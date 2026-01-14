@@ -13,7 +13,7 @@ else()
     add_definitions(-D__LINUX__)
     find_package(SDL2 REQUIRED)
     include_directories(${SDL2_INCLUDE_DIRS})
-    file(GLOB_RECURSE PLATFORM_SOURCES "src/platform/linux/*.cpp")
+    file(GLOB_RECURSE PLATFORM_SOURCES "src/Platform/Linux/*.cpp")
 endif()
 
 

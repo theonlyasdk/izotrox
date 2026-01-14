@@ -1,0 +1,40 @@
+#pragma once
+#include <cstdint>
+
+namespace Izo {
+
+struct Color {
+    uint8_t r, g, b, a;
+
+    constexpr Color() : r(0), g(0), b(0), a(255) {}
+    constexpr Color(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 255) : r(r), g(g), b(b), a(a) {}
+    constexpr Color(uint32_t argb) {
+        a = (argb >> 24) & 0xFF;
+        r = (argb >> 16) & 0xFF;
+        g = (argb >> 8)  & 0xFF;
+        b =  argb        & 0xFF;
+    }
+
+    constexpr uint32_t to_argb() const {
+        return (a << 24) | (r << 16) | (g << 8) | b;
+    }
+
+    // Helper for RGBA (if needed by some backends, but Android FB is usually BGRA or RGBA)
+    // We'll stick to a standard representation in memory.
+    
+    static const Color Black;
+    static const Color White;
+    static const Color Red;
+    static const Color Green;
+    static const Color Blue;
+    static const Color Transparent;
+};
+
+inline const Color Color::Black(0, 0, 0);
+inline const Color Color::White(255, 255, 255);
+inline const Color Color::Red(255, 0, 0);
+inline const Color Color::Green(0, 255, 0);
+inline const Color Color::Blue(0, 0, 255);
+inline const Color Color::Transparent(0, 0, 0, 0);
+
+} // namespace Izo

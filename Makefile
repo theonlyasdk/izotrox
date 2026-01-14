@@ -9,7 +9,7 @@ INSTALL_DIR = /data/adb/$(TARGET).dir/
 
 all: build
 
-build:
+build: cmake
 	cd build && ninja -j$(shell nproc)
 	./build/$(TARGET)
 
@@ -21,7 +21,7 @@ cmake:
 		-DCMAKE_CXX_STANDARD_REQUIRED=ON
 	cp build/compile_commands.json .
 
-install:
+install: build
 	cd build && ninja install
 
 run:
