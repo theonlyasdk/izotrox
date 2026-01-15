@@ -26,8 +26,10 @@
 #include "Graphics/ResourceManager.hpp"
 #include "Graphics/SplashScreen.hpp"
 #include "Graphics/View.hpp"
+#include "Graphics/ListView.hpp"
 #include "Core/Application.hpp"
 #include "Core/Theme.hpp"
+#include "Platform/MobileDevice.hpp"
 
 using FontManager = Izo::ResourceManager<Izo::Font>;
 using ImageManager = Izo::ResourceManager<Izo::Image>;
@@ -53,7 +55,7 @@ int main(int argc, char* argv[]) {
     auto painter = std::make_unique<Izo::Painter>(*backbuffer);
 
     FontManager fonts;
-    ImageManager images;
+    ImageManager manager;
 
     Izo::Font* systemFont = fonts.load("system-ui", "res/fonts/Roboto-Regular.ttf", 24.0f);
     if (!systemFont) {
@@ -67,15 +69,14 @@ int main(int argc, char* argv[]) {
     
     splash.next_step("Initializing Input...");
     Izo::Input::instance().init();
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
 
     splash.next_step("Loading Images...");
-    Izo::Image* sliderHandle = images.load("slider-handle", "res/icons/slider-handle.png");
-    Izo::Image* sliderHandleFocus = images.load("slider-handle-focus", "res/icons/slider-handle-focus.png");
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+
+    Izo::Image* sliderHandle = manager.load("slider-handle", "res/icons/slider-handle.png");
+    Izo::Image* sliderHandleFocus = manager.load("slider-handle-focus", "res/icons/slider-handle-focus.png");
 
     splash.next_step("Loading Fonts...");
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    // load extra fonts here...
 
     splash.next_step("Building UI...");
     
@@ -85,7 +86,6 @@ int main(int argc, char* argv[]) {
 
     // Create View
     Izo::View view(root);
-    // Initial resize to setup layout
     view.resize(width, height);
 
     bool running = true;
@@ -119,16 +119,40 @@ int main(int argc, char* argv[]) {
     auto tb = std::make_shared<Izo::TextBox>("Enter something...", systemFont);
     tb->set_focusable(true);
     root->add_child(tb);
+    
+    // Demo Multiline
+    auto multiLbl = std::make_shared<Izo::Label>("Multi-line\nLabel Test", systemFont, Izo::Theme::instance().color("Label.Text"));
+    root->add_child(multiLbl);
+    
+    // Demo Wrap
+    auto wrapLbl = std::make_shared<Izo::Label>("This is a very long text that should automatically wrap to the next line if the container width is not enough to hold it in a single line.", systemFont, Izo::Theme::instance().color("Label.Text"));
+    wrapLbl->set_width(Izo::MatchParent);
+    wrapLbl->set_wrap(true);
+    root->add_child(wrapLbl);
 
-    // Initial Layout via View resize?
-    // We already called view.resize(). But we added children after.
-    // Need to trigger resize/layout again.
+    // ListView Demo
+    auto listView = std::make_shared<Izo::ListView>();
+    listView->set_width(Izo::MatchParent);
+    listView->set_height(400); 
+    
+    std::vector<std::string> items;
+    for(int i=0; i<50; ++i) {
+        items.push_back("List Item " + std::to_string(i));
+    }
+    listView->set_items(items);
+    
+    listView->set_item_drawer([systemFont](Izo::Painter& p, int i, int x, int y, int w, int h) {
+        std::string text = "List Item " + std::to_string(i);
+        int th = systemFont->height();
+        int ty = y + (h - th) / 2;
+        systemFont->draw_text(p, x + 15, ty, text, Izo::Theme::instance().color("ListView.Text"));
+    });
+    
+    root->add_child(listView);
+
     view.resize(width, height);
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
-
     splash.next_step("Ready!");
-    std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
     app.set_on_resize([&](int w, int h) {
         width = w;
@@ -138,36 +162,43 @@ int main(int argc, char* argv[]) {
         view.resize(w, h);
     });
 
-    Izo::Logger::instance().info("Entering render loop...");
-
     root->invalidate();
 
+    auto lastTime = std::chrono::high_resolution_clock::now();
+
     while (running) {
+        auto currentTime = std::chrono::high_resolution_clock::now();
+        float dt = std::chrono::duration<float, std::chrono::milliseconds::period>(currentTime - lastTime).count();
+        lastTime = currentTime;
+
         if (!app.pump_events()) {
             running = false;
         }
 
-        // Pass input to view
         int tx = Izo::Input::instance().touch_x();
         int ty = Izo::Input::instance().touch_y();
         bool down = Izo::Input::instance().touch_down();
         view.on_touch(tx, ty, down);
         
         int key = Izo::Input::instance().key();
-        if (key > 0) view.on_key(key);
+        if (key > 0) view.on_key(key); 
         
         view.update();
 
-        if (Izo::Widget::is_dirty()) {
+        bool is_dirty = Izo::Widget::dirty();
+
+        if (is_dirty) {
             backbuffer->clear(Izo::Theme::instance().color("Window.Background"));
             view.draw(*painter);
 
             app.present(*backbuffer);
             Izo::Widget::clear_dirty();
         }
-        
-        std::this_thread::sleep_for(std::chrono::milliseconds(16));
     }
+
+    Izo::Logger::instance().info("Shutting down...");
+    backbuffer->clear(Izo::Color::Black);
+    app.present(*backbuffer);
 
     return 0;
 }

@@ -4,6 +4,8 @@
 #include <cstdio>
 #include <iostream>
 #include <cmath>
+#include <sstream>
+#include <algorithm>
 
 namespace Izo {
 
@@ -129,6 +131,134 @@ void Font::draw_text(Painter& painter, int x, int y, const std::string& text, Co
         }
         curX += g.advance;
     }
+}
+
+void Font::measure_multiline(const std::string& text, int& out_w, int& out_h, int max_width) {
+    out_w = 0;
+    out_h = 0;
+    if (!validState) return;
+
+    int lineHeight = height();
+    int curLineWidth = 0;
+    int curY = lineHeight;
+
+    std::string line;
+    std::stringstream ss(text);
+    std::string segment;
+    
+    // We need to handle \n manually
+    // Split by \n first?
+    
+    int maxW = 0;
+    int totalH = 0;
+    
+    auto process_line = [&](std::string l) {
+        if (max_width <= 0) {
+            int w = width(l);
+            if (w > maxW) maxW = w;
+            totalH += lineHeight;
+        } else {
+             // Word wrap
+             std::stringstream wordSS(l);
+             std::string word;
+             std::string currentLine;
+             int currentW = 0;
+             
+             while (wordSS >> word) {
+                 int wordW = width(word);
+                 int spaceW = width(" ");
+                 
+                 if (currentLine.empty()) {
+                     currentLine = word;
+                     currentW = wordW;
+                 } else {
+                     if (currentW + spaceW + wordW <= max_width) {
+                         currentLine += " " + word;
+                         currentW += spaceW + wordW;
+                     } else {
+                         // New line
+                         if (currentW > maxW) maxW = currentW;
+                         totalH += lineHeight;
+                         currentLine = word;
+                         currentW = wordW;
+                     }
+                 }
+             }
+             if (!currentLine.empty()) {
+                 if (currentW > maxW) maxW = currentW;
+                 totalH += lineHeight;
+             }
+        }
+    };
+    
+    size_t start = 0;
+    size_t end = text.find('\n');
+    while (end != std::string::npos) {
+        process_line(text.substr(start, end - start));
+        start = end + 1;
+        end = text.find('\n', start);
+    }
+    process_line(text.substr(start));
+    
+    if (totalH == 0 && !text.empty()) totalH = lineHeight;
+
+    out_w = maxW;
+    out_h = totalH;
+}
+
+void Font::draw_text_multiline(Painter& painter, int x, int y, const std::string& text, Color color, int max_width) {
+    if (!validState) return;
+    
+    int lineHeight = height();
+    int curY = y;
+    
+    auto draw_line_str = [&](const std::string& l) {
+        draw_text(painter, x, curY, l, color);
+        curY += lineHeight;
+    };
+
+    size_t start = 0;
+    size_t end = text.find('\n');
+    
+    auto process_line = [&](std::string l) {
+        if (max_width <= 0) {
+            draw_line_str(l);
+        } else {
+             std::stringstream wordSS(l);
+             std::string word;
+             std::string currentLine;
+             int currentW = 0;
+             
+             while (wordSS >> word) {
+                 int wordW = width(word);
+                 int spaceW = width(" ");
+                 
+                 if (currentLine.empty()) {
+                     currentLine = word;
+                     currentW = wordW;
+                 } else {
+                     if (currentW + spaceW + wordW <= max_width) {
+                         currentLine += " " + word;
+                         currentW += spaceW + wordW;
+                     } else {
+                         draw_line_str(currentLine);
+                         currentLine = word;
+                         currentW = wordW;
+                     }
+                 }
+             }
+             if (!currentLine.empty()) {
+                 draw_line_str(currentLine);
+             }
+        }
+    };
+
+    while (end != std::string::npos) {
+        process_line(text.substr(start, end - start));
+        start = end + 1;
+        end = text.find('\n', start);
+    }
+    process_line(text.substr(start));
 }
 
 } // namespace Izo

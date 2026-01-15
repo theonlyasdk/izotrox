@@ -10,7 +10,7 @@
 namespace Izo {
 
 Framebuffer::Framebuffer() 
-    : fd_(-1), fbp_(nullptr), width_(0), height_(0), double_buffered_(false), current_buffer_idx_(0) {
+    : m_fd(-1), m_fbp(nullptr), m_width(0), m_height(0), m_double_buffered(false), m_current_buffer_idx(0) {
 }
 
 Framebuffer::~Framebuffer() {
@@ -20,49 +20,49 @@ Framebuffer::~Framebuffer() {
 bool Framebuffer::init(const std::string& device) {
     Logger::instance().info("Initializing Framebuffer on " + device);
     
-    fd_ = open(device.c_str(), O_RDWR);
-    if (fd_ == -1) {
+    m_fd = open(device.c_str(), O_RDWR);
+    if (m_fd == -1) {
         // Fallback to standard linux fb0 if not android path
         if (device == "/dev/graphics/fb0") {
-             fd_ = open("/dev/fb0", O_RDWR);
+             m_fd = open("/dev/fb0", O_RDWR);
         }
-        if (fd_ == -1) {
+        if (m_fd == -1) {
             Logger::instance().error("Error opening framebuffer device");
             return false;
         }
     }
 
-    if (ioctl(fd_, FBIOGET_FSCREENINFO, &finfo_) == -1) {
+    if (ioctl(m_fd, FBIOGET_FSCREENINFO, &m_finfo) == -1) {
         Logger::instance().error("Error reading fixed information");
         return false;
     }
 
-    if (ioctl(fd_, FBIOGET_VSCREENINFO, &vinfo_) == -1) {
+    if (ioctl(m_fd, FBIOGET_VSCREENINFO, &m_vinfo) == -1) {
         Logger::instance().error("Error reading variable information");
         return false;
     }
 
-    width_ = vinfo_.xres;
-    height_ = vinfo_.yres;
-    bpp_ = vinfo_.bits_per_pixel;
-    line_length_ = finfo_.line_length;
+    m_width = m_vinfo.xres;
+    m_height = m_vinfo.yres;
+    m_bpp = m_vinfo.bits_per_pixel;
+    m_line_length = m_finfo.line_length;
 
-    Logger::instance().info("FB Resolution: " + std::to_string(width_) + "x" + std::to_string(height_) + " " + std::to_string(bpp_) + "bpp");
+    Logger::instance().info("FB Resolution: " + std::to_string(m_width) + "x" + std::to_string(m_height) + " " + std::to_string(m_bpp) + "bpp");
 
     // Try to enable double buffering
-    vinfo_.yres_virtual = vinfo_.yres * 2;
-    if (ioctl(fd_, FBIOPUT_VSCREENINFO, &vinfo_) == 0) {
-        ioctl(fd_, FBIOGET_VSCREENINFO, &vinfo_);
-        if (vinfo_.yres_virtual >= vinfo_.yres * 2) {
-             double_buffered_ = true;
+    m_vinfo.yres_virtual = m_vinfo.yres * 2;
+    if (ioctl(m_fd, FBIOPUT_VSCREENINFO, &m_vinfo) == 0) {
+        ioctl(m_fd, FBIOGET_VSCREENINFO, &m_vinfo);
+        if (m_vinfo.yres_virtual >= m_vinfo.yres * 2) {
+             m_double_buffered = true;
              Logger::instance().info("Double buffering enabled");
         }
     }
 
-    screensize_ = vinfo_.yres_virtual * finfo_.line_length;
+    m_screensize = m_vinfo.yres_virtual * m_finfo.line_length;
 
-    fbp_ = (uint8_t*)mmap(0, screensize_, PROT_READ | PROT_WRITE, MAP_SHARED, fd_, 0);
-    if ((intptr_t)fbp_ == -1) {
+    m_fbp = (uint8_t*)mmap(0, m_screensize, PROT_READ | PROT_WRITE, MAP_SHARED, m_fd, 0);
+    if ((intptr_t)m_fbp == -1) {
         Logger::instance().error("Error mapping framebuffer to memory");
         return false;
     }
@@ -71,31 +71,31 @@ bool Framebuffer::init(const std::string& device) {
 }
 
 void Framebuffer::cleanup() {
-    if (fbp_ && (intptr_t)fbp_ != -1) {
-        munmap(fbp_, screensize_);
-        fbp_ = nullptr;
+    if (m_fbp && (intptr_t)m_fbp != -1) {
+        munmap(m_fbp, m_screensize);
+        m_fbp = nullptr;
     }
-    if (fd_ > 0) {
-        close(fd_);
-        fd_ = -1;
+    if (m_fd > 0) {
+        close(m_fd);
+        m_fd = -1;
     }
 }
 
 void Framebuffer::swap_buffers(Canvas& src) {
-    if (!fbp_) return;
+    if (!m_fbp) return;
 
-    int buf_idx = double_buffered_ ? (1 - current_buffer_idx_) : 0;
-    int y_offset = buf_idx * height_;
+    int buf_idx = m_double_buffered ? (1 - m_current_buffer_idx) : 0;
+    int y_offset = buf_idx * m_height;
     
     // Copy src canvas to FB
     // Handle BPP conversions if necessary. Assuming 32bpp for now (standard Android/Linux modern FB)
-    if (bpp_ == 32) {
-        uint8_t* dst_base = fbp_ + (y_offset * line_length_);
+    if (m_bpp == 32) {
+        uint8_t* dst_base = m_fbp + (y_offset * m_line_length);
         const uint32_t* src_pixels = src.pixels();
         
-        for (int y = 0; y < height_; ++y) {
-            uint32_t* dst_row = (uint32_t*)(dst_base + y * line_length_);
-            const uint32_t* src_row = src_pixels + y * width_; // Canvas width matches fb width hopefully
+        for (int y = 0; y < m_height; ++y) {
+            uint32_t* dst_row = (uint32_t*)(dst_base + y * m_line_length);
+            const uint32_t* src_row = src_pixels + y * m_width; // Canvas width matches fb width hopefully
             
             // memcpy is fastest if formats match
             // Android often uses BGRA or RGBA. Our Color is RGBA (in memory).
@@ -103,18 +103,18 @@ void Framebuffer::swap_buffers(Canvas& src) {
             // For now, let's assume they match or we accept the swap for this port.
             // Actually, we can check vinfo red offset.
             
-            std::memcpy(dst_row, src_row, width_ * 4);
+            std::memcpy(dst_row, src_row, m_width * 4);
         }
     }
 
-    if (double_buffered_) {
-        vinfo_.yoffset = y_offset;
-        ioctl(fd_, FBIOPAN_DISPLAY, &vinfo_);
+    if (m_double_buffered) {
+        m_vinfo.yoffset = y_offset;
+        ioctl(m_fd, FBIOPAN_DISPLAY, &m_vinfo);
         
         int arg = 0;
-        ioctl(fd_, FBIO_WAITFORVSYNC, &arg);
+        ioctl(m_fd, FBIO_WAITFORVSYNC, &arg);
         
-        current_buffer_idx_ = buf_idx;
+        m_current_buffer_idx = buf_idx;
     }
 }
 

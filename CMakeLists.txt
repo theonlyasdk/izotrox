@@ -24,7 +24,7 @@ file(GLOB_RECURSE HEADERS
      "include/**/*.h"
      "include/**/*.hpp")
 
-add_executable(izotrox ${SOURCES} ${HEADERS} ${PLATFORM_SOURCES})
+add_executable(izotrox ${SOURCES} ${HEADERS} ${PLATFORM_SOURCES} "src/Platform/MobileDevice.cpp")
 
 target_include_directories(izotrox PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_include_directories(izotrox PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)

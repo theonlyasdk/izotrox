@@ -7,7 +7,7 @@ INSTALL_DIR = /data/adb/$(TARGET).install.dir/
 
 .PHONY: all build cmake clean build_clean install run push
 
-all: build push
+all: build
 
 build: cmake
 	cd build && ninja -j$(shell nproc)

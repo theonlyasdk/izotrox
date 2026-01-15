@@ -21,7 +21,7 @@ public:
     void draw_line(int x1, int y1, int x2, int y2, Color color);
     
     void fill_rounded_rect(int x, int y, int w, int h, int radius, Color color);
-    void draw_rounded_rect(int x, int y, int w, int h, int radius, Color color);
+    void draw_rounded_rect(int x, int y, int w, int h, int radius, Color color, int thickness = 1);
 
     Canvas& canvas() { return m_canvas_ref; }
 

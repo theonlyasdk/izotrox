@@ -63,10 +63,10 @@ void TextBox::ensure_cursor_visible() {
 }
 
 void TextBox::draw_content(Painter& painter) {
-    painter.fill_rounded_rect(m_bounds.x, m_bounds.y, m_bounds.w, m_bounds.h, 4, Theme::instance().color("TextBox.Background"));
+    painter.fill_rect(m_bounds.x, m_bounds.y, m_bounds.w, m_bounds.h, Theme::instance().color("TextBox.Background"));
 
     Color border = m_border_anim.value();
-    painter.draw_rounded_rect(m_bounds.x, m_bounds.y, m_bounds.w, m_bounds.h, 4, border);
+    painter.draw_rect(m_bounds.x, m_bounds.y, m_bounds.w, m_bounds.h, border);
 
     if (m_font) {
         int padding = 5;

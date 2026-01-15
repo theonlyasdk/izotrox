@@ -4,45 +4,45 @@
 namespace Izo {
 
 Canvas::Canvas(int width, int height) 
-    : width_(width), height_(height), owns_memory_(true) {
-    pixels_ = new uint32_t[width * height];
+    : m_width(width), m_height(height), m_owns_memory(true) {
+    m_pixels = new uint32_t[width * height];
 }
 
 Canvas::Canvas(int width, int height, uint32_t* pixels)
-    : width_(width), height_(height), pixels_(pixels), owns_memory_(false) {
+    : m_width(width), m_height(height), m_pixels(pixels), m_owns_memory(false) {
 }
 
 Canvas::~Canvas() {
-    if (owns_memory_ && pixels_) {
-        delete[] pixels_;
+    if (m_owns_memory && m_pixels) {
+        delete[] m_pixels;
     }
 }
 
 size_t Canvas::size_bytes() const {
-    return width_ * height_ * sizeof(uint32_t);
+    return m_width * m_height * sizeof(uint32_t);
 }
 
 void Canvas::clear(Color color) {
     uint32_t c = color.to_argb();
     if (c == 0) {
-        std::memset(pixels_, 0, width_ * height_ * sizeof(uint32_t));
+        std::memset(m_pixels, 0, m_width * m_height * sizeof(uint32_t));
     } else {
-        size_t count = width_ * height_;
+        size_t count = m_width * m_height;
         for (size_t i = 0; i < count; ++i) {
-            pixels_[i] = c;
+            m_pixels[i] = c;
         }
     }
 }
 
 void Canvas::set_pixel(int x, int y, uint32_t color) {
-    if (x >= 0 && x < width_ && y >= 0 && y < height_) {
-        pixels_[y * width_ + x] = color;
+    if (x >= 0 && x < m_width && y >= 0 && y < m_height) {
+        m_pixels[y * m_width + x] = color;
     }
 }
 
 uint32_t Canvas::pixel(int x, int y) const {
-    if (x >= 0 && x < width_ && y >= 0 && y < height_) {
-        return pixels_[y * width_ + x];
+    if (x >= 0 && x < m_width && y >= 0 && y < m_height) {
+        return m_pixels[y * m_width + x];
     }
     return 0;
 }

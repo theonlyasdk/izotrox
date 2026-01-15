@@ -17,11 +17,11 @@ public:
 
     ~Canvas();
 
-    int width() const { return width_; }
-    int height() const { return height_; }
+    int width() const { return m_width; }
+    int height() const { return m_height; }
     
-    uint32_t* pixels() { return pixels_; }
-    const uint32_t* pixels() const { return pixels_; }
+    uint32_t* pixels() { return m_pixels; }
+    const uint32_t* pixels() const { return m_pixels; }
     
     size_t size_bytes() const;
 
@@ -32,10 +32,10 @@ public:
     uint32_t pixel(int x, int y) const;
 
 private:
-    int width_;
-    int height_;
-    uint32_t* pixels_;
-    bool owns_memory_;
+    int m_width;
+    int m_height;
+    uint32_t* m_pixels;
+    bool m_owns_memory;
 };
 
 } // namespace Izo

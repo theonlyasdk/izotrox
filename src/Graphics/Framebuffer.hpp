@@ -16,25 +16,25 @@ public:
     // Swaps buffers if double buffering is enabled
     void swap_buffers(Canvas& src);
 
-    int width() const { return width_; }
-    int height() const { return height_; }
-    bool valid() const { return fd_ > 0; }
+    int width() const { return m_width; }
+    int height() const { return m_height; }
+    bool valid() const { return m_fd > 0; }
     
-    uint32_t* buffer() { return (uint32_t*)fbp_; }
+    uint32_t* buffer() { return (uint32_t*)m_fbp; }
 
 private:
-    int fd_;
-    uint8_t* fbp_;
-    size_t screensize_;
-    int width_, height_;
-    int bpp_;
-    long int line_length_;
+    int m_fd;
+    uint8_t* m_fbp;
+    size_t m_screensize;
+    int m_width, m_height;
+    int m_bpp;
+    long int m_line_length;
     
-    struct fb_var_screeninfo vinfo_;
-    struct fb_fix_screeninfo finfo_;
+    struct fb_var_screeninfo m_vinfo;
+    struct fb_fix_screeninfo m_finfo;
 
-    bool double_buffered_;
-    int current_buffer_idx_;
+    bool m_double_buffered;
+    int m_current_buffer_idx;
 };
 
 } // namespace Izo

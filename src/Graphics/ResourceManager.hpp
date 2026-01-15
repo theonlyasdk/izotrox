@@ -15,7 +15,6 @@ public:
 
     template <typename... Args>
     T* load(const std::string& name, Args&&... args) {
-        // Construct the resource
         auto res = std::make_shared<T>(std::forward<Args>(args)...);
         
         // Check validity if possible

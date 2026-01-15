@@ -25,6 +25,10 @@ public:
     void draw_text(Painter& painter, int x, int y, const std::string& text, Color color);
     int width(const std::string& text);
 
+    // Multiline / Wrapping support
+    void draw_text_multiline(Painter& painter, int x, int y, const std::string& text, Color color, int max_width = -1);
+    void measure_multiline(const std::string& text, int& out_w, int& out_h, int max_width = -1);
+
 private:
     std::string path;
     float sizeVal;

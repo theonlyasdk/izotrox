@@ -20,7 +20,7 @@ void GridLayout::layout_children() {
     std::vector<int> row_heights;
     int current_h = 0;
     for (size_t i = 0; i < m_children.size(); ++i) {
-        if (!m_children[i]->is_visible()) continue;
+        if (!m_children[i]->visible()) continue;
         // Measure logic should be in measure(), but for layout we rely on measured sizes?
         // Or re-measure?
         // Let's assume measure() was called before layout().
@@ -37,7 +37,7 @@ void GridLayout::layout_children() {
     int col_idx = 0;
     for (size_t i = 0; i < m_children.size(); ++i) {
         auto& child = m_children[i];
-        if (!child->is_visible()) continue;
+        if (!child->visible()) continue;
         
         int mh = child->measured_height();
         

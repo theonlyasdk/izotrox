@@ -29,16 +29,29 @@ void Painter::draw_pixel(int x, int y, Color color) {
             m_canvas_ref.set_pixel(x, y, color.to_argb());
         } else {
             uint32_t bg = m_canvas_ref.pixel(x, y);
+            
+            // Fast fixed-point alpha blending
+            uint32_t a = color.a;
+            uint32_t inv_a = 255 - a;
+            
+#ifdef __ANDROID__
             Color bgC(bg);
+            uint32_t r = (color.r * a + bgC.r * inv_a) >> 8;
+            uint32_t g = (color.g * a + bgC.g * inv_a) >> 8;
+            uint32_t b = (color.b * a + bgC.b * inv_a) >> 8;
+            m_canvas_ref.set_pixel(x, y, Color((uint8_t)r, (uint8_t)g, (uint8_t)b).to_argb());
+#else
+            uint32_t rb = bg & 0xFF00FF;
+            uint32_t g  = bg & 0x00FF00;
             
-            float alpha = color.a / 255.0f;
-            float inv = 1.0f - alpha;
+            uint32_t color_rb = color.to_argb() & 0xFF00FF;
+            uint32_t color_g  = color.to_argb() & 0x00FF00;
             
-            uint8_t r = (uint8_t)(color.r * alpha + bgC.r * inv);
-            uint8_t g = (uint8_t)(color.g * alpha + bgC.g * inv);
-            uint8_t b = (uint8_t)(color.b * alpha + bgC.b * inv);
+            uint32_t res_rb = ((color_rb * a + rb * inv_a) >> 8) & 0xFF00FF;
+            uint32_t res_g  = ((color_g * a + g * inv_a) >> 8) & 0x00FF00;
             
-            m_canvas_ref.set_pixel(x, y, Color(r, g, b).to_argb());
+            m_canvas_ref.set_pixel(x, y, 0xFF000000 | res_rb | res_g);
+#endif
         }
     }
 }
@@ -53,8 +66,9 @@ void Painter::fill_rect(int x, int y, int w, int h, Color color) {
     
     if (color.a == 255) {
         for (int iy = 0; iy < dest.h; ++iy) {
+            uint32_t* row = m_canvas_ref.pixels() + (dest.y + iy) * m_canvas_ref.width() + dest.x;
             for (int ix = 0; ix < dest.w; ++ix) {
-                m_canvas_ref.set_pixel(dest.x + ix, dest.y + iy, c);
+                row[ix] = c;
             }
         }
     } else if (color.a > 0) {
@@ -89,44 +103,50 @@ void Painter::draw_line(int x1, int y1, int x2, int y2, Color color) {
     }
 }
 
-static void draw_corner_aa(Painter& p, int cx, int cy, int radius, int quad, Color color, bool filled) {
+static void draw_corner_aa(Painter& p, int cx, int cy, int radius, int quad, Color color, bool filled, int thickness = 1) {
     int x_start = (quad == 0 || quad == 2) ? cx - radius : cx;
     int x_end = (quad == 0 || quad == 2) ? cx : cx + radius;
     int y_start = (quad == 0 || quad == 1) ? cy - radius : cy;
     int y_end = (quad == 0 || quad == 1) ? cy : cy + radius;
     
+    // Expand a bit for AA
     if (quad == 0 || quad == 2) x_start--; else x_end++;
     if (quad == 0 || quad == 1) y_start--; else y_end++;
 
-    float rSq = (float)(radius * radius);
     float r = (float)radius;
+    float rSq = r * r;
 
     for (int y = y_start; y <= y_end; y++) {
         for (int x = x_start; x <= x_end; x++) {
             float dx = (float)x - (float)cx;
             float dy = (float)y - (float)cy;
-            float dist = sqrtf((dx + 0.5f)*(dx + 0.5f) + (dy + 0.5f)*(dy + 0.5f));
-            float alpha = 0.0f;
+            float dist_sq = dx*dx + dy*dy;
+            float dist = sqrtf(dist_sq);
             
             if (filled) {
-                 alpha = 1.0f - (dist - (r - 0.5f));
+                if (dist <= r - 0.5f) {
+                    p.draw_pixel(x, y, color);
+                } else if (dist < r + 0.5f) {
+                    float alpha = 1.0f - (dist - (r - 0.5f));
+                    Color c = color;
+                    c.a = (uint8_t)(c.a * std::clamp(alpha, 0.0f, 1.0f));
+                    p.draw_pixel(x, y, c);
+                }
             } else {
-                 float width = 1.2f;
-                 float offset = 0.6f; 
-                 float d = fabsf(dist - (r - offset));
-                 if (d < width) {
-                     alpha = 1.0f - (d / width);
-                     alpha = std::min(1.0f, alpha * 1.5f);
+                 // Thick outline
+                 float t = (float)thickness;
+                 float half_t = t / 2.0f;
+                 float center_r = r - half_t;
+                 float d = fabsf(dist - center_r);
+                 
+                 if (d < half_t - 0.5f) {
+                     p.draw_pixel(x, y, color);
+                 } else if (d < half_t + 0.5f) {
+                     float alpha = 1.0f - (d - (half_t - 0.5f));
+                     Color c = color;
+                     c.a = (uint8_t)(c.a * std::clamp(alpha, 0.0f, 1.0f));
+                     p.draw_pixel(x, y, c);
                  }
-            }
-
-            if (alpha < 0.0f) alpha = 0.0f;
-            if (alpha > 1.0f) alpha = 1.0f;
-            
-            if (alpha > 0.0f) {
-                Color c = color;
-                c.a = (uint8_t)(c.a * alpha);
-                p.draw_pixel(x, y, c);
             }
         }
     }
@@ -151,24 +171,30 @@ void Painter::fill_rounded_rect(int x, int y, int w, int h, int radius, Color co
     draw_corner_aa(*this, x + w - radius, y + h - radius, radius, 3, color, true);
 }
 
-void Painter::draw_rounded_rect(int x, int y, int w, int h, int radius, Color color) {
+void Painter::draw_rounded_rect(int x, int y, int w, int h, int radius, Color color, int thickness) {
     if (radius <= 0) {
-        draw_rect(x, y, w, h, color);
+        // Draw thick rect using 4 fills
+        fill_rect(x, y, w, thickness, color);
+        fill_rect(x, y + h - thickness, w, thickness, color);
+        fill_rect(x, y + thickness, thickness, h - thickness * 2, color);
+        fill_rect(x + w - thickness, y + thickness, thickness, h - thickness * 2, color);
         return;
     }
 
     int min_side = std::min(w, h);
     if (radius * 2 > min_side) radius = min_side / 2;
     
-    fill_rect(x + radius, y, w - 2 * radius, 1, color);
-    fill_rect(x + radius, y + h - 1, w - 2 * radius, 1, color);
-    fill_rect(x, y + radius, 1, h - 2 * radius, color);
-    fill_rect(x + w - 1, y + radius, 1, h - 2 * radius, color);
+    // Sides
+    fill_rect(x + radius, y, w - 2 * radius, thickness, color);
+    fill_rect(x + radius, y + h - thickness, w - 2 * radius, thickness, color);
+    fill_rect(x, y + radius, thickness, h - 2 * radius, color);
+    fill_rect(x + w - thickness, y + radius, thickness, h - 2 * radius, color);
 
-    draw_corner_aa(*this, x + radius, y + radius, radius, 0, color, false);
-    draw_corner_aa(*this, x + w - radius, y + radius, radius, 1, color, false);
-    draw_corner_aa(*this, x + radius, y + h - radius, radius, 2, color, false);
-    draw_corner_aa(*this, x + w - radius, y + h - radius, radius, 3, color, false);
+    // Corners
+    draw_corner_aa(*this, x + radius, y + radius, radius, 0, color, false, thickness);
+    draw_corner_aa(*this, x + w - radius, y + radius, radius, 1, color, false, thickness);
+    draw_corner_aa(*this, x + radius, y + h - radius, radius, 2, color, false, thickness);
+    draw_corner_aa(*this, x + w - radius, y + h - radius, radius, 3, color, false, thickness);
 }
 
 } // namespace Izo

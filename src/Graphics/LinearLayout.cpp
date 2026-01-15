@@ -9,7 +9,7 @@ void LinearLayout::measure(int parent_w, int parent_h) {
     int h = 0;
     
     for (auto& child : m_children) {
-        if (!child->is_visible()) continue;
+        if (!child->visible()) continue;
         child->measure(parent_w, parent_h); // Pass available space
         
         if (m_orientation == Orientation::Vertical) {
@@ -36,7 +36,7 @@ void LinearLayout::layout_children() {
     int cur_y = m_bounds.y + 10;
     
     for (auto& child : m_children) {
-        if (!child->is_visible()) continue;
+        if (!child->visible()) continue;
         
         int cw = child->measured_width();
         int ch = child->measured_height();

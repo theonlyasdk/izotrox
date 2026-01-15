@@ -14,11 +14,14 @@ public:
 
     void draw_content(Painter& painter) override;
     void measure(int parent_w, int parent_h) override;
+    
+    void set_wrap(bool wrap) { m_wrap = wrap; }
 
 private:
     std::string m_text_str;
     Font* m_font;
     Color m_color;
+    bool m_wrap = false;
 };
 
 } // namespace Izo

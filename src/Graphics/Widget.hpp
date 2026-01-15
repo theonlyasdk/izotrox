@@ -25,12 +25,12 @@ public:
     virtual void update();
     
     // Layout
-    virtual void layout() {}
+    virtual void layout() {};
     virtual void measure(int parent_w, int parent_h); // Sets m_measured_size
     virtual IntRect content_box() const { return {0, 0, m_bounds.w, m_bounds.h}; } // Default content is full size
 
     // Input
-    virtual bool on_touch(int tx, int ty, bool down); // Template method
+    virtual bool on_touch(int tx, int ty, bool down, bool captured = false); // Template method
     virtual bool on_touch_event(int local_x, int local_y, bool down) { return false; } // For subclass handling
     virtual bool on_key(int key) { return false; }
 
@@ -48,13 +48,17 @@ public:
 
     void show();
     void hide();
-    bool is_visible() const { return m_is_visible; }
+    bool visible() const { return m_visible; }
 
     void set_focusable(bool focusable) { m_is_focusable = focusable; }
-    bool is_focused() const { return m_is_focused; }
+    bool focusable() const { return m_is_focusable; }
+    bool focused() const { return m_is_focused; }
+    void set_focused(bool focused);
+    
+    void set_show_focus_indicator(bool show) { m_show_focus_indicator = show; }
 
     virtual void invalidate();
-    static bool is_dirty();
+    static bool dirty();
     static void clear_dirty();
 
 protected:
@@ -76,7 +80,8 @@ protected:
     bool m_prev_touch_down = false;
     bool m_is_focusable = false;
     bool m_is_focused = false;
-    bool m_is_visible = true;
+    bool m_visible = true;
+    bool m_show_focus_indicator = true;
 
     static bool s_global_dirty;
 };

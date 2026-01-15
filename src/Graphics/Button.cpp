@@ -12,9 +12,9 @@ Button::Button(const std::string& text, Font* font)
 
 void Button::draw_content(Painter& painter) {
     Color c = m_bg_anim.value();
-    painter.fill_rounded_rect(m_bounds.x, m_bounds.y, m_bounds.w, m_bounds.h, 6, c);
-    painter.draw_rounded_rect(m_bounds.x, m_bounds.y, m_bounds.w, m_bounds.h, 6, Theme::instance().color("Button.Text"));
-    
+    painter.fill_rect(m_bounds.x, m_bounds.y, m_bounds.w, m_bounds.h, c);
+    painter.draw_rect(m_bounds.x, m_bounds.y, m_bounds.w, m_bounds.h, Theme::instance().color("Button.Text"));
+
     if (m_font) {
         int tw = m_font->width(m_text_str);
         int th = m_font->height();

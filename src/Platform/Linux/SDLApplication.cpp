@@ -92,7 +92,9 @@ bool SDLApplication::pump_events() {
              }
              
              if (down) {
-                 if (e.key.keysym.sym == SDLK_BACKSPACE) {
+                 if (e.key.keysym.sym == SDLK_c && (e.key.keysym.mod & KMOD_CTRL)) {
+                     m_running = false;
+                 } else if (e.key.keysym.sym == SDLK_BACKSPACE) {
                      Izo::Input::instance().set_key(Izo::Input::Backspace); 
                  } else if (e.key.keysym.sym == SDLK_RETURN) {
                      Izo::Input::instance().set_key(Izo::Input::Enter); 

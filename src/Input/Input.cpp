@@ -10,6 +10,7 @@
 #ifdef __ANDROID__
 #include <sys/poll.h>
 #include <linux/input.h>
+#include <sys/ioctl.h>
 #endif
 
 namespace Izo {
@@ -106,10 +107,39 @@ void Input::run_thread() {
         std::string path = "/dev/input/event" + std::to_string(i);
         int fd = open(path.c_str(), O_RDONLY);
         if (fd >= 0) {
-            Logger::instance().info("Opened input: " + path);
-            fds[count].fd = fd;
-            fds[count].events = POLLIN;
-            count++;
+            unsigned char evtype_b[EV_MAX/8 + 1];
+            memset(evtype_b, 0, sizeof(evtype_b));
+            ioctl(fd, EVIOCGBIT(0, sizeof(evtype_b)), evtype_b);
+
+            bool keep = false;
+            
+            // Check for Touch (ABS_MT_POSITION_X)
+            if ((evtype_b[EV_ABS/8] & (1<<(EV_ABS%8)))) {
+                unsigned char abs_b[ABS_MAX/8 + 1];
+                ioctl(fd, EVIOCGBIT(EV_ABS, sizeof(abs_b)), abs_b);
+                if (abs_b[ABS_MT_POSITION_X/8] & (1<<(ABS_MT_POSITION_X%8))) {
+                    keep = true;
+                    Logger::instance().info("Input " + path + " is Touchscreen");
+                }
+            }
+            
+            // Check for Keyboard (KEY_ENTER)
+            if (!keep && (evtype_b[EV_KEY/8] & (1<<(EV_KEY%8)))) {
+                 unsigned char key_b[KEY_MAX/8 + 1];
+                 ioctl(fd, EVIOCGBIT(EV_KEY, sizeof(key_b)), key_b);
+                 if (key_b[KEY_ENTER/8] & (1<<(KEY_ENTER%8))) {
+                     keep = true;
+                     Logger::instance().info("Input " + path + " is Keyboard");
+                 }
+            }
+
+            if (keep) {
+                fds[count].fd = fd;
+                fds[count].events = POLLIN;
+                count++;
+            } else {
+                close(fd);
+            }
         }
     }
 

@@ -70,7 +70,7 @@ private:
     T target;
     float duration = 0.0f;
     float elapsed = 0.0f;
-    Easing easing = Easing::Linear;
+    Easing easing = Easing::EaseInOutQuad;
     bool running = false;
 };
 

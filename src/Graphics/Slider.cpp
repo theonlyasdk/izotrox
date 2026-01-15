@@ -51,7 +51,7 @@ void Slider::draw_content(Painter& painter) {
 }
 
 void Slider::measure(int parent_w, int parent_h) {
-    m_measured_size = {0, 0, 150, 30};
+    m_measured_size = {0, 0, 150, 40};
 }
 
 bool Slider::on_touch_event(int local_x, int local_y, bool down) {

@@ -1,6 +1,8 @@
 // Mozilla Public License version 2.0. (c) theonlyasdk 2026
 
 #include "View.hpp"
+#include "Container.hpp"
+#include "Input/Input.hpp"
 
 namespace Izo {
 
@@ -10,28 +12,14 @@ void View::resize(int w, int h) {
     m_width = w;
     m_height = h;
     if (m_root) {
-        // Measure first
-        m_root->measure(w, h);
-        // Then set bounds
-        m_root->set_bounds({0, 0, w, h}); // Root fills view?
-        // Or root uses its measured size?
-        // Usually root layout fills screen.
         m_root->set_bounds({0, 0, w, h});
+        m_root->measure(w, h);
         
-        // If root is layout, it will layout children in set_bounds override?
-        // Widget::set_bounds just sets rect.
-        // Layout must override set_bounds or we call layout() explicitly?
-        // Layout logic should be in measure/layout pass.
-        // I should add `layout()` method to Widget interface or cast?
-        // Or `set_bounds` triggers layout in Layout class.
-        
-        // Let's assume Layout overrides set_bounds or we need a layout pass.
-        // I should add `virtual void layout()` to Widget (default empty).
-        // Check Widget.hpp I just wrote. It DOES NOT have layout().
-        // I should add it.
-        m_root->layout();
+        Container* container = dynamic_cast<Container*>(m_root.get());
+        if (container) {
+            container->layout();
+        }
     }
-    if (m_root) m_root->invalidate();
 }
 
 void View::update() {
@@ -47,6 +35,31 @@ void View::on_touch(int x, int y, bool down) {
 }
 
 void View::on_key(int key) {
+    if (key == 9) { // Tab
+        std::vector<std::shared_ptr<Widget>> focusables;
+        auto rootContainer = std::dynamic_pointer_cast<Container>(m_root);
+        if (rootContainer) {
+            rootContainer->collect_focusable_widgets(focusables);
+        }
+        
+        if (focusables.empty()) return;
+        
+        int currentIdx = -1;
+        for (int i = 0; i < (int)focusables.size(); ++i) {
+            if (focusables[i]->focused()) {
+                currentIdx = i;
+                break;
+            }
+        }
+        
+        // Unfocus all
+        for (auto& w : focusables) w->set_focused(false);
+        
+        int nextIdx = (currentIdx + 1) % focusables.size();
+        focusables[nextIdx]->set_focused(true);
+        return;
+    }
+
     if (m_root) m_root->on_key(key);
 }
 

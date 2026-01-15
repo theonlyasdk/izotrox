@@ -1,6 +1,7 @@
 #include "Application.hpp"
 #include "../Platform/PlatformMacros.hpp"
 #include "../Input/Input.hpp"
+#include "../Platform/MobileDevice.hpp"
 
 #ifdef __ANDROID__
     #include "../Graphics/Framebuffer.hpp"
@@ -32,7 +33,11 @@ Application::Application(int width, int height, const char* title)
     : impl(std::make_unique<Impl>(width, height, title)) {
 }
 
-Application::~Application() = default;
+Application::~Application() {
+    IF_ANDROID(
+        MobileDevice::set_brightness(0);
+    )
+}
 
 bool Application::init() {
     IF_ANDROID(
