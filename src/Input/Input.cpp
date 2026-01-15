@@ -1,6 +1,7 @@
+// Mozilla Public License version 2.0. (c) theonlyasdk 2026
+
 #include "Input.hpp"
 #include <Debug/Logger.hpp>
-#include <thread>
 #include <vector>
 #include <fcntl.h>
 #include <unistd.h>
@@ -18,35 +19,64 @@ Input& Input::instance() {
     return s_instance;
 }
 
+Input::Input() {
+}
+
 Input::~Input() {
-#ifdef __ANDROID__
-    running_ = false;
-    // Detach or join thread if we stored it (we are leaking it for now as per simple port)
-#endif
+    if (m_running) {
+        m_running = false;
+        if (m_worker_thread.joinable()) {
+            m_worker_thread.join();
+        }
+    }
 }
 
 void Input::set_touch(int x, int y, bool down) {
-    std::lock_guard<std::mutex> lock(mutex_);
-    state_.touch_x = x;
-    state_.touch_y = y;
-    state_.touch_down = down;
+    std::lock_guard<std::mutex> lock(m_mutex);
+    m_state.touch_x = x;
+    m_state.touch_y = y;
+    m_state.touch_down = down;
 }
 
 void Input::set_key(int key) {
-    std::lock_guard<std::mutex> lock(mutex_);
-    state_.last_key = key;
+    std::lock_guard<std::mutex> lock(m_mutex);
+    m_state.last_key = key;
+}
+
+void Input::set_shift(bool down) {
+    std::lock_guard<std::mutex> lock(m_mutex);
+    m_state.shift_down = down;
 }
 
 int Input::key() {
-    std::lock_guard<std::mutex> lock(mutex_);
-    int key = state_.last_key;
-    state_.last_key = 0;
+    std::lock_guard<std::mutex> lock(m_mutex);
+    int key = m_state.last_key;
+    m_state.last_key = 0;
     return key;
+}
+
+int Input::touch_x() {
+    std::lock_guard<std::mutex> lock(m_mutex);
+    return m_state.touch_x;
+}
+
+int Input::touch_y() {
+    std::lock_guard<std::mutex> lock(m_mutex);
+    return m_state.touch_y;
+}
+
+bool Input::touch_down() {
+    std::lock_guard<std::mutex> lock(m_mutex);
+    return m_state.touch_down;
+}
+
+bool Input::shift() {
+    std::lock_guard<std::mutex> lock(m_mutex);
+    return m_state.shift_down;
 }
 
 #ifdef __ANDROID__
 static int linux_code_to_ascii(int code, bool shift) {
-    // Basic mapping similar to ankrypton
     if (code >= KEY_A && code <= KEY_Z) {
         int val = 'a' + (code - KEY_A);
         if (shift) val -= 32;
@@ -63,8 +93,10 @@ static int linux_code_to_ascii(int code, bool shift) {
     if (code == KEY_BACKSPACE) return 8;
     return 0; 
 }
+#endif
 
-void android_input_thread() {
+void Input::run_thread() {
+#ifdef __ANDROID__
     Logger::instance().info("Starting Android Input Thread");
     
     struct pollfd fds[16];
@@ -88,14 +120,13 @@ void android_input_thread() {
 
     struct input_event ev;
     bool shift = false;
-    
-    // Local state tracking to minimize lock contention
     int lx = 0, ly = 0; 
     bool ldown = false;
 
-    while (true) {
-        int ret = poll(fds, count, -1);
-        if (ret <= 0) continue;
+    while (m_running) {
+        int ret = poll(fds, count, 100); 
+        if (ret == 0) continue; 
+        if (ret < 0) break; 
 
         bool touch_updated = false;
 
@@ -105,13 +136,14 @@ void android_input_thread() {
                     if (ev.type == EV_KEY) {
                         if (ev.code == KEY_LEFTSHIFT || ev.code == KEY_RIGHTSHIFT) {
                             shift = (ev.value != 0);
+                            set_shift(shift);
                         } else if (ev.code == BTN_TOUCH || ev.code == BTN_LEFT) {
                             ldown = (ev.value != 0);
                             touch_updated = true;
-                        } else if (ev.value == 1 || ev.value == 2) { // Press or Repeat
+                        } else if (ev.value == 1 || ev.value == 2) { 
                             int key = linux_code_to_ascii(ev.code, shift);
                             if (key > 0) {
-                                Input::instance().set_key(key);
+                                set_key(key);
                             }
                         }
                     } else if (ev.type == EV_ABS) {
@@ -131,23 +163,27 @@ void android_input_thread() {
         }
         
         if (touch_updated) {
-            Input::instance().set_touch(lx, ly, ldown);
+            set_touch(lx, ly, ldown);
         }
     }
-}
+    
+    for (int i = 0; i < count; i++) {
+        close(fds[i].fd);
+    }
+    Logger::instance().info("Input thread stopped");
 #endif
+}
 
 void Input::init() {
 #ifdef __ANDROID__
-    running_ = true;
-    std::thread t(android_input_thread);
-    t.detach(); 
+    if (!m_running) {
+        m_running = true;
+        m_worker_thread = std::thread(&Input::run_thread, this);
+    }
 #endif
 }
 
 void Input::update() {
-    // Nothing to poll on Android (thread handles it)
-    // Nothing on Linux (SDL pumps events)
 }
 
 } // namespace Izo

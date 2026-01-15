@@ -23,17 +23,13 @@ public:
     uint32_t* pixels() { return pixels_; }
     const uint32_t* pixels() const { return pixels_; }
     
-    size_t size_bytes() const { return width_ * height_ * sizeof(uint32_t); }
+    size_t size_bytes() const;
 
     void clear(Color color);
 
-    void set_pixel(int x, int y, uint32_t color) {
-        pixels_[y * width_ + x] = color;
-    }
+    void set_pixel(int x, int y, uint32_t color);
 
-    uint32_t pixel(int x, int y) const {
-        return pixels_[y * width_ + x];
-    }
+    uint32_t pixel(int x, int y) const;
 
 private:
     int width_;

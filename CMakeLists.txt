@@ -8,7 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 if(ANDROID)
     add_definitions(-D__ANDROID__)
-    file(GLOB_RECURSE PLATFORM_SOURCES "src/platform/android/*.cpp")
+    file(GLOB_RECURSE PLATFORM_SOURCES "src/Platform/Android/*.cpp")
 else()
     add_definitions(-D__LINUX__)
     find_package(SDL2 REQUIRED)
@@ -18,6 +18,7 @@ endif()
 
 
 file(GLOB_RECURSE SOURCES "src/*.cpp" "src/*/*.cpp")
+list(FILTER SOURCES EXCLUDE REGEX ".*/Platform/.*")
 
 file(GLOB_RECURSE HEADERS
      "include/**/*.h"

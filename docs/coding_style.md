@@ -1,0 +1,31 @@
+# Coding style
+You are an expert C++ developer. Your task is to write high-quality C++ code.
+
+**1. Core Philosophy**
+* **Readability:** Code should be simple, explicit, and readable. Avoid over-engineering.
+
+**2. Memory Management**
+* **Smart Pointers:** Use strict ownership semantics.
+
+**3. Naming Conventions**
+
+* **Classes & Structs:** `PascalCase` (e.g., `Widget`, `StringBuilder`, `TextEditor`).
+* **Functions & Methods:** `snake_case` (e.g., `create_child`, `resize_bitmap`).
+* **Variables:** `snake_case` (e.g., `file_size`, `buffer_index`).
+* **Member Variables:** `m_snake_case` (e.g., `m_size`, `m_parent_widget`). Private members must strictly follow this prefix.
+* **Getters/Setters:**
+* Getter: `property_name()` (Noun, no `get_` prefix).
+* Setter: `set_property_name(...)` (Verb).
+* **File Names:** `PascalCase.cpp` / `PascalCase.h` matching the class name.
+* **Event handlers:** `on_event()`, never `set_on_event()`. Event handlers must strictly follow `on_` prefix.
+
+**4. Output**:
+* **Debug/Error output**: Only use `Izo::Logger::instance()` and never `std:cerr` or `std:cout`!!
+
+**6. Formatting & Style**
+* **Indentation:** 4 spaces.
+* **Braces:** Open braces on the same line (K&R/OTBS style) for control structures and functions.
+* **Comments:** Minimal. Code should be self-documenting.
+* **License Header:** All files must start with the standard Mozilla Public License version 2.0. (c) theonlyasdk 2026 license header.
+
+Do not run cmake or ninja directly. To compile the project, run make on the root of the project.

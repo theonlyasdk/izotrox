@@ -1,45 +1,39 @@
+// Mozilla Public License version 2.0. (c) theonlyasdk 2026
+
 #include "ProgressBar.hpp"
+#include "../Core/Theme.hpp"
 #include <algorithm>
 
 namespace Izo {
 
-ProgressBar::ProgressBar(float progress) : progress_(progress), color_(Color::Green), bg_color_(Color(50, 50, 50)) {}
+ProgressBar::ProgressBar(float progress) : m_val(progress) {}
 
 void ProgressBar::set_progress(float v) { 
     float new_p = std::clamp(v, 0.0f, 1.0f);
-    if (new_p != progress_) {
-        progress_ = new_p;
+    if (new_p != m_val) {
+        m_val = new_p;
         Widget::invalidate();
     }
 }
 
-float ProgressBar::get_progress() const { return progress_; }
+float ProgressBar::progress() const { return m_val; }
 
-void ProgressBar::draw(Painter& painter) {
-    // Draw background
-    painter.fill_rect(x, y, w, h, bg_color_);
-    painter.draw_rect(x, y, w, h, Color::White);
+void ProgressBar::draw_content(Painter& painter) {
+    painter.fill_rounded_rect(m_bounds.x, m_bounds.y, m_bounds.w, m_bounds.h, 4, Theme::instance().color("ProgressBar.Background"));
+    painter.draw_rounded_rect(m_bounds.x, m_bounds.y, m_bounds.w, m_bounds.h, 4, Color::White); 
 
-    // Draw progress
-    if (progress_ > 0.0f) {
-        int fill_w = static_cast<int>(w * progress_);
-        painter.fill_rect(x, y, fill_w, h, color_);
+    if (m_val > 0.0f) {
+        int fill_w = static_cast<int>(m_bounds.w * m_val);
+        painter.fill_rounded_rect(m_bounds.x, m_bounds.y, fill_w, m_bounds.h, 4, Theme::instance().color("ProgressBar.Fill"));
     }
 }
 
-void ProgressBar::measure(int& mw, int& mh) {
-    mw = 100; // Default width
-    mh = 20;  // Default height
+void ProgressBar::measure(int parent_w, int parent_h) {
+    m_measured_size = {0, 0, 100, 20};
 }
 
-bool ProgressBar::on_touch(int tx, int ty, bool down) {
-     bool inside = (tx >= x && tx < x + w && ty >= y && ty < y + h);
-     if (inside && down) {
-         float p = (float)(tx - x) / (float)w;
-         set_progress(p);
-         return true;
-     }
-     return false;
+bool ProgressBar::on_touch_event(int, int, bool) {
+     return false; 
 }
 
 } // namespace Izo

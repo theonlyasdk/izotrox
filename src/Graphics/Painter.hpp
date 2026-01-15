@@ -1,31 +1,12 @@
+// Mozilla Public License version 2.0. (c) theonlyasdk 2026
+
 #pragma once
 #include "Canvas.hpp"
 #include "Color.hpp"
+#include "../Core/Rect.hpp"
 #include <algorithm>
 
 namespace Izo {
-
-struct Rect {
-    int x, y, w, h;
-    
-    int right() const { return x + w; }
-    int bottom() const { return y + h; }
-    
-    bool intersects(const Rect& other) const {
-        return x < other.right() && right() > other.x &&
-               y < other.bottom() && bottom() > other.y;
-    }
-
-    Rect intersection(const Rect& other) const {
-        int x1 = std::max(x, other.x);
-        int y1 = std::max(y, other.y);
-        int x2 = std::min(right(), other.right());
-        int y2 = std::min(bottom(), other.bottom());
-        
-        if (x2 < x1 || y2 < y1) return {0,0,0,0};
-        return {x1, y1, x2 - x1, y2 - y1};
-    }
-};
 
 class Painter {
 public:
@@ -39,13 +20,14 @@ public:
     void draw_rect(int x, int y, int w, int h, Color color);
     void draw_line(int x1, int y1, int x2, int y2, Color color);
     
-    // TODO: Add more primitives (circle, rounded rect, etc.)
+    void fill_rounded_rect(int x, int y, int w, int h, int radius, Color color);
+    void draw_rounded_rect(int x, int y, int w, int h, int radius, Color color);
 
-    Canvas& canvas() { return canvas_; }
+    Canvas& canvas() { return m_canvas_ref; }
 
 private:
-    Canvas& canvas_;
-    Rect clip_rect_;
+    Canvas& m_canvas_ref;
+    IntRect m_clip_rect;
 };
 
 } // namespace Izo

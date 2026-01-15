@@ -1,0 +1,30 @@
+#pragma once
+#include "Canvas.hpp"
+#include "Painter.hpp"
+#include "Font.hpp"
+#include "../Core/Application.hpp"
+#include <string>
+
+namespace Izo {
+
+class SplashScreen {
+public:
+    SplashScreen(Application& app, Painter& painter, Canvas& canvas, Font& font);
+
+    void set_total_steps(int steps);
+    void next_step(const std::string& status);
+
+private:
+    void render();
+
+    Application& app;
+    Painter& painter;
+    Canvas& canvas;
+    Font& font;
+
+    int totalSteps = 1;
+    int currentStep = 0;
+    std::string currentStatus;
+};
+
+} // namespace Izo

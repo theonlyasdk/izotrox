@@ -18,19 +18,33 @@ Canvas::~Canvas() {
     }
 }
 
+size_t Canvas::size_bytes() const {
+    return width_ * height_ * sizeof(uint32_t);
+}
+
 void Canvas::clear(Color color) {
     uint32_t c = color.to_argb();
-    // Optimization for black/zero
     if (c == 0) {
         std::memset(pixels_, 0, width_ * height_ * sizeof(uint32_t));
     } else {
-        // We can use std::fill_n or a loop
-        // std::fill_n might be optimized
         size_t count = width_ * height_;
         for (size_t i = 0; i < count; ++i) {
             pixels_[i] = c;
         }
     }
+}
+
+void Canvas::set_pixel(int x, int y, uint32_t color) {
+    if (x >= 0 && x < width_ && y >= 0 && y < height_) {
+        pixels_[y * width_ + x] = color;
+    }
+}
+
+uint32_t Canvas::pixel(int x, int y) const {
+    if (x >= 0 && x < width_ && y >= 0 && y < height_) {
+        return pixels_[y * width_ + x];
+    }
+    return 0;
 }
 
 } // namespace Izo

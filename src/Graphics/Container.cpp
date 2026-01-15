@@ -1,61 +1,72 @@
+// Mozilla Public License version 2.0. (c) theonlyasdk 2026
+
 #include "Container.hpp"
 #include "../Input/Input.hpp"
 
 namespace Izo {
 
 void Container::add_child(std::shared_ptr<Widget> child) {
-    children.push_back(child);
+    m_children.push_back(child);
     Widget::invalidate();
 }
 
-void Container::draw(Painter& painter) {
-    for (auto& child : children) {
-        child->draw(painter);
+void Container::draw_content(Painter& painter) {
+    for (auto& child : m_children) {
+        if (child->is_visible())
+            child->draw(painter);
     }
 }
 
-void Container::update() {
-    int tx = Input::instance().touch_x();
-    int ty = Input::instance().touch_y();
-    bool down = Input::instance().touch_down();
-    
-    // bool consumed = false; // Unused variable
-    for (auto it = children.rbegin(); it != children.rend(); ++it) {
-        if ((*it)->on_touch(tx, ty, down)) {
-            // consumed = true;
-            break;
+bool Container::on_touch(int tx, int ty, bool down) {
+    if (m_captured_child) {
+        m_captured_child->on_touch(tx, ty, down);
+        if (!down) {
+            m_captured_child = nullptr;
         }
-    }
+        return true;
+    } 
     
-    int k = Input::instance().key();
-    if (k > 0) {
-        for (auto& child : children) {
-            if (child->is_focused) {
-                if (child->on_key(k)) {
-                     // Key handled
-                }
-                break;
+    if (down) {
+        for (auto it = m_children.rbegin(); it != m_children.rend(); ++it) {
+            if ((*it)->is_visible() && (*it)->on_touch(tx, ty, down)) {
+                m_captured_child = *it;
+                return true;
             }
         }
+    } else {
+         for (auto it = m_children.rbegin(); it != m_children.rend(); ++it) {
+            if ((*it)->is_visible())
+                (*it)->on_touch(tx, ty, down);
+        }
     }
+    
+    return false;
+}
 
-    for (auto& child : children) {
-        child->update();
+bool Container::on_key(int key) {
+    for (auto& child : m_children) {
+        if (child->is_visible()) {
+            if (child->on_key(key)) return true;
+        }
+    }
+    return false;
+}
+
+void Container::update() {
+    for (auto& child : m_children) {
+        if (child->is_visible())
+            child->update();
+    }
+}
+
+void Container::invalidate() {
+    Widget::invalidate();
+    for (auto& child : m_children) {
+        child->invalidate();
     }
 }
 
 void Container::layout() {
-    int cur_x = x;
-    int cur_y = y;
-    for (auto& child : children) {
-        int mw, mh;
-        child->measure(mw, mh);
-        child->set_pos(cur_x, cur_y);
-        child->set_size(mw, mh);
-        cur_y += mh + 10;
-    }
-    h = cur_y - y;
-    Widget::invalidate();
 }
 
 } // namespace Izo

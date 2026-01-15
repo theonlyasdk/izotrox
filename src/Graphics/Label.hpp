@@ -1,3 +1,5 @@
+// Mozilla Public License version 2.0. (c) theonlyasdk 2026
+
 #pragma once
 #include "Widget.hpp"
 #include "Font.hpp"
@@ -10,13 +12,13 @@ class Label : public Widget {
 public:
     Label(const std::string& text, Font* font, Color color);
 
-    void draw(Painter& painter) override;
-    void measure(int& mw, int& mh) override;
+    void draw_content(Painter& painter) override;
+    void measure(int parent_w, int parent_h) override;
 
 private:
-    std::string text_;
-    Font* font_;
-    Color color_;
+    std::string m_text_str;
+    Font* m_font;
+    Color m_color;
 };
 
 } // namespace Izo

@@ -1,9 +1,13 @@
+// Mozilla Public License version 2.0. (c) theonlyasdk 2026
+
 #include <iostream>
 #include <unistd.h>
 #include <vector>
 #include <chrono>
 #include <thread>
 #include <cmath>
+#include <memory>
+#include <string>
 
 #include "Debug/Logger.hpp"
 #include "Input/Input.hpp"
@@ -12,122 +16,156 @@
 #include "Graphics/Font.hpp"
 #include "Graphics/Widget.hpp"
 #include "Graphics/Container.hpp"
+#include "Graphics/LinearLayout.hpp"
 #include "Graphics/Label.hpp"
 #include "Graphics/Button.hpp"
 #include "Graphics/ProgressBar.hpp"
 #include "Graphics/TextBox.hpp"
+#include "Graphics/Slider.hpp"
+#include "Graphics/Image.hpp"
+#include "Graphics/ResourceManager.hpp"
+#include "Graphics/SplashScreen.hpp"
+#include "Graphics/View.hpp"
+#include "Core/Application.hpp"
+#include "Core/Theme.hpp"
 
-#ifdef __ANDROID__
-    #include "Graphics/Framebuffer.hpp"
-#else
-    #include "Platform/Linux/SDLApplication.hpp"
-#endif
-
-using namespace Izo;
+using FontManager = Izo::ResourceManager<Izo::Font>;
+using ImageManager = Izo::ResourceManager<Izo::Image>;
 
 int main(int argc, char* argv[]) {
-    Logger::instance().info("Izotrox Starting...");
+    Izo::Logger::instance().info("Izotrox Starting...");
+
+    Izo::Theme::instance().load("res/theme/default.ini");
 
     int width = 800;
     int height = 600;
 
-#ifdef __ANDROID__
-    Framebuffer fb;
-    if (!fb.init()) {
-        Logger::instance().error("Failed to initialize framebuffer!");
+    Izo::Application app(width, height, "Izotrox");
+    if (!app.init()) {
+        Izo::Logger::instance().error("Failed to initialize application!");
         return 1;
     }
-    width = fb.width();
-    height = fb.height();
-#else
-    SDLApplication app("Izotrox", width, height);
-#endif
+    
+    width = app.width();
+    height = app.height();
 
-    // Create a backbuffer (Canvas)
-    Canvas backbuffer(width, height);
-    Painter painter(backbuffer);
+    auto backbuffer = std::make_unique<Izo::Canvas>(width, height);
+    auto painter = std::make_unique<Izo::Painter>(*backbuffer);
 
-    Font font("res/fonts/Roboto-Regular.ttf", 24.0f);
-    if (!font.valid()) {
-        Logger::instance().warn("Could not load font: res/fonts/Roboto-Regular.ttf");
+    FontManager fonts;
+    ImageManager images;
+
+    Izo::Font* systemFont = fonts.load("system-ui", "res/fonts/Roboto-Regular.ttf", 24.0f);
+    if (!systemFont) {
+        Izo::Logger::instance().error("CRITICAL: Could not load system font!");
+        return 1;
     }
 
-    Container root;
-    root.set_pos(50, 50);
-    root.set_size(width - 100, height - 100);
+    Izo::SplashScreen splash(app, *painter, *backbuffer, *systemFont);
 
-    auto lbl = std::make_shared<Label>("Izotrox UI Demo", &font, Color::White);
-    root.add_child(lbl);
+    splash.set_total_steps(5); 
+    
+    splash.next_step("Initializing Input...");
+    Izo::Input::instance().init();
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
 
-    auto btn1 = std::make_shared<Button>("Start Engine", &font);
-    root.add_child(btn1);
+    splash.next_step("Loading Images...");
+    Izo::Image* sliderHandle = images.load("slider-handle", "res/icons/slider-handle.png");
+    Izo::Image* sliderHandleFocus = images.load("slider-handle-focus", "res/icons/slider-handle-focus.png");
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
 
-    auto btn2 = std::make_shared<Button>("Settings", &font);
-    root.add_child(btn2);
+    splash.next_step("Loading Fonts...");
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
 
-    auto btn3 = std::make_shared<Button>("Exit", &font);
-    root.add_child(btn3);
+    splash.next_step("Building UI...");
+    
+    auto root = std::make_shared<Izo::LinearLayout>(Izo::Orientation::Vertical);
+    root->set_width(Izo::MatchParent);
+    root->set_height(Izo::MatchParent);
 
-    auto pb = std::make_shared<ProgressBar>(0.0f);
-    root.add_child(pb);
-
-    auto tb = std::make_shared<TextBox>("Enter something...", &font);
-    root.add_child(tb);
-
-    // Initial Layout
-    root.layout();
-
-    Input::instance().init();
-
-    Logger::instance().info("Entering render loop...");
-
-    int frames = 0;
-    int display_fps = 0;
-    auto last_time = std::chrono::steady_clock::now();
-
-    // Force first draw
-    Widget::invalidate();
+    // Create View
+    Izo::View view(root);
+    // Initial resize to setup layout
+    view.resize(width, height);
 
     bool running = true;
+
+    auto lbl = std::make_shared<Izo::Label>("Izotrox UI Demo", systemFont, Izo::Theme::instance().color("Label.Text"));
+    lbl->set_width(Izo::MatchParent);
+    root->add_child(lbl);
+
+    auto btn1 = std::make_shared<Izo::Button>("Start Engine", systemFont);
+    btn1->set_focusable(true);
+    root->add_child(btn1);
+
+    auto btn2 = std::make_shared<Izo::Button>("Settings", systemFont);
+    btn2->set_focusable(true);
+    root->add_child(btn2);
+
+    auto btn3 = std::make_shared<Izo::Button>("Exit", systemFont);
+    btn3->set_focusable(true);
+    btn3->set_on_click([&running]() {
+        Izo::Logger::instance().info("Exit clicked");
+        running = false;
+    });
+    root->add_child(btn3);
+
+    auto pb = std::make_shared<Izo::ProgressBar>(0.0f);
+    root->add_child(pb);
+    
+    auto slider = std::make_shared<Izo::Slider>(sliderHandle, sliderHandleFocus, 0.5f);
+    root->add_child(slider);
+
+    auto tb = std::make_shared<Izo::TextBox>("Enter something...", systemFont);
+    tb->set_focusable(true);
+    root->add_child(tb);
+
+    // Initial Layout via View resize?
+    // We already called view.resize(). But we added children after.
+    // Need to trigger resize/layout again.
+    view.resize(width, height);
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+
+    splash.next_step("Ready!");
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+
+    app.set_on_resize([&](int w, int h) {
+        width = w;
+        height = h;
+        backbuffer = std::make_unique<Izo::Canvas>(w, h);
+        painter = std::make_unique<Izo::Painter>(*backbuffer);
+        view.resize(w, h);
+    });
+
+    Izo::Logger::instance().info("Entering render loop...");
+
+    root->invalidate();
+
     while (running) {
-        
-#ifndef __ANDROID__
         if (!app.pump_events()) {
             running = false;
         }
-#endif
+
+        // Pass input to view
+        int tx = Izo::Input::instance().touch_x();
+        int ty = Izo::Input::instance().touch_y();
+        bool down = Izo::Input::instance().touch_down();
+        view.on_touch(tx, ty, down);
         
-        root.update();
+        int key = Izo::Input::instance().key();
+        if (key > 0) view.on_key(key);
+        
+        view.update();
 
-        if (Widget::is_dirty()) {
-            backbuffer.clear(Color(20, 20, 20));
+        if (Izo::Widget::is_dirty()) {
+            backbuffer->clear(Izo::Theme::instance().color("Window.Background"));
+            view.draw(*painter);
 
-            root.draw(painter);
-
-            if (font.valid()) {
-                 std::string fps_text = "FPS: " + std::to_string(display_fps);
-                 font.draw_text(painter, 10, 10, fps_text, Color::Green);
-            }
-
-#ifdef __ANDROID__
-            if (fb.valid()) fb.swap_buffers(backbuffer);
-#else
-            app.present(backbuffer.pixels(), width, height);
-#endif
-            Widget::clear_dirty();
-            
-            frames++;
+            app.present(*backbuffer);
+            Izo::Widget::clear_dirty();
         }
         
-        auto now = std::chrono::steady_clock::now();
-        if (std::chrono::duration_cast<std::chrono::seconds>(now - last_time).count() >= 1) {
-            display_fps = frames;
-            frames = 0;
-            last_time = now;
-            // Only log FPS, don't force redraw just for FPS number update unless something else changes
-            // Logger::instance().info("FPS: " + std::to_string(display_fps));
-        }
-
         std::this_thread::sleep_for(std::chrono::milliseconds(16));
     }
 

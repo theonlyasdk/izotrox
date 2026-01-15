@@ -1,49 +1,84 @@
+// Mozilla Public License version 2.0. (c) theonlyasdk 2026
+
 #include "Button.hpp"
+#include "../Core/Theme.hpp"
+#include <cmath>
 
 namespace Izo {
 
 Button::Button(const std::string& text, Font* font) 
-    : text_(text), font_(font), bg_color_(Color::Blue), text_color_(Color::White) {}
+    : m_text_str(text), m_font(font), 
+      m_bg_anim(Theme::instance().color("Button.Background")) {}
 
-void Button::draw(Painter& painter) {
-    Color c = is_pressed_ ? Color(50, 50, 200) : bg_color_;
-    painter.fill_rect(x, y, w, h, c);
-    painter.draw_rect(x, y, w, h, Color::White);
+void Button::draw_content(Painter& painter) {
+    Color c = m_bg_anim.value();
+    painter.fill_rounded_rect(m_bounds.x, m_bounds.y, m_bounds.w, m_bounds.h, 6, c);
+    painter.draw_rounded_rect(m_bounds.x, m_bounds.y, m_bounds.w, m_bounds.h, 6, Theme::instance().color("Button.Text"));
     
-    if (font_) {
-        int tw = font_->width(text_);
-        int th = font_->height();
-        int tx = x + (w - tw) / 2;
-        int ty = y + (h - th) / 2;
-        font_->draw_text(painter, tx, ty, text_, text_color_);
+    if (m_font) {
+        int tw = m_font->width(m_text_str);
+        int th = m_font->height();
+        int tx = m_bounds.x + (m_bounds.w - tw) / 2;
+        int ty = m_bounds.y + (m_bounds.h - th) / 2;
+        
+        if (m_is_pressed) ty += 1;
+        
+        m_font->draw_text(painter, tx, ty, m_text_str, Theme::instance().color("Button.Text"));
     }
 }
 
-bool Button::on_touch(int tx, int ty, bool down) {
-    bool inside = (tx >= x && tx < x + w && ty >= y && ty < y + h);
-    bool old_pressed = is_pressed_;
+void Button::update() {
+    if (m_bg_anim.update(16.0f)) Widget::invalidate();
+    Widget::update(); 
+}
+
+bool Button::on_touch_event(int local_x, int local_y, bool down) {
+    // local_x/y are relative to m_bounds.
+    // inside check is implicit by on_touch calling us?
+    // Widget::on_touch checks bounds before calling handle_focus_logic.
+    // But it passes event to us regardless of inside if we are captured?
+    // Widget::on_touch only checks inside for focus logic.
+    // It passes `local_x` which might be outside.
+    // So we need to check inside.
     
+    // Bounds check: 0 <= local_x < w
+    bool inside = (local_x >= 0 && local_x < m_bounds.w && local_y >= 0 && local_y < m_bounds.h);
+    
+    bool old_pressed = m_is_pressed;
+    bool old_hovered = m_is_hovered;
+    
+    m_is_hovered = inside; 
+
     if (inside) {
-        is_pressed_ = down;
+        m_is_pressed = down;
     } else {
-        is_pressed_ = false;
+        m_is_pressed = false;
     }
     
-    if (old_pressed != is_pressed_) {
+    if (old_pressed && !m_is_pressed && inside && !down) {
+        if (m_on_click) m_on_click();
+    }
+    
+    if (old_pressed != m_is_pressed || old_hovered != m_is_hovered) {
+        Color target = Theme::instance().color("Button.Background");
+        if (m_is_pressed) target = Theme::instance().color("Button.Pressed");
+        else if (m_is_hovered) target = Theme::instance().color("Button.Hover");
+        
+        m_bg_anim.set_target(target, 200, Easing::EaseOutQuad);
         Widget::invalidate();
     }
     
-    if (inside && down) return true;
-    return false;
+    // Focus handled by base Widget
+    return true; // Consume event if interactive
 }
 
-void Button::measure(int& mw, int& mh) {
-     if (font_) {
-        mw = font_->width(text_) + 20;
-        mh = font_->height() + 10;
-    } else {
-        mw = 50; mh = 20;
+void Button::measure(int parent_w, int parent_h) {
+     int mw = 50, mh = 20;
+     if (m_font) {
+        mw = m_font->width(m_text_str) + 20;
+        mh = m_font->height() + 10;
     }
+    m_measured_size = {0, 0, mw, mh};
 }
 
 } // namespace Izo

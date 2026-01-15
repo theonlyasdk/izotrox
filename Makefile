@@ -3,11 +3,11 @@ SRCS        = $(shell find src -type f \( -name '*.cpp' -o -name '*.c' \))
 SDL_FLAGS   = $(shell pkg-config --libs --cflags sdl2)
 CXXFLAGS    = -O3 -std=c++23 $(SDL_FLAGS) -Isrc
 LDFLAGS     = -lm $(SDL_FLAGS)
-INSTALL_DIR = /data/adb/$(TARGET).dir/
+INSTALL_DIR = /data/adb/$(TARGET).install.dir/
 
 .PHONY: all build cmake clean build_clean install run push
 
-all: build
+all: build push
 
 build: cmake
 	cd build && ninja -j$(shell nproc)
@@ -21,9 +21,6 @@ cmake:
 		-DCMAKE_CXX_STANDARD_REQUIRED=ON
 	cp build/compile_commands.json .
 
-install: build
-	cd build && ninja install
-
 run:
 	./build/$(TARGET)
 
@@ -36,3 +33,9 @@ build_clean:
 push:
 	adb shell mkdir -p $(INSTALL_DIR)
 	adb push build/$(TARGET) $(INSTALL_DIR)
+	adb shell mkdir -p /data/adb/izotrox
+	adb push res /data/adb/izotrox/
+	adb push src /data/adb/izotrox/
+	adb push CMakeLists.txt /data/adb/izotrox/
+	adb push Makefile /data/adb/izotrox/
+	adb push Makefile /data/adb/izotrox/

@@ -4,7 +4,6 @@
 #include <memory>
 #include "Painter.hpp"
 
-// Forward declaration for stb_truetype structs
 typedef struct stbtt_fontinfo stbtt_fontinfo;
 
 namespace Izo {
@@ -19,34 +18,30 @@ public:
     Font(const std::string& path, float size);
     ~Font();
 
-    bool valid() const { return valid_; }
-    float size() const { return size_; }
+    bool valid() const { return validState; }
+    float size() const { return sizeVal; }
     int height() const;
 
     void draw_text(Painter& painter, int x, int y, const std::string& text, Color color);
     int width(const std::string& text);
 
 private:
-    std::string path_;
-    float size_;
-    bool valid_;
-    std::vector<unsigned char> data_;
+    std::string path;
+    float sizeVal;
+    bool validState;
+    std::vector<unsigned char> data;
     
-    // Pimpl idiom or void* to avoid including stb header in our header
-    // But since we are allowed to use stb in implementation, we can just use void* or forward decl.
-    // stbtt_fontinfo is a struct.
-    std::unique_ptr<stbtt_fontinfo> info_;
+    std::unique_ptr<stbtt_fontinfo> info;
     
-    float scale_;
-    int ascent_, descent_, line_gap_, baseline_;
+    float scale;
+    int ascent, descent, lineGap, baseline;
     
-    // Simple atlas for ASCII
     struct Atlas {
         int width, height;
         std::vector<unsigned char> pixels;
-    } atlas_;
+    } atlas;
 
-    Glyph glyphs_[128]; // Cache for ASCII 32-127
+    Glyph glyphs[128]; 
 
     void load();
 };

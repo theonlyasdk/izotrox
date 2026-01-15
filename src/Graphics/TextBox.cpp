@@ -1,75 +1,198 @@
+// Mozilla Public License version 2.0. (c) theonlyasdk 2026
+
 #include "TextBox.hpp"
+#include "../Core/Theme.hpp"
+#include "../Input/Input.hpp"
+#include <algorithm>
+#include <cmath>
 
 namespace Izo {
 
 TextBox::TextBox(const std::string& placeholder, Font* font) 
-    : text_(""), placeholder_(placeholder), font_(font), 
-      bg_color_(Color(30, 30, 30)), text_color_(Color::White), border_color_(Color(100, 100, 100)) {}
+    : m_text_buffer(""), m_placeholder(placeholder), m_font(font) {}
 
 void TextBox::set_text(const std::string& t) { 
-    if (text_ != t) {
-        text_ = t;
+    if (m_text_buffer != t) {
+        m_text_buffer = t;
+        m_sel_start = m_sel_end = (int)t.length();
+        ensure_cursor_visible();
         Widget::invalidate();
     }
 }
 
-const std::string& TextBox::get_text() const { return text_; }
+const std::string& TextBox::text() const { return m_text_buffer; }
 
-void TextBox::draw(Painter& painter) {
-    Color border = is_focused ? Color::Red : border_color_;
+int TextBox::get_cursor_index(int lx) {
+    if (!m_font || m_text_buffer.empty()) return 0;
+    int best_idx = 0;
+    int best_dist = 10000;
+    int cur_x = 0;
     
-    painter.fill_rect(x, y, w, h, bg_color_);
-    painter.draw_rect(x, y, w, h, border);
+    for (size_t i = 0; i <= m_text_buffer.length(); ++i) {
+        int dist = abs(cur_x - lx);
+        if (dist < best_dist) {
+            best_dist = dist;
+            best_idx = (int)i;
+        }
+        if (i < m_text_buffer.length()) {
+            std::string s = m_text_buffer.substr(i, 1);
+            cur_x += m_font->width(s);
+        }
+    }
+    return best_idx;
+}
 
-    if (font_) {
+void TextBox::ensure_cursor_visible() {
+    if (!m_font) return;
+    
+    std::string pre_cursor = m_text_buffer.substr(0, m_sel_end);
+    int cursor_x = m_font->width(pre_cursor);
+    int visible_w = m_bounds.w - 10;
+    
+    if (cursor_x < m_scroll_x) {
+        m_scroll_x = cursor_x;
+    }
+    else if (cursor_x > m_scroll_x + visible_w) {
+        m_scroll_x = cursor_x - visible_w;
+    }
+    
+    int total_w = m_font->width(m_text_buffer);
+    if (total_w < visible_w) m_scroll_x = 0;
+    else if (m_scroll_x > total_w - visible_w) m_scroll_x = total_w - visible_w;
+    if (m_scroll_x < 0) m_scroll_x = 0;
+}
+
+void TextBox::draw_content(Painter& painter) {
+    painter.fill_rounded_rect(m_bounds.x, m_bounds.y, m_bounds.w, m_bounds.h, 4, Theme::instance().color("TextBox.Background"));
+
+    Color border = m_border_anim.value();
+    painter.draw_rounded_rect(m_bounds.x, m_bounds.y, m_bounds.w, m_bounds.h, 4, border);
+
+    if (m_font) {
         int padding = 5;
-        // Draw placeholder if empty
-        if (text_.empty()) {
-            font_->draw_text(painter, x + padding, y + padding, placeholder_, Color(150, 150, 150));
+        painter.set_clip(m_bounds.x + padding, m_bounds.y + padding, m_bounds.w - 2 * padding, m_bounds.h - 2 * padding);
+        
+        int draw_x = m_bounds.x + padding - m_scroll_x;
+        int draw_y = m_bounds.y + padding;
+        
+        if (m_sel_start != m_sel_end) {
+            int s = std::min(m_sel_start, m_sel_end);
+            int e = std::max(m_sel_start, m_sel_end);
+            
+            std::string pre_sel = m_text_buffer.substr(0, s);
+            std::string sel_txt = m_text_buffer.substr(s, e - s);
+            
+            int x1 = m_font->width(pre_sel);
+            int sw = m_font->width(sel_txt);
+            
+            painter.fill_rect(draw_x + x1, draw_y, sw, m_font->height(), Theme::instance().color("TextBox.Selection"));
+        }
+
+        if (m_text_buffer.empty()) {
+            m_font->draw_text(painter, draw_x, draw_y, m_placeholder, Theme::instance().color("TextBox.Placeholder"));
         } else {
-            font_->draw_text(painter, x + padding, y + padding, text_, text_color_);
+            m_font->draw_text(painter, draw_x, draw_y, m_text_buffer, Theme::instance().color("TextBox.Text"));
         }
         
-        if (is_focused) {
-            int tw = text_.empty() ? 0 : font_->width(text_);
-            painter.fill_rect(x + padding + tw + 1, y + padding, 2, font_->height(), Color::White);
+        if (m_is_focused) {
+             std::string pre_cursor = m_text_buffer.substr(0, m_sel_end);
+             int cx = m_font->width(pre_cursor);
+             painter.fill_rect(draw_x + cx, draw_y, 2, m_font->height(), Theme::instance().color("TextBox.Cursor"));
         }
+        
+        painter.reset_clip();
     }
 }
 
-bool TextBox::on_touch(int tx, int ty, bool down) {
-    bool inside = (tx >= x && tx < x + w && ty >= y && ty < y + h);
+void TextBox::update() {
+    if (m_border_anim.update(16.0f)) Widget::invalidate();
+    Widget::update(); 
+}
+
+bool TextBox::on_touch_event(int local_x, int local_y, bool down) {
+    bool inside = (local_x >= 0 && local_x < m_bounds.w && local_y >= 0 && local_y < m_bounds.h);
+    
     if (down) {
-        if (is_focused != inside) {
-            is_focused = inside;
+        if (inside) {
+            int text_local_x = local_x - 5 + m_scroll_x;
+            int idx = get_cursor_index(text_local_x);
+            if (!m_is_dragging) {
+                m_sel_start = idx;
+                m_sel_end = idx;
+                m_is_dragging = true;
+            } else {
+                m_sel_end = idx;
+            }
+            ensure_cursor_visible();
             Widget::invalidate();
+            return true;
+        } else {
+             m_is_dragging = false;
         }
-        return inside;
+    } else {
+        m_is_dragging = false;
     }
     return false;
 }
 
 bool TextBox::on_key(int key) {
-    if (!is_focused) return false;
-    
+    if (!m_is_focused) return false;
+    // ... same key logic ...
     bool changed = false;
-    if (key == 8) { // Backspace
-        if (!text_.empty()) {
-            text_.pop_back();
+    bool shift = Input::instance().shift();
+
+    if (key == Input::Backspace) { 
+        if (m_sel_start != m_sel_end) {
+            int s = std::min(m_sel_start, m_sel_end);
+            int e = std::max(m_sel_start, m_sel_end);
+            m_text_buffer.erase(s, e - s);
+            m_sel_start = m_sel_end = s;
             changed = true;
+        } else {
+            if (m_sel_end > 0) {
+                m_text_buffer.erase(m_sel_end - 1, 1);
+                m_sel_end--;
+                m_sel_start = m_sel_end;
+                changed = true;
+            }
+        }
+    } else if (key == Input::Left) {
+        if (m_sel_end > 0) {
+            m_sel_end--;
+            if (!shift) m_sel_start = m_sel_end; 
+            ensure_cursor_visible();
+            Widget::invalidate();
+        }
+    } else if (key == Input::Right) {
+        if (m_sel_end < (int)m_text_buffer.length()) {
+            m_sel_end++;
+            if (!shift) m_sel_start = m_sel_end;
+            ensure_cursor_visible();
+            Widget::invalidate();
         }
     } else if (key >= 32 && key < 127) {
-        text_ += (char)key;
+        if (m_sel_start != m_sel_end) {
+            int s = std::min(m_sel_start, m_sel_end);
+            int e = std::max(m_sel_start, m_sel_end);
+            m_text_buffer.erase(s, e - s);
+            m_sel_start = m_sel_end = s;
+        }
+        m_text_buffer.insert(m_sel_end, 1, (char)key);
+        m_sel_end++;
+        m_sel_start = m_sel_end;
         changed = true;
     }
     
-    if (changed) Widget::invalidate();
+    if (changed) {
+        ensure_cursor_visible();
+        Widget::invalidate();
+    }
     return true;
 }
 
-void TextBox::measure(int& mw, int& mh) {
-    mw = 200;
-    mh = font_ ? font_->height() + 10 : 30;
+void TextBox::measure(int parent_w, int parent_h) {
+    int mh = m_font ? m_font->height() + 10 : 30;
+    m_measured_size = {0, 0, 200, mh};
 }
 
 } // namespace Izo

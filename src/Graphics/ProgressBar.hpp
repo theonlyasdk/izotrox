@@ -1,3 +1,5 @@
+// Mozilla Public License version 2.0. (c) theonlyasdk 2026
+
 #pragma once
 #include "Widget.hpp"
 #include "Color.hpp"
@@ -9,16 +11,14 @@ public:
     ProgressBar(float progress = 0.0f);
 
     void set_progress(float v);
-    float get_progress() const;
+    float progress() const;
 
-    void draw(Painter& painter) override;
-    void measure(int& mw, int& mh) override;
-    bool on_touch(int tx, int ty, bool down) override;
+    void draw_content(Painter& painter) override;
+    void measure(int parent_w, int parent_h) override;
+    bool on_touch_event(int, int, bool) override;
 
 private:
-    float progress_;
-    Color color_;
-    Color bg_color_;
+    float m_val;
 };
 
 } // namespace Izo

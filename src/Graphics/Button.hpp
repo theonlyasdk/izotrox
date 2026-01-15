@@ -1,8 +1,12 @@
+// Mozilla Public License version 2.0. (c) theonlyasdk 2026
+
 #pragma once
 #include "Widget.hpp"
 #include "Font.hpp"
 #include "Color.hpp"
+#include "Animator.hpp"
 #include <string>
+#include <functional>
 
 namespace Izo {
 
@@ -10,16 +14,22 @@ class Button : public Widget {
 public:
     Button(const std::string& text, Font* font);
 
-    void draw(Painter& painter) override;
-    bool on_touch(int tx, int ty, bool down) override;
-    void measure(int& mw, int& mh) override;
+    void draw_content(Painter& painter) override;
+    void update() override;
+    bool on_touch_event(int local_x, int local_y, bool down) override;
+    void measure(int parent_w, int parent_h) override;
+    
+    void set_on_click(std::function<void()> callback) { m_on_click = callback; }
 
 private:
-    std::string text_;
-    Font* font_;
-    Color bg_color_;
-    Color text_color_;
-    bool is_pressed_ = false;
+    std::string m_text_str;
+    Font* m_font;
+    bool m_is_pressed = false;
+    bool m_is_hovered = false;
+    
+    Animator<Color> m_bg_anim;
+    
+    std::function<void()> m_on_click;
 };
 
 } // namespace Izo

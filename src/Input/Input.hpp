@@ -1,7 +1,10 @@
+// Mozilla Public License version 2.0. (c) theonlyasdk 2026
+
 #pragma once
 
 #include <atomic>
 #include <mutex>
+#include <thread>
 
 namespace Izo {
 
@@ -9,42 +12,49 @@ struct InputState {
     int touch_x = 0;
     int touch_y = 0;
     bool touch_down = false;
+    bool shift_down = false;
     
     int last_key = 0;
-    
-    // For internal tracking
-    int mouse_x = 0;
-    int mouse_y = 0;
 };
 
 class Input {
 public:
+    enum Key {
+        Backspace = 8,
+        Enter = 13,
+        Left = 200,
+        Right = 201,
+        Up = 202,
+        Down = 203
+    };
+
     static Input& instance();
 
     void init();
     void update();
 
-    int touch_x() const { return state_.touch_x; }
-    int touch_y() const { return state_.touch_y; }
-    bool touch_down() const { return state_.touch_down; }
+    int touch_x();
+    int touch_y();
+    bool touch_down();
+    bool shift();
     
     int key();
 
     void set_touch(int x, int y, bool down);
     void set_key(int key);
+    void set_shift(bool down);
 
 private:
-    Input() = default;
+    Input(); 
     ~Input();
 
-    InputState state_;
-    std::mutex mutex_;
+    void run_thread();
+
+    InputState m_state;
+    std::mutex m_mutex;
     
-#ifdef __ANDROID__
-    bool running_ = false;
-    // Thread handle would be here (pthread or std::thread)
-    // We'll use std::thread in cpp
-#endif
+    std::atomic<bool> m_running{false};
+    std::thread m_worker_thread;
 };
 
 } // namespace Izo
