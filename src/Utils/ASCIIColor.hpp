@@ -1,6 +1,10 @@
 #pragma once
+/**
+ * ASCII Color Codes used for colorful logger output
+ */
+
 namespace Izo {
-namespace AsciiColor {
+namespace ASCIIColor {
     constexpr const char* Reset   = "\033[0m";
     constexpr const char* Black   = "\033[30m";
     constexpr const char* Red     = "\033[31m";

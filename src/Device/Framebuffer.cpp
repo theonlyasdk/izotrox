@@ -18,7 +18,7 @@ Framebuffer::~Framebuffer() {
 }
 
 bool Framebuffer::init(const std::string& device) {
-    Logger::instance().info("Initializing Framebuffer on " + device);
+    Logger::the().info("Initializing Framebuffer on " + device);
     
     m_fd = open(device.c_str(), O_RDWR);
     if (m_fd == -1) {
@@ -27,18 +27,18 @@ bool Framebuffer::init(const std::string& device) {
              m_fd = open("/dev/fb0", O_RDWR);
         }
         if (m_fd == -1) {
-            Logger::instance().error("Error opening framebuffer device");
+            Logger::the().error("Error opening framebuffer device");
             return false;
         }
     }
 
     if (ioctl(m_fd, FBIOGET_FSCREENINFO, &m_finfo) == -1) {
-        Logger::instance().error("Error reading fixed information");
+        Logger::the().error("Error reading fixed information");
         return false;
     }
 
     if (ioctl(m_fd, FBIOGET_VSCREENINFO, &m_vinfo) == -1) {
-        Logger::instance().error("Error reading variable information");
+        Logger::the().error("Error reading variable information");
         return false;
     }
 
@@ -47,7 +47,7 @@ bool Framebuffer::init(const std::string& device) {
     m_bpp = m_vinfo.bits_per_pixel;
     m_line_length = m_finfo.line_length;
 
-    Logger::instance().info("FB Resolution: " + std::to_string(m_width) + "x" + std::to_string(m_height) + " " + std::to_string(m_bpp) + "bpp");
+    Logger::the().info("FB Resolution: " + std::to_string(m_width) + "x" + std::to_string(m_height) + " " + std::to_string(m_bpp) + "bpp");
 
     // Try to enable double buffering
     m_vinfo.yres_virtual = m_vinfo.yres * 2;
@@ -55,7 +55,7 @@ bool Framebuffer::init(const std::string& device) {
         ioctl(m_fd, FBIOGET_VSCREENINFO, &m_vinfo);
         if (m_vinfo.yres_virtual >= m_vinfo.yres * 2) {
              m_double_buffered = true;
-             Logger::instance().info("Double buffering enabled");
+             Logger::the().info("Double buffering enabled");
         }
     }
 
@@ -63,7 +63,7 @@ bool Framebuffer::init(const std::string& device) {
 
     m_fbp = (uint8_t*)mmap(0, m_screensize, PROT_READ | PROT_WRITE, MAP_SHARED, m_fd, 0);
     if ((intptr_t)m_fbp == -1) {
-        Logger::instance().error("Error mapping framebuffer to memory");
+        Logger::the().error("Error mapping framebuffer to memory");
         return false;
     }
 

@@ -1,5 +1,6 @@
 #pragma once
-#include "Canvas.hpp"
+#include "Graphics/Canvas.hpp"
+
 #include <string>
 #include <linux/fb.h>
 

@@ -1,7 +1,7 @@
 // Mozilla Public License version 2.0. (c) theonlyasdk 2026
 
 #include "TextBox.hpp"
-#include "../Core/Theme.hpp"
+#include "Core/ThemeDB.hpp"
 #include "../Input/Input.hpp"
 #include <algorithm>
 #include <cmath>
@@ -63,7 +63,7 @@ void TextBox::ensure_cursor_visible() {
 }
 
 void TextBox::draw_content(Painter& painter) {
-    painter.fill_rect(m_bounds.x, m_bounds.y, m_bounds.w, m_bounds.h, Theme::instance().color("TextBox.Background"));
+    painter.fill_rect(m_bounds.x, m_bounds.y, m_bounds.w, m_bounds.h, ThemeDB::the().color("TextBox.Background"));
 
     Color border = m_border_anim.value();
     painter.draw_rect(m_bounds.x, m_bounds.y, m_bounds.w, m_bounds.h, border);
@@ -85,19 +85,19 @@ void TextBox::draw_content(Painter& painter) {
             int x1 = m_font->width(pre_sel);
             int sw = m_font->width(sel_txt);
             
-            painter.fill_rect(draw_x + x1, draw_y, sw, m_font->height(), Theme::instance().color("TextBox.Selection"));
+            painter.fill_rect(draw_x + x1, draw_y, sw, m_font->height(), ThemeDB::the().color("TextBox.Selection"));
         }
 
         if (m_text_buffer.empty()) {
-            m_font->draw_text(painter, draw_x, draw_y, m_placeholder, Theme::instance().color("TextBox.Placeholder"));
+            m_font->draw_text(painter, draw_x, draw_y, m_placeholder, ThemeDB::the().color("TextBox.Placeholder"));
         } else {
-            m_font->draw_text(painter, draw_x, draw_y, m_text_buffer, Theme::instance().color("TextBox.Text"));
+            m_font->draw_text(painter, draw_x, draw_y, m_text_buffer, ThemeDB::the().color("TextBox.Text"));
         }
         
         if (m_is_focused) {
              std::string pre_cursor = m_text_buffer.substr(0, m_sel_end);
              int cx = m_font->width(pre_cursor);
-             painter.fill_rect(draw_x + cx, draw_y, 2, m_font->height(), Theme::instance().color("TextBox.Cursor"));
+             painter.fill_rect(draw_x + cx, draw_y, 2, m_font->height(), ThemeDB::the().color("TextBox.Cursor"));
         }
         
         painter.reset_clip();
@@ -139,7 +139,7 @@ bool TextBox::on_key(int key) {
     if (!m_is_focused) return false;
     // ... same key logic ...
     bool changed = false;
-    bool shift = Input::instance().shift();
+    bool shift = Input::the().shift();
 
     if (key == Input::Backspace) { 
         if (m_sel_start != m_sel_end) {

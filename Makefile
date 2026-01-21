@@ -1,7 +1,6 @@
 TARGET      = izotrox
 SRCS        = $(shell find src -type f \( -name '*.cpp' -o -name '*.c' \))
 SDL_FLAGS   = $(shell pkg-config --libs --cflags sdl2)
-CXXFLAGS    = -O3 -std=c++23 $(SDL_FLAGS) -Isrc
 LDFLAGS     = -lm $(SDL_FLAGS)
 INSTALL_DIR = /data/adb/$(TARGET).install.dir/
 

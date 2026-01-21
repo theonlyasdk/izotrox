@@ -15,7 +15,7 @@ enum class Level {
 
 class Logger {
 public:
-    static Logger& instance();
+    static Logger& the();
 
     void set_level(Level lvl);
     void log(Level lvl, const std::string& msg);

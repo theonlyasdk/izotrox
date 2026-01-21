@@ -1,6 +1,6 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "Image.hpp"
-#include "stb_image.h"
+#include "Lib/stb_image.h"
 #include <iostream>
 
 namespace Izo {

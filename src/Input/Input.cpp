@@ -15,7 +15,7 @@
 
 namespace Izo {
 
-Input& Input::instance() {
+Input& Input::the() {
     static Input s_instance;
     return s_instance;
 }
@@ -98,7 +98,7 @@ static int linux_code_to_ascii(int code, bool shift) {
 
 void Input::run_thread() {
 #ifdef __ANDROID__
-    Logger::instance().info("Starting Android Input Thread");
+    Logger::the().info("Starting Android Input Thread");
     
     struct pollfd fds[16];
     int count = 0;
@@ -119,7 +119,7 @@ void Input::run_thread() {
                 ioctl(fd, EVIOCGBIT(EV_ABS, sizeof(abs_b)), abs_b);
                 if (abs_b[ABS_MT_POSITION_X/8] & (1<<(ABS_MT_POSITION_X%8))) {
                     keep = true;
-                    Logger::instance().info("Input " + path + " is Touchscreen");
+                    Logger::the().info("Input " + path + " is Touchscreen");
                 }
             }
             
@@ -129,7 +129,7 @@ void Input::run_thread() {
                  ioctl(fd, EVIOCGBIT(EV_KEY, sizeof(key_b)), key_b);
                  if (key_b[KEY_ENTER/8] & (1<<(KEY_ENTER%8))) {
                      keep = true;
-                     Logger::instance().info("Input " + path + " is Keyboard");
+                     Logger::the().info("Input " + path + " is Keyboard");
                  }
             }
 
@@ -144,7 +144,7 @@ void Input::run_thread() {
     }
 
     if (count == 0) {
-        Logger::instance().error("No input devices found!");
+        Logger::the().error("No input devices found!");
         return;
     }
 
@@ -200,7 +200,7 @@ void Input::run_thread() {
     for (int i = 0; i < count; i++) {
         close(fds[i].fd);
     }
-    Logger::instance().info("Input thread stopped");
+    Logger::the().info("Input thread stopped");
 #endif
 }
 

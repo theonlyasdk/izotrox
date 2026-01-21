@@ -26,7 +26,7 @@ void Painter::draw_pixel(int x, int y, Color color) {
         if (color.a == 0) return;
 
         if (color.a == 255) {
-            m_canvas_ref.set_pixel(x, y, color.to_argb());
+            m_canvas_ref.set_pixel(x, y, color.as_argb());
         } else {
             uint32_t bg = m_canvas_ref.pixel(x, y);
             
@@ -44,8 +44,8 @@ void Painter::draw_pixel(int x, int y, Color color) {
             uint32_t rb = bg & 0xFF00FF;
             uint32_t g  = bg & 0x00FF00;
             
-            uint32_t color_rb = color.to_argb() & 0xFF00FF;
-            uint32_t color_g  = color.to_argb() & 0x00FF00;
+            uint32_t color_rb = color.as_argb() & 0xFF00FF;
+            uint32_t color_g  = color.as_argb() & 0x00FF00;
             
             uint32_t res_rb = ((color_rb * a + rb * inv_a) >> 8) & 0xFF00FF;
             uint32_t res_g  = ((color_g * a + g * inv_a) >> 8) & 0x00FF00;
@@ -62,7 +62,7 @@ void Painter::fill_rect(int x, int y, int w, int h, Color color) {
     
     if (dest.w <= 0 || dest.h <= 0) return;
     
-    uint32_t c = color.to_argb();
+    uint32_t c = color.as_argb();
     
     if (color.a == 255) {
         for (int iy = 0; iy < dest.h; ++iy) {

@@ -1,7 +1,7 @@
 // Mozilla Public License version 2.0. (c) theonlyasdk 2026
 
 #include "Slider.hpp"
-#include "../Core/Theme.hpp"
+#include "Core/ThemeDB.hpp"
 #include <algorithm>
 
 namespace Izo {
@@ -25,11 +25,11 @@ void Slider::draw_content(Painter& painter) {
     int trackH = 4;
     int ty = m_bounds.y + (m_bounds.h - trackH) / 2;
     
-    painter.fill_rounded_rect(m_bounds.x, ty, m_bounds.w, trackH, 2, Theme::instance().color("Slider.Track"));
+    painter.fill_rounded_rect(m_bounds.x, ty, m_bounds.w, trackH, 2, ThemeDB::the().color("Slider.Track"));
     
     if (m_val > 0.0f) {
         int fillW = (int)(m_bounds.w * m_val);
-        painter.fill_rounded_rect(m_bounds.x, ty, fillW, trackH, 2, Theme::instance().color("Slider.Active"));
+        painter.fill_rounded_rect(m_bounds.x, ty, fillW, trackH, 2, ThemeDB::the().color("Slider.Active"));
     }
     
     Image* imgToDraw = m_handle;

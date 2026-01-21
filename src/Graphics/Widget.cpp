@@ -1,7 +1,7 @@
 // Mozilla Public License version 2.0. (c) theonlyasdk 2026
 
 #include "Widget.hpp"
-#include "../Core/Theme.hpp"
+#include "Core/ThemeDB.hpp"
 
 namespace Izo {
 
@@ -66,14 +66,14 @@ bool Widget::on_touch(int tx, int ty, bool down, bool captured) {
 void Widget::draw_focus_outline(Painter& painter) {
     float t = m_focus_anim.value();
     if (t > 0.01f) {
-        int max_thickness = Theme::instance().value("Widget.FocusThickness", 6);
-        int radius = Theme::instance().value("Widget.FocusRadius", 4); 
+        int max_thickness = ThemeDB::the().value("Widget.FocusThickness", 6);
+        int radius = ThemeDB::the().value("Widget.FocusRadius", 4); 
         
         float expansion = (max_thickness * (1.0f - t)); 
         float thickness = expansion + 1;
         
         uint8_t alpha = (uint8_t)(255 * t);
-        Color theme_focus = Theme::instance().color("Widget.Focus");
+        Color theme_focus = ThemeDB::the().color("Widget.Focus");
         Color color(theme_focus.r, theme_focus.g, theme_focus.b, alpha);
         
         // Using the new draw_rounded_rect with thickness to avoid overlaps

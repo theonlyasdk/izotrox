@@ -1,19 +1,19 @@
 // Mozilla Public License version 2.0. (c) theonlyasdk 2026
 
 #include "Button.hpp"
-#include "../Core/Theme.hpp"
+#include "Core/ThemeDB.hpp"
 #include <cmath>
 
 namespace Izo {
 
 Button::Button(const std::string& text, Font* font) 
     : m_text_str(text), m_font(font), 
-      m_bg_anim(Theme::instance().color("Button.Background")) {}
+      m_bg_anim(ThemeDB::the().color("Button.Background")) {}
 
 void Button::draw_content(Painter& painter) {
     Color c = m_bg_anim.value();
     painter.fill_rect(m_bounds.x, m_bounds.y, m_bounds.w, m_bounds.h, c);
-    painter.draw_rect(m_bounds.x, m_bounds.y, m_bounds.w, m_bounds.h, Theme::instance().color("Button.Text"));
+    painter.draw_rect(m_bounds.x, m_bounds.y, m_bounds.w, m_bounds.h, ThemeDB::the().color("Button.Text"));
 
     if (m_font) {
         int tw = m_font->width(m_text_str);
@@ -23,7 +23,7 @@ void Button::draw_content(Painter& painter) {
         
         if (m_is_pressed) ty += 1;
         
-        m_font->draw_text(painter, tx, ty, m_text_str, Theme::instance().color("Button.Text"));
+        m_font->draw_text(painter, tx, ty, m_text_str, ThemeDB::the().color("Button.Text"));
     }
 }
 
@@ -60,9 +60,9 @@ bool Button::on_touch_event(int local_x, int local_y, bool down) {
     }
     
     if (old_pressed != m_is_pressed || old_hovered != m_is_hovered) {
-        Color target = Theme::instance().color("Button.Background");
-        if (m_is_pressed) target = Theme::instance().color("Button.Pressed");
-        else if (m_is_hovered) target = Theme::instance().color("Button.Hover");
+        Color target = ThemeDB::the().color("Button.Background");
+        if (m_is_pressed) target = ThemeDB::the().color("Button.Pressed");
+        else if (m_is_hovered) target = ThemeDB::the().color("Button.Hover");
         
         m_bg_anim.set_target(target, 200, Easing::EaseOutQuad);
         Widget::invalidate();

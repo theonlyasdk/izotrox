@@ -17,12 +17,13 @@ public:
     bool pump_events();
 
     // Present the canvas to the screen
+    // On Android it copies canvas to framebuffer and swaps doublebuffer
     void present(Canvas& canvas);
 
     int width() const;
     int height() const;
 
-    void set_on_resize(std::function<void(int, int)> callback);
+    void on_resize(std::function<void(int, int)> callback);
 
 private:
     struct Impl;

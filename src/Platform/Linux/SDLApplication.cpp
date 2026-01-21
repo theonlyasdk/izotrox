@@ -76,32 +76,32 @@ bool SDLApplication::pump_events() {
                 if (m_on_resize) m_on_resize(m_width, m_height);
             }
         } else if (e.type == SDL_MOUSEMOTION) {
-            Izo::Input::instance().set_touch(e.motion.x, e.motion.y, (e.motion.state & SDL_BUTTON_LMASK) != 0);
+            Izo::Input::the().set_touch(e.motion.x, e.motion.y, (e.motion.state & SDL_BUTTON_LMASK) != 0);
         } else if (e.type == SDL_MOUSEBUTTONDOWN) {
-             Izo::Input::instance().set_touch(e.button.x, e.button.y, true);
+             Izo::Input::the().set_touch(e.button.x, e.button.y, true);
         } else if (e.type == SDL_MOUSEBUTTONUP) {
-             Izo::Input::instance().set_touch(e.button.x, e.button.y, false);
+             Izo::Input::the().set_touch(e.button.x, e.button.y, false);
         } else if (e.type == SDL_TEXTINPUT) {
             if (e.text.text[0]) {
-                 Izo::Input::instance().set_key((int)e.text.text[0]);
+                 Izo::Input::the().set_key((int)e.text.text[0]);
             }
         } else if (e.type == SDL_KEYDOWN || e.type == SDL_KEYUP) {
              bool down = (e.type == SDL_KEYDOWN);
              if (e.key.keysym.sym == SDLK_LSHIFT || e.key.keysym.sym == SDLK_RSHIFT) {
-                 Izo::Input::instance().set_shift(down);
+                 Izo::Input::the().set_shift(down);
              }
              
              if (down) {
                  if (e.key.keysym.sym == SDLK_c && (e.key.keysym.mod & KMOD_CTRL)) {
                      m_running = false;
                  } else if (e.key.keysym.sym == SDLK_BACKSPACE) {
-                     Izo::Input::instance().set_key(Izo::Input::Backspace); 
+                     Izo::Input::the().set_key(Izo::Input::Backspace); 
                  } else if (e.key.keysym.sym == SDLK_RETURN) {
-                     Izo::Input::instance().set_key(Izo::Input::Enter); 
+                     Izo::Input::the().set_key(Izo::Input::Enter); 
                  } else if (e.key.keysym.sym == SDLK_LEFT) {
-                     Izo::Input::instance().set_key(Izo::Input::Left);
+                     Izo::Input::the().set_key(Izo::Input::Left);
                  } else if (e.key.keysym.sym == SDLK_RIGHT) {
-                     Izo::Input::instance().set_key(Izo::Input::Right);
+                     Izo::Input::the().set_key(Izo::Input::Right);
                  }
              }
         }

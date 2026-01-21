@@ -1,5 +1,7 @@
 #pragma once
+
 #include "../Graphics/Color.hpp"
+#include "Debug/Logger.hpp"
 #include "File.hpp"
 #include <map>
 #include <string>
@@ -8,11 +10,11 @@
 
 namespace Izo {
 
-class Theme {
+class ThemeDB {
 public:
-    static Theme& instance() {
-        static Theme s_instance;
-        return s_instance;
+    static ThemeDB& the() {
+        static ThemeDB m_instance;
+        return m_instance;
     }
 
     void load(const std::string& path) {
@@ -46,6 +48,8 @@ public:
                 }
             }
         }
+
+        Logger::the().info(std::format("Theme from '{}' has been loaded.", path));
     }
 
     Color color(const std::string& name) {

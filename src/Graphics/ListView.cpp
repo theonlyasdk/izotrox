@@ -1,7 +1,7 @@
 // Mozilla Public License version 2.0. (c) theonlyasdk 2026
 
 #include "ListView.hpp"
-#include "../Core/Theme.hpp"
+#include "Core/ThemeDB.hpp"
 #include <algorithm>
 #include <cmath>
 
@@ -63,8 +63,8 @@ void ListView::update() {
 }
 
 void ListView::draw_content(Painter& painter) {
-    Color bg = Theme::instance().color("ListView.Background");
-    if (bg.a == 0) bg = Theme::instance().color("Window.Background");
+    Color bg = ThemeDB::the().color("ListView.Background");
+    if (bg.a == 0) bg = ThemeDB::the().color("Window.Background");
     
     painter.fill_rect(m_bounds.x, m_bounds.y, m_bounds.w, m_bounds.h, bg);
 
@@ -79,8 +79,8 @@ void ListView::draw_content(Painter& painter) {
     int end_idx = start_idx + (m_bounds.h / m_item_height) + 2;
     if (end_idx > m_item_count) end_idx = m_item_count;
 
-    Color divColor = Theme::instance().color("ListView.Divider");
-    Color highlight = Theme::instance().color("ListView.Highlight");
+    Color divColor = ThemeDB::the().color("ListView.Divider");
+    Color highlight = ThemeDB::the().color("ListView.Highlight");
 
     for (int i = start_idx; i < end_idx; ++i) {
         int item_y = m_bounds.y + (i * m_item_height) + (int)m_scroll_y;
@@ -131,7 +131,7 @@ void ListView::draw_content(Painter& painter) {
 
     if (!focused()) {
         // Draw border unclipped so AA corners work perfectly
-        painter.draw_rect(m_bounds.x, m_bounds.y, m_bounds.w, m_bounds.h, Theme::instance().color("TextBox.Border"));
+        painter.draw_rect(m_bounds.x, m_bounds.y, m_bounds.w, m_bounds.h, ThemeDB::the().color("TextBox.Border"));
     }
 }
 

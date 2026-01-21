@@ -1,6 +1,6 @@
 #define STB_TRUETYPE_IMPLEMENTATION
 #include "Font.hpp"
-#include "stb_truetype.h"
+#include "Lib/stb_truetype.h"
 #include <cstdio>
 #include <iostream>
 #include <cmath>

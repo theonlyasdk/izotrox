@@ -20,7 +20,7 @@ You are an expert C++ developer. Your task is to write high-quality C++ code.
 * **Event handlers:** `on_event()`, never `set_on_event()`. Event handlers must strictly follow `on_` prefix.
 
 **4. Output**:
-* **Debug/Error output**: Only use `Izo::Logger::instance()` and never `std:cerr` or `std:cout`!!
+* **Debug/Error output**: Only use `Izo::Logger::the()` and never `std:cerr` or `std:cout`!!
 
 **6. Formatting & Style**
 * **Indentation:** 4 spaces.

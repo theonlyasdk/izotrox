@@ -1,16 +1,17 @@
 #include "Application.hpp"
 #include "../Platform/PlatformMacros.hpp"
-#include "../Input/Input.hpp"
-#include "../Platform/MobileDevice.hpp"
 
 #ifdef __ANDROID__
-    #include "../Graphics/Framebuffer.hpp"
+    #include "../Device/Framebuffer.hpp"
 #else
     #include "../Platform/Linux/SDLApplication.hpp"
 #endif
 
 namespace Izo {
 
+/**
+ * Application platform implementation
+ */
 struct Application::Impl {
     int width, height;
     std::function<void(int, int)> on_resize;
@@ -42,12 +43,10 @@ Application::~Application() {
 bool Application::init() {
     IF_ANDROID(
         system("stop");
-        if (!impl->fb.init()) return false;
+        if (!impl->fb.init()) 
+            return false;
         impl->width = impl->fb.width();
         impl->height = impl->fb.height();
-        // Android input init is manual in main usually, but we can do it here?
-        // Input::instance().init(); // Let's leave input init explicit in main or do it here?
-        // User said "handle the events".
     )    
     return true;
 }
@@ -68,7 +67,8 @@ bool Application::pump_events() {
 
 void Application::present(Canvas& canvas) {
     IF_ANDROID(
-        if (impl->fb.valid()) impl->fb.swap_buffers(canvas);
+        if (impl->fb.valid()) 
+            impl->fb.swap_buffers(canvas);
     )
     IF_DESKTOP(
         if (impl->sdl_app) {
@@ -85,7 +85,7 @@ void Application::present(Canvas& canvas) {
 int Application::width() const { return impl->width; }
 int Application::height() const { return impl->height; }
 
-void Application::set_on_resize(std::function<void(int, int)> callback) {
+void Application::on_resize(std::function<void(int, int)> callback) {
     impl->on_resize = callback;
 }
 

@@ -23,7 +23,7 @@ size_t Canvas::size_bytes() const {
 }
 
 void Canvas::clear(Color color) {
-    uint32_t c = color.to_argb();
+    uint32_t c = color.as_argb();
     if (c == 0) {
         std::memset(m_pixels, 0, m_width * m_height * sizeof(uint32_t));
     } else {

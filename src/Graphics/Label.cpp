@@ -1,7 +1,7 @@
 // Mozilla Public License version 2.0. (c) theonlyasdk 2026
 
 #include "Label.hpp"
-#include "../Core/Theme.hpp"
+#include "Core/ThemeDB.hpp"
 
 namespace Izo {
 

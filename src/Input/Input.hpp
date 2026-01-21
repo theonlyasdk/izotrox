@@ -28,7 +28,7 @@ public:
         Down = 203
     };
 
-    static Input& instance();
+    static Input& the();
 
     void init();
     void update();
