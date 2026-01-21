@@ -83,7 +83,7 @@ bool SDLApplication::pump_events() {
              Izo::Input::the().set_touch(e.button.x, e.button.y, false);
         } else if (e.type == SDL_TEXTINPUT) {
             if (e.text.text[0]) {
-                 Izo::Input::the().set_key((int)e.text.text[0]);
+                 Izo::Input::the().set_key((Izo::KeyCode)e.text.text[0]);
             }
         } else if (e.type == SDL_KEYDOWN || e.type == SDL_KEYUP) {
              bool down = (e.type == SDL_KEYDOWN);
@@ -95,13 +95,13 @@ bool SDLApplication::pump_events() {
                  if (e.key.keysym.sym == SDLK_c && (e.key.keysym.mod & KMOD_CTRL)) {
                      m_running = false;
                  } else if (e.key.keysym.sym == SDLK_BACKSPACE) {
-                     Izo::Input::the().set_key(Izo::Input::Backspace); 
+                     Izo::Input::the().set_key(Izo::KeyCode::Backspace); 
                  } else if (e.key.keysym.sym == SDLK_RETURN) {
-                     Izo::Input::the().set_key(Izo::Input::Enter); 
+                     Izo::Input::the().set_key(Izo::KeyCode::Enter); 
                  } else if (e.key.keysym.sym == SDLK_LEFT) {
-                     Izo::Input::the().set_key(Izo::Input::Left);
+                     Izo::Input::the().set_key(Izo::KeyCode::Left);
                  } else if (e.key.keysym.sym == SDLK_RIGHT) {
-                     Izo::Input::the().set_key(Izo::Input::Right);
+                     Izo::Input::the().set_key(Izo::KeyCode::Right);
                  }
              }
         }

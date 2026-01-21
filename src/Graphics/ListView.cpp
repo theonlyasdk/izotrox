@@ -2,8 +2,11 @@
 
 #include "ListView.hpp"
 #include "Core/ThemeDB.hpp"
+#include "Input/Input.hpp"
 #include <algorithm>
 #include <cmath>
+#include <linux/input-event-codes.h>
+#include <linux/input.h>
 
 namespace Izo {
 
@@ -58,7 +61,11 @@ void ListView::update() {
     } else {
         m_scrollbar_alpha = 255;
     }
-    
+
+    if(Input::the().key() == (KeyCode)'a') {
+        m_selected_index--;
+    }
+
     Widget::update();
 }
 

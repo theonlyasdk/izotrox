@@ -34,8 +34,8 @@ void View::on_touch(int x, int y, bool down) {
     if (m_root) m_root->on_touch(x, y, down);
 }
 
-void View::on_key(int key) {
-    if (key == 9) { // Tab
+void View::on_key(KeyCode key) {
+    if (key == KeyCode::Tab) { // Tab
         std::vector<std::shared_ptr<Widget>> focusables;
         auto rootContainer = std::dynamic_pointer_cast<Container>(m_root);
         if (rootContainer) {

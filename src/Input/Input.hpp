@@ -5,6 +5,7 @@
 #include <atomic>
 #include <mutex>
 #include <thread>
+#include "KeyCode.hpp"
 
 namespace Izo {
 
@@ -14,20 +15,11 @@ struct InputState {
     bool touch_down = false;
     bool shift_down = false;
     
-    int last_key = 0;
+    KeyCode last_key = KeyCode::None;
 };
 
 class Input {
 public:
-    enum Key {
-        Backspace = 8,
-        Enter = 13,
-        Left = 200,
-        Right = 201,
-        Up = 202,
-        Down = 203
-    };
-
     static Input& the();
 
     void init();
@@ -38,10 +30,10 @@ public:
     bool touch_down();
     bool shift();
     
-    int key();
+    KeyCode key();
 
     void set_touch(int x, int y, bool down);
-    void set_key(int key);
+    void set_key(KeyCode key);
     void set_shift(bool down);
 
 private:

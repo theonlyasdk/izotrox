@@ -53,8 +53,8 @@ int main(int argc, char* argv[]) {
     width = app.width();
     height = app.height();
 
-    auto backbuffer = std::make_unique<Canvas>(width, height);
-    auto painter = std::make_unique<Painter>(*backbuffer);
+    auto canvas = std::make_unique<Canvas>(width, height);
+    auto painter = std::make_unique<Painter>(*canvas);
 
     FontManager fonts;
     ImageManager manager;
@@ -65,7 +65,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    SplashScreen splash(app, *painter, *backbuffer, *systemFont);
+    SplashScreen splash(app, *painter, *canvas, *systemFont);
 
     splash.set_total_steps(5); 
     
@@ -159,8 +159,8 @@ int main(int argc, char* argv[]) {
     app.on_resize([&](int w, int h) {
         width = w;
         height = h;
-        backbuffer = std::make_unique<Canvas>(w, h);
-        painter = std::make_unique<Painter>(*backbuffer);
+        canvas = std::make_unique<Canvas>(w, h);
+        painter = std::make_unique<Painter>(*canvas);
         view.resize(w, h);
     });
 
@@ -182,25 +182,25 @@ int main(int argc, char* argv[]) {
         bool down = Input::the().touch_down();
         view.on_touch(tx, ty, down);
         
-        int key = Input::the().key();
-        if (key > 0) view.on_key(key); 
-        
+        KeyCode key = Input::the().key();
+        if (key != KeyCode::None) view.on_key(key); 
         view.update();
 
         bool is_dirty = Widget::dirty();
 
         if (is_dirty) {
-            backbuffer->clear(ThemeDB::the().color("Window.Background"));
+            canvas->clear(ThemeDB::the().color("Window.Background"));
+
             view.draw(*painter);
 
-            app.present(*backbuffer);
+            app.present(*canvas);
             Widget::clear_dirty();
         }
     }
 
-    Logger::the().info("Shutting down...");
-    backbuffer->clear(Color::Black);
-    app.present(*backbuffer);
+    Logger::the().info("Bye!");
+    canvas->clear(Color::Black);
+    app.present(*canvas);
 
     return 0;
 }

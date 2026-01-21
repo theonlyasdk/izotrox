@@ -4,6 +4,7 @@
 #include "Painter.hpp"
 #include "Animator.hpp"
 #include "../Core/Rect.hpp"
+#include "../Input/KeyCode.hpp"
 
 namespace Izo {
 
@@ -32,7 +33,7 @@ public:
     // Input
     virtual bool on_touch(int tx, int ty, bool down, bool captured = false); // Template method
     virtual bool on_touch_event(int local_x, int local_y, bool down) { return false; } // For subclass handling
-    virtual bool on_key(int key) { return false; }
+    virtual bool on_key(KeyCode key) { return false; }
 
     // Properties
     void set_bounds(const IntRect& bounds) { m_bounds = bounds; }

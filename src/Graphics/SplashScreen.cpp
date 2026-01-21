@@ -19,28 +19,30 @@ void SplashScreen::next_step(const std::string& status) {
     currentStep++;
     if (currentStep > totalSteps) currentStep = totalSteps;
     
+    usleep(100000);
+    Logger::the().info(std::format("SplashScreen::next_step(): {}", status));
     render();
 }
 
 void SplashScreen::render() {
     int width = canvas.width();
     int height = canvas.height();
-    
-    canvas.clear(Color(20, 20, 20));
-    
+
+    canvas.clear(Color::White);
+
     std::string title = "Izotrox";
     int tw = font.width(title);
     int th = font.height();
-    font.draw_text(painter, (width - tw) / 2, (height - th) / 2, title, Color::White);
+    font.draw_text(painter, (width - tw) / 2, (height - th) / 2, title, Color::Black);
     
-    float pct = (float)currentStep / (float)totalSteps;
-    int pctInt = (int)(pct * 100);
-    std::string pctStr = std::to_string(pctInt) + "%";
+    float completed_steps = (float)currentStep / (float)totalSteps;
+    int completed_percent = (int)(completed_steps * 100);
+    std::string pctStr = std::to_string(completed_percent) + "%";
     
-    int barHeight = 10;
+    int barh = 10;
     int pw = font.width(pctStr);
-    
-    int pctY = height - barHeight - th - 5; 
+
+    int pctY = height - barh - th - 5; 
     font.draw_text(painter, (width - pw) / 2, pctY, pctStr, Color(200, 200, 200));
     
     if (!currentStatus.empty()) {
@@ -48,9 +50,9 @@ void SplashScreen::render() {
         font.draw_text(painter, (width - sw) / 2, pctY - th - 5, currentStatus, Color(150, 150, 150));
     }
 
-    painter.fill_rect(0, height - barHeight, width, barHeight, Color(50, 50, 50));
-    int fillW = (int)(width * pct);
-    painter.fill_rect(0, height - barHeight, fillW, barHeight, Color(0, 120, 215));
+    painter.fill_rect(0, height - barh, width, barh, Color(50, 50, 50));
+    int fillW = (int)(width * completed_steps);
+    painter.fill_rect(0, height - barh, fillW, barh, Color(0, 120, 215));
     
     app.present(canvas);
 }

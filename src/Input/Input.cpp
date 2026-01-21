@@ -1,6 +1,7 @@
 // Mozilla Public License version 2.0. (c) theonlyasdk 2026
 
 #include "Input.hpp"
+#include "Platform/PlatformMacros.hpp"
 #include <Debug/Logger.hpp>
 #include <vector>
 #include <fcntl.h>
@@ -13,11 +14,14 @@
 #include <sys/ioctl.h>
 #endif
 
+/**
+ * In the Input system, touch and mouse is considered similarly.
+ */
 namespace Izo {
 
 Input& Input::the() {
-    static Input s_instance;
-    return s_instance;
+    static Input g_instance;
+    return g_instance;
 }
 
 Input::Input() {
@@ -39,7 +43,7 @@ void Input::set_touch(int x, int y, bool down) {
     m_state.touch_down = down;
 }
 
-void Input::set_key(int key) {
+void Input::set_key(KeyCode key) {
     std::lock_guard<std::mutex> lock(m_mutex);
     m_state.last_key = key;
 }
@@ -49,10 +53,10 @@ void Input::set_shift(bool down) {
     m_state.shift_down = down;
 }
 
-int Input::key() {
+KeyCode Input::key() {
     std::lock_guard<std::mutex> lock(m_mutex);
-    int key = m_state.last_key;
-    m_state.last_key = 0;
+    KeyCode key = m_state.last_key;
+    m_state.last_key = KeyCode::None;
     return key;
 }
 
@@ -76,25 +80,25 @@ bool Input::shift() {
     return m_state.shift_down;
 }
 
-#ifdef __ANDROID__
-static int linux_code_to_ascii(int code, bool shift) {
+IF_ANDROID(
+static KeyCode linux_code_to_ascii(int code, bool shift) {
     if (code >= KEY_A && code <= KEY_Z) {
         int val = 'a' + (code - KEY_A);
         if (shift) val -= 32;
-        return val;
+        return (KeyCode)val;
     }
     if (code >= KEY_1 && code <= KEY_9) {
-        if (!shift) return '1' + (code - KEY_1);
+        if (!shift) return (KeyCode)('1' + (code - KEY_1));
         const char* syms = "!@#$%^&*(";
-        return syms[code - KEY_1];
+        return (KeyCode)syms[code - KEY_1];
     }
-    if (code == KEY_0) return shift ? ')' : '0';
-    if (code == KEY_SPACE) return ' ';
-    if (code == KEY_ENTER) return 13;
-    if (code == KEY_BACKSPACE) return 8;
-    return 0; 
+    if (code == KEY_0) return shift ? (KeyCode)')' : (KeyCode)'0';
+    if (code == KEY_SPACE) return KeyCode::Space;
+    if (code == KEY_ENTER) return KeyCode::Enter;
+    if (code == KEY_BACKSPACE) return KeyCode::Backspace;
+    return KeyCode::None; 
 }
-#endif
+)
 
 void Input::run_thread() {
 #ifdef __ANDROID__
@@ -104,7 +108,8 @@ void Input::run_thread() {
     int count = 0;
 
     for (int i = 0; i < 10; i++) {
-        std::string path = "/dev/input/event" + std::to_string(i);
+        std::string path = std::format("/dev/input/event{}", std::to_string(i));
+
         int fd = open(path.c_str(), O_RDONLY);
         if (fd >= 0) {
             unsigned char evtype_b[EV_MAX/8 + 1];
@@ -119,7 +124,7 @@ void Input::run_thread() {
                 ioctl(fd, EVIOCGBIT(EV_ABS, sizeof(abs_b)), abs_b);
                 if (abs_b[ABS_MT_POSITION_X/8] & (1<<(ABS_MT_POSITION_X%8))) {
                     keep = true;
-                    Logger::the().info("Input " + path + " is Touchscreen");
+                    Logger::the().info(std::format("Input '{}' is a Touchscreen", path));
                 }
             }
             
@@ -129,7 +134,7 @@ void Input::run_thread() {
                  ioctl(fd, EVIOCGBIT(EV_KEY, sizeof(key_b)), key_b);
                  if (key_b[KEY_ENTER/8] & (1<<(KEY_ENTER%8))) {
                      keep = true;
-                     Logger::the().info("Input " + path + " is Keyboard");
+                     Logger::the().info(std::format("Input '{}' is a Keyboard", path));
                  }
             }
 
@@ -171,8 +176,8 @@ void Input::run_thread() {
                             ldown = (ev.value != 0);
                             touch_updated = true;
                         } else if (ev.value == 1 || ev.value == 2) { 
-                            int key = linux_code_to_ascii(ev.code, shift);
-                            if (key > 0) {
+                            KeyCode key = linux_code_to_ascii(ev.code, shift);
+                            if (key != KeyCode::None) {
                                 set_key(key);
                             }
                         }

@@ -19,7 +19,7 @@ public:
     void draw_content(Painter& painter) override;
     void update() override;
     bool on_touch_event(int local_x, int local_y, bool down) override;
-    bool on_key(int key) override;
+    bool on_key(KeyCode key) override;
     void measure(int parent_w, int parent_h) override;
 
 private:

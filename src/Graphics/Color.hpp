@@ -9,7 +9,7 @@ struct Color {
     uint8_t r, g, b, a;
 
     constexpr Color() : r(0), g(0), b(0), a(255) {}
-    constexpr Color(const uint8_t gray) : r(gray), g(gray), b(gray), a(255) {}
+    constexpr Color(const uint8_t gray, const uint8_t alpha) : r(gray), g(gray), b(gray), a(alpha) {}
     constexpr Color(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 255) : r(r), g(g), b(b), a(a) {}
     constexpr Color(uint32_t argb) {
         a = (argb >> 24) & 0xFF;

@@ -15,7 +15,7 @@ public:
     
     // Override on_touch to dispatch to children
     bool on_touch(int tx, int ty, bool down, bool captured = false) override;
-    bool on_key(int key) override;
+    bool on_key(KeyCode key) override;
     
     void invalidate() override;
     void layout() override; 

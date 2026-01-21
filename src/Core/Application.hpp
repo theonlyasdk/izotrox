@@ -24,7 +24,6 @@ public:
     int height() const;
 
     void on_resize(std::function<void(int, int)> callback);
-
 private:
     struct Impl;
     std::unique_ptr<Impl> impl;

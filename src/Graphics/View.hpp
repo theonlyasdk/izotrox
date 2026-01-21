@@ -3,6 +3,7 @@
 #pragma once
 #include "Widget.hpp"
 #include <memory>
+#include "../Input/KeyCode.hpp"
 
 namespace Izo {
 
@@ -16,7 +17,7 @@ public:
     
     // Event injection
     void on_touch(int x, int y, bool down);
-    void on_key(int key);
+    void on_key(KeyCode key);
 
 private:
     std::shared_ptr<Widget> m_root;

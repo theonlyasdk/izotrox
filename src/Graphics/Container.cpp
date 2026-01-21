@@ -50,7 +50,7 @@ bool Container::on_touch(int tx, int ty, bool down, bool captured) {
     return false;
 }
 
-bool Container::on_key(int key) {
+bool Container::on_key(KeyCode key) {
     for (auto& child : m_children) {
         if (child->visible()) {
             if (child->on_key(key)) return true;

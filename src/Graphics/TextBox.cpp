@@ -135,13 +135,14 @@ bool TextBox::on_touch_event(int local_x, int local_y, bool down) {
     return false;
 }
 
-bool TextBox::on_key(int key) {
+bool TextBox::on_key(KeyCode key) {
     if (!m_is_focused) return false;
     // ... same key logic ...
     bool changed = false;
     bool shift = Input::the().shift();
+    int keyVal = (int)key;
 
-    if (key == Input::Backspace) { 
+    if (key == KeyCode::Backspace) { 
         if (m_sel_start != m_sel_end) {
             int s = std::min(m_sel_start, m_sel_end);
             int e = std::max(m_sel_start, m_sel_end);
@@ -156,28 +157,28 @@ bool TextBox::on_key(int key) {
                 changed = true;
             }
         }
-    } else if (key == Input::Left) {
+    } else if (key == KeyCode::Left) {
         if (m_sel_end > 0) {
             m_sel_end--;
             if (!shift) m_sel_start = m_sel_end; 
             ensure_cursor_visible();
             Widget::invalidate();
         }
-    } else if (key == Input::Right) {
+    } else if (key == KeyCode::Right) {
         if (m_sel_end < (int)m_text_buffer.length()) {
             m_sel_end++;
             if (!shift) m_sel_start = m_sel_end;
             ensure_cursor_visible();
             Widget::invalidate();
         }
-    } else if (key >= 32 && key < 127) {
+    } else if (keyVal >= 32 && keyVal < 127) {
         if (m_sel_start != m_sel_end) {
             int s = std::min(m_sel_start, m_sel_end);
             int e = std::max(m_sel_start, m_sel_end);
             m_text_buffer.erase(s, e - s);
             m_sel_start = m_sel_end = s;
         }
-        m_text_buffer.insert(m_sel_end, 1, (char)key);
+        m_text_buffer.insert(m_sel_end, 1, (char)keyVal);
         m_sel_end++;
         m_sel_start = m_sel_end;
         changed = true;
