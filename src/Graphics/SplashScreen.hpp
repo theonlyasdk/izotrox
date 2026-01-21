@@ -1,8 +1,8 @@
 #pragma once
-#include "Canvas.hpp"
 #include "Painter.hpp"
+#include "Canvas.hpp"
 #include "Font.hpp"
-#include "../Core/Application.hpp"
+#include "Core/Application.hpp"
 #include <string>
 
 namespace Izo {

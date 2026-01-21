@@ -1,10 +1,10 @@
 #include "Application.hpp"
-#include "../Platform/PlatformMacros.hpp"
+#include "Platform/PlatformMacros.hpp"
 
 #ifdef __ANDROID__
-    #include "../Device/Framebuffer.hpp"
+    #include "Device/Framebuffer.hpp"
 #else
-    #include "../Platform/Linux/SDLApplication.hpp"
+    #include "Platform/Linux/SDLApplication.hpp"
 #endif
 
 namespace Izo {

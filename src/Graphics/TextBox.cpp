@@ -2,7 +2,7 @@
 
 #include "TextBox.hpp"
 #include "Core/ThemeDB.hpp"
-#include "../Input/Input.hpp"
+#include "Input/Input.hpp"
 #include <algorithm>
 #include <cmath>
 

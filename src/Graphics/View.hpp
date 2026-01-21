@@ -3,7 +3,7 @@
 #pragma once
 #include "Widget.hpp"
 #include <memory>
-#include "../Input/KeyCode.hpp"
+#include "Input/KeyCode.hpp"
 
 namespace Izo {
 

@@ -1,6 +1,6 @@
 #include "SplashScreen.hpp"
-#include "../Debug/Logger.hpp"
-#include <thread>
+#include "Core/ThemeDB.hpp"
+#include "Debug/Logger.hpp"
 
 namespace Izo {
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../Graphics/Color.hpp"
+#include "Graphics/Color.hpp"
 #include "Debug/Logger.hpp"
 #include "File.hpp"
 #include <map>

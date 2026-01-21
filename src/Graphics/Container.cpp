@@ -1,7 +1,7 @@
 // Mozilla Public License version 2.0. (c) theonlyasdk 2026
 
 #include "Container.hpp"
-#include "../Input/Input.hpp"
+#include "Input/Input.hpp"
 
 namespace Izo {
 

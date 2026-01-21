@@ -1,7 +1,8 @@
 #pragma once
-#include <memory>
+
 #include <functional>
-#include "../Graphics/Canvas.hpp"
+#include <string>
+#include "Graphics/Canvas.hpp"
 
 namespace Izo {
 
