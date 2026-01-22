@@ -1,12 +1,6 @@
-// Mozilla Public License version 2.0. (c) theonlyasdk 2026
-
 #include "ListView.hpp"
+#include "ListItem.hpp"
 #include "Core/ThemeDB.hpp"
-#include "Input/Input.hpp"
-#include <algorithm>
-#include <cmath>
-#include <linux/input-event-codes.h>
-#include <linux/input.h>
 
 namespace Izo {
 
@@ -14,174 +8,138 @@ ListView::ListView() {
     set_focusable(true);
 }
 
-void ListView::set_items(const std::vector<std::string>& items) {
-    m_items = items;
-    m_item_count = items.size();
-    Widget::invalidate();
+void ListView::add_item(std::shared_ptr<Widget> item) {
+    add_child(item);
 }
 
-void ListView::set_item_drawer(std::function<void(Painter&, int index, int x, int y, int w, int h)> drawer) {
-    m_drawer = drawer;
-}
-
-void ListView::set_item_count(int count) {
-    m_item_count = count;
-    Widget::invalidate();
-}
-
-void ListView::update() {
-    int total_content_height = m_item_count * m_item_height;
-    int max_scroll = (total_content_height > m_bounds.h) ? -(total_content_height - m_bounds.h) : 0;
-
-    if (!m_is_dragging) {
-        if (std::abs(m_velocity_y) > 0.001f || m_scroll_y > 0 || m_scroll_y < max_scroll) {
-            m_scroll_y += m_velocity_y;
-            Widget::invalidate();
-
-            if (m_scroll_y > 0) {
-                m_velocity_y = (0 - m_scroll_y) * TENSION;
-                m_scrollbar_alpha = 255;
-            } else if (m_scroll_y < max_scroll) {
-                m_velocity_y = (max_scroll - m_scroll_y) * TENSION;
-                m_scrollbar_alpha = 255;
-            } else if (std::abs(m_velocity_y) > MIN_VELOCITY) {
-                m_velocity_y *= FRICTION;
-                m_scrollbar_alpha = 255;
-            } else {
-                m_velocity_y = 0;
-            }
-        } else {
-             if (m_scrollbar_alpha > 0) {
-                m_scrollbar_alpha -= SCROLLBAR_FADE_SPEED;
-                if (m_scrollbar_alpha < 0) m_scrollbar_alpha = 0;
-                Widget::invalidate();
-            }
-        }
+void ListView::select(int index) {
+    if (index < 0 || index >= (int)m_children.size()) {
+        m_selected_index = -1;
     } else {
-        m_scrollbar_alpha = 255;
+        m_selected_index = index;
     }
-
-    if(Input::the().key() == (KeyCode)'a') {
-        m_selected_index--;
+    
+    // Update ListItem selected states
+    for (size_t i = 0; i < m_children.size(); ++i) {
+        auto listItem = std::dynamic_pointer_cast<ListItem>(m_children[i]);
+        if (listItem) {
+            listItem->set_selected((int)i == m_selected_index);
+        }
     }
-
-    Widget::update();
-}
-
-void ListView::draw_content(Painter& painter) {
-    Color bg = ThemeDB::the().color("ListView.Background");
-    if (bg.a == 0) bg = ThemeDB::the().color("Window.Background");
     
-    painter.fill_rect(m_bounds.x, m_bounds.y, m_bounds.w, m_bounds.h, bg);
-
-    painter.set_clip(m_bounds.x, m_bounds.y, m_bounds.w, m_bounds.h);
-
-    int start_idx = (int)(-m_scroll_y / m_item_height);
-    if (start_idx < 0) start_idx = 0;
+    if (m_on_item_selected && m_selected_index >= 0) {
+        m_on_item_selected(m_selected_index);
+    }
     
-    int end_idx = start_idx + (m_bounds.h / m_item_height) + 2;
-    if (end_idx > m_item_count) end_idx = m_item_count;
-
-    Color divColor = ThemeDB::the().color("ListView.Divider");
-    Color highlight = ThemeDB::the().color("ListView.Highlight");
-
-    for (int i = start_idx; i < end_idx; ++i) {
-        int item_y = m_bounds.y + (i * m_item_height) + (int)m_scroll_y;
+    // Ensure selected item is visible
+    if (m_selected_index >= 0) {
+        auto& child = m_children[m_selected_index];
+        int item_top = child->bounds().y;
+        int item_bottom = item_top + child->bounds().h;
+        int view_top = m_bounds.y - (int)m_scroll_y;
+        int view_bottom = view_top + m_bounds.h;
         
-        if (i == m_selected_index) {
-             painter.fill_rect(m_bounds.x, item_y, m_bounds.w, m_item_height, highlight);
+        if (item_top < view_top) {
+            m_scroll_y = -(item_top - m_bounds.y);
+        } else if (item_bottom > view_bottom) {
+            m_scroll_y = -(item_bottom - m_bounds.y - m_bounds.h);
         }
-
-        if (m_drawer) {
-            m_drawer(painter, i, m_bounds.x, item_y, m_bounds.w, m_item_height);
-        }
-        
-        painter.fill_rect(m_bounds.x, item_y + m_item_height - 1, m_bounds.w, 1, divColor);
-    }
-    
-    painter.reset_clip();
-
-    if (m_scrollbar_alpha > 0) {
-        int total_content_height = m_item_count * m_item_height;
-        if (total_content_height > m_bounds.h) {
-            float view_ratio = (float)m_bounds.h / total_content_height;
-            int max_scroll = -(total_content_height - m_bounds.h);
-            
-            float bar_h = (float)m_bounds.h * view_ratio;
-            float bar_y;
-
-            if (m_scroll_y > 0) {
-                float overscroll = m_scroll_y;
-                float size_factor = 1.0f - (overscroll / (float)m_bounds.h);
-                if (size_factor < 0.2f) size_factor = 0.2f;
-                bar_h *= size_factor;
-                bar_y = (float)m_bounds.y;
-            } else if (m_scroll_y < max_scroll) {
-                float overscroll = max_scroll - m_scroll_y;
-                float size_factor = 1.0f - (overscroll / (float)m_bounds.h);
-                if (size_factor < 0.2f) size_factor = 0.2f;
-                bar_h *= size_factor;
-                bar_y = (float)m_bounds.y + (float)m_bounds.h - bar_h;
-            } else {
-                bar_y = (float)m_bounds.y + (-m_scroll_y * view_ratio);
-            }
-
-            Color thumb(150, 150, 150, (uint8_t)m_scrollbar_alpha);
-            painter.fill_rect(m_bounds.x + m_bounds.w - 6, (int)bar_y, 4, (int)bar_h, thumb);
-        }
-    }
-
-    if (!focused()) {
-        painter.draw_rect(m_bounds.x, m_bounds.y, m_bounds.w, m_bounds.h, ThemeDB::the().color("TextBox.Border"));
     }
 }
 
-bool ListView::on_touch_event(int local_x, int local_y, bool down) {
-    int ty = m_bounds.y + local_y; 
+bool ListView::on_key(KeyCode key) {
+    if (!m_focused) return false;
     
-    int total_content_height = m_item_count * m_item_height;
-    int max_scroll = (total_content_height > m_bounds.h) ? -(total_content_height - m_bounds.h) : 0;
-    
-    if (down) {
-        m_scrollbar_alpha = 255;
-        if (!m_is_dragging) {
-            m_is_dragging = true;
-            m_velocity_y = 0;
-        } else {
-            float diff = (float)(ty - m_last_touch_y);
-            if (m_scroll_y > 0 || m_scroll_y < max_scroll) {
-                diff *= 0.5f; 
-            }
-            m_velocity_y = diff;
-            m_scroll_y += m_velocity_y;
-            Widget::invalidate();
+    if (key == KeyCode::Down) {
+        int next = m_selected_index + 1;
+        if (next < (int)m_children.size()) {
+            select(next);
         }
-        m_last_touch_y = ty;
-        return true; 
-    } else {
-        if (m_is_dragging) {
-            m_is_dragging = false;
-            if (std::abs(m_velocity_y) < 2.0f) {
-                 int clicked_y = ty - m_bounds.y - (int)m_scroll_y;
-                 int index = clicked_y / m_item_height;
-                 if (index >= 0 && index < m_item_count) {
-                     m_selected_index = index;
-                     Widget::invalidate();
-                 }
-            }
-            Widget::invalidate();
+        return true;
+    } else if (key == KeyCode::Up) {
+        int prev = m_selected_index - 1;
+        if (prev >= 0) {
+            select(prev);
         }
-        return false;
+        return true;
     }
+    
+    return false;
 }
 
 void ListView::measure(int parent_w, int parent_h) {
     int w = parent_w;
     int h = parent_h;
-    if (m_width == WrapContent) w = 200; 
-    if (m_height == WrapContent) h = m_item_count * m_item_height; 
+    
+    int content_h = 0;
+    for (auto& child : m_children) {
+        if (!child->visible()) continue;
+        child->measure(parent_w, parent_h);
+        content_h += child->measured_height();
+    }
+    m_total_content_height = content_h;
+
+    if (m_width == (int)WidgetSizePolicy::MatchParent) w = parent_w;
+    else if (m_width == (int)WidgetSizePolicy::WrapContent) w = 200;
+    else if (m_width > 0) w = m_width;
+
+    if (m_height == (int)WidgetSizePolicy::MatchParent) h = parent_h;
+    else if (m_height == (int)WidgetSizePolicy::WrapContent) h = content_h;
+    else if (m_height > 0) h = m_height;
     
     m_measured_size = {0, 0, w, h};
+}
+
+void ListView::layout_children() {
+    int cur_y = m_bounds.y;
+    for (auto& child : m_children) {
+        if (!child->visible()) continue;
+        int ch = child->measured_height();
+        child->set_bounds({m_bounds.x, cur_y, m_bounds.w, ch});
+        child->layout();
+        cur_y += ch;
+    }
+}
+
+int ListView::content_height() const {
+    return m_total_content_height;
+}
+
+void ListView::draw_content(Painter& painter) {
+    Color bg = ThemeDB::the().color("ListView.Background");
+    if (bg.a == 0) bg = ThemeDB::the().color("Window.Background");
+    painter.fill_rect(m_bounds.x, m_bounds.y, m_bounds.w, m_bounds.h, bg);
+
+    Layout::draw_content(painter);
+    
+    // Optional: Draw dividers
+    Color divColor = ThemeDB::the().color("ListView.Divider");
+    int cur_y = m_bounds.y + (int)m_scroll_y;
+    int visible_top = m_bounds.y - (int)m_scroll_y;
+    int visible_bottom = visible_top + m_bounds.h;
+
+    // Use push clip for dividers as well!
+    painter.push_clip(m_bounds.x, m_bounds.y, m_bounds.w, m_bounds.h);
+    painter.push_translate(0, (int)m_scroll_y);
+
+    for (auto& child : m_children) {
+        if (!child->visible()) continue;
+        int ch = child->measured_height();
+        int item_y = child->bounds().y;
+        
+        // Cull dividers
+        if (item_y + ch >= visible_top && item_y <= visible_bottom) {
+             // Draw relative to child
+             int line_y = item_y + ch - 1; 
+             painter.fill_rect(child->bounds().x, line_y, m_bounds.w, 1, divColor);
+        }
+    }
+    
+    painter.pop_translate();
+    painter.pop_clip();
+
+    // Draw border
+    painter.draw_rect(m_bounds.x, m_bounds.y, m_bounds.w, m_bounds.h, ThemeDB::the().color("ListView.Border"));
 }
 
 } // namespace Izo

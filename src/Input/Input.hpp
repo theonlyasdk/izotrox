@@ -14,6 +14,8 @@ struct InputState {
     int touch_y = 0;
     bool touch_down = false;
     bool shift_down = false;
+    bool ctrl_down = false;
+    int scroll_y = 0;
     
     KeyCode last_key = KeyCode::None;
 };
@@ -29,12 +31,16 @@ public:
     int touch_y();
     bool touch_down();
     bool shift();
+    bool ctrl();
+    int scroll_y();
     
     KeyCode key();
 
     void set_touch(int x, int y, bool down);
     void set_key(KeyCode key);
     void set_shift(bool down);
+    void set_ctrl(bool down);
+    void set_scroll(int y);
 
 private:
     Input(); 

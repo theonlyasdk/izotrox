@@ -11,6 +11,32 @@ public:
     virtual void layout_children() = 0;
     
     void measure(int parent_w, int parent_h) override;
+    void update() override;
+    void draw_content(Painter& painter) override;
+    void draw_focus(Painter& painter) override;
+    bool on_touch(int tx, int ty, bool down, bool captured = false) override;
+    bool on_touch_event(int local_x, int local_y, bool down) override;
+    bool is_scrollable() const override { return true; }
+
+protected:
+    virtual int content_height() const = 0;
+
+    float m_scroll_y = 0.0f;
+    float m_velocity_y = 0.0f;
+    bool m_is_dragging = false;
+    int m_last_touch_y = 0;
+    
+    int m_initial_touch_x = 0;
+    int m_initial_touch_y = 0;
+    bool m_potential_swipe = false;
+    bool m_has_intercepted = false;
+    
+    float m_scrollbar_alpha = 0.0f;
+    
+    const float FRICTION = 0.95f;
+    const float MIN_VELOCITY = 0.15f;
+    const float TENSION = 0.15f;
+    const float SCROLLBAR_FADE_SPEED = 1.0f;
 };
 
 } // namespace Izo

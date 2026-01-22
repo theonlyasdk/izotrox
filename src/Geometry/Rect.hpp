@@ -17,6 +17,10 @@ public:
     bool contains(T px, T py) const;
     bool intersects(const Rect& other) const;
     Rect intersection(const Rect& other) const;
+    Rect expanded(T amount) const;
+    Rect contracted(T amount) const;
+    void expand(T amount);
+    void contract(T amount);
 };
 
 using IntRect = Rect<int>;

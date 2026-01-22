@@ -1,6 +1,6 @@
 #include "SplashScreen.hpp"
-#include "Core/ThemeDB.hpp"
 #include "Debug/Logger.hpp"
+#include <format>
 
 namespace Izo {
 

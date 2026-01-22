@@ -16,11 +16,14 @@ public:
     // Override on_touch to dispatch to children
     bool on_touch(int tx, int ty, bool down, bool captured = false) override;
     bool on_key(KeyCode key) override;
+    void draw_focus(Painter& painter) override;
     
     // void invalidate() override; // Removed to avoid recursive invalidation
     void layout() override; 
 
     void collect_focusable_widgets(std::vector<std::shared_ptr<Widget>>& out_list);
+    
+    const std::vector<std::shared_ptr<Widget>>& children() const { return m_children; }
 
 protected:
     std::vector<std::shared_ptr<Widget>> m_children;

@@ -28,4 +28,14 @@ void AndroidDevice::set_brightness(uint8_t value) {
 #endif
 }
 
+void AndroidDevice::set_front_flash(bool enable) {
+    Logger::the().info(std::format("Setting front flash to {}", enable));
+#ifdef __ANDROID__
+    std::ofstream f("/sys/class/camera/flash/front_flash");
+    if (f.is_open()) {
+        f << (enable ? "1" : "0");
+    }
+#endif
+}
+
 } // namespace Izo

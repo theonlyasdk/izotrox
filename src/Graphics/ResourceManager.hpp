@@ -17,12 +17,9 @@ public:
     T* load(const std::string& name, Args&&... args) {
         auto res = std::make_shared<T>(std::forward<Args>(args)...);
         
-        // Check validity if possible
-        // We assume T has a valid() method or we check pointer
-        // If T is Font or Image, they have valid().
         if (!res->valid()) {
-            std::cerr << "ResourceManager: Failed to load " << name << std::endl;
-            return nullptr;
+            Logger::the().error(std::format("ResourceManager: Failed to load {0}", name));
+            std::exit(1); // Halt the application on failure of loading resource
         }
 
         resources[name] = res;

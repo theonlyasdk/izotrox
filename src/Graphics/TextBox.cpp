@@ -3,10 +3,14 @@
 #include "TextBox.hpp"
 #include "Core/ThemeDB.hpp"
 #include "Input/Input.hpp"
+#include "Core/Application.hpp"
 #include <algorithm>
 #include <cmath>
+#include <cctype>
 
 namespace Izo {
+
+std::string TextBox::s_clipboard;
 
 TextBox::TextBox(const std::string& placeholder, Font* font) 
     : m_text_buffer(""), m_placeholder(placeholder), m_font(font) {}
@@ -16,11 +20,17 @@ void TextBox::set_text(const std::string& t) {
         m_text_buffer = t;
         m_sel_start = m_sel_end = (int)t.length();
         ensure_cursor_visible();
-        Widget::invalidate();
+        if (m_on_change) {
+            m_on_change(m_text_buffer);
+        }
     }
 }
 
 const std::string& TextBox::text() const { return m_text_buffer; }
+
+void TextBox::set_placeholder(const std::string& placeholder) { 
+    m_placeholder = placeholder; 
+}
 
 int TextBox::get_cursor_index(int lx) {
     if (!m_font || m_text_buffer.empty()) return 0;
@@ -42,6 +52,23 @@ int TextBox::get_cursor_index(int lx) {
     return best_idx;
 }
 
+int TextBox::find_word_start(int pos) {
+    if (pos <= 0) return 0;
+    int i = pos - 1;
+    while (i >= 0 && std::isspace(m_text_buffer[i])) i--;
+    while (i >= 0 && !std::isspace(m_text_buffer[i])) i--;
+    return i + 1;
+}
+
+int TextBox::find_word_end(int pos) {
+    int len = (int)m_text_buffer.length();
+    if (pos >= len) return len;
+    int i = pos;
+    while (i < len && std::isspace(m_text_buffer[i])) i++;
+    while (i < len && !std::isspace(m_text_buffer[i])) i++;
+    return i;
+}
+
 void TextBox::ensure_cursor_visible() {
     if (!m_font) return;
     
@@ -60,6 +87,9 @@ void TextBox::ensure_cursor_visible() {
     if (total_w < visible_w) m_scroll_x = 0;
     else if (m_scroll_x > total_w - visible_w) m_scroll_x = total_w - visible_w;
     if (m_scroll_x < 0) m_scroll_x = 0;
+
+    m_cursor_timer = 0.0f;
+    m_cursor_visible = true;
 }
 
 void TextBox::draw_content(Painter& painter) {
@@ -70,7 +100,7 @@ void TextBox::draw_content(Painter& painter) {
 
     if (m_font) {
         int padding = 5;
-        painter.set_clip(m_bounds.x + padding, m_bounds.y + padding, m_bounds.w - 2 * padding, m_bounds.h - 2 * padding);
+        painter.push_clip(m_bounds.x + padding, m_bounds.y + padding, m_bounds.w - 2 * padding, m_bounds.h - 2 * padding);
         
         int draw_x = m_bounds.x + padding - m_scroll_x;
         int draw_y = m_bounds.y + padding;
@@ -94,19 +124,31 @@ void TextBox::draw_content(Painter& painter) {
             m_font->draw_text(painter, draw_x, draw_y, m_text_buffer, ThemeDB::the().color("TextBox.Text"));
         }
         
-        if (m_is_focused) {
+        if (m_focused && m_cursor_visible) {
              std::string pre_cursor = m_text_buffer.substr(0, m_sel_end);
              int cx = m_font->width(pre_cursor);
              painter.fill_rect(draw_x + cx, draw_y, 2, m_font->height(), ThemeDB::the().color("TextBox.Cursor"));
         }
         
-        painter.reset_clip();
+        painter.pop_clip();
     }
 }
 
 void TextBox::update() {
-    if (m_border_anim.update(16.0f)) Widget::invalidate();
+    m_border_anim.update(Application::the().delta());
     Widget::update(); 
+
+    if (m_focused) {
+        m_cursor_timer += Application::the().delta();
+        int blink_speed = ThemeDB::the().int_value("TextBox.CursorBlinkSpeed", 500);
+        if (m_cursor_timer >= (float)blink_speed) {
+            m_cursor_visible = !m_cursor_visible;
+            m_cursor_timer = 0.0f;
+        }
+    } else {
+        m_cursor_visible = false;
+        m_cursor_timer = 0.0f;
+    }
 }
 
 bool TextBox::on_touch_event(int local_x, int local_y, bool down) {
@@ -124,7 +166,6 @@ bool TextBox::on_touch_event(int local_x, int local_y, bool down) {
                 m_sel_end = idx;
             }
             ensure_cursor_visible();
-            Widget::invalidate();
             return true;
         } else {
              m_is_dragging = false;
@@ -136,43 +177,123 @@ bool TextBox::on_touch_event(int local_x, int local_y, bool down) {
 }
 
 bool TextBox::on_key(KeyCode key) {
-    if (!m_is_focused) return false;
-    // ... same key logic ...
+    if (!m_focused) return false;
+
     bool changed = false;
     bool shift = Input::the().shift();
+    bool ctrl = Input::the().ctrl();
     int keyVal = (int)key;
+    int len = (int)m_text_buffer.length();
+    bool has_selection = (m_sel_start != m_sel_end);
+
+    // Ctrl+A - Select All
+    if (ctrl && keyVal == 'a') {
+        m_sel_start = 0;
+        m_sel_end = len;
+        ensure_cursor_visible();
+        return true;
+    }
+    
+    // Ctrl+C - Copy
+    if (ctrl && keyVal == 'c') {
+        if (has_selection) {
+            int s = std::min(m_sel_start, m_sel_end);
+            int e = std::max(m_sel_start, m_sel_end);
+            s_clipboard = m_text_buffer.substr(s, e - s);
+        }
+        return true;
+    }
+    
+    // Ctrl+X - Cut
+    if (ctrl && keyVal == 'x') {
+        if (has_selection) {
+            int s = std::min(m_sel_start, m_sel_end);
+            int e = std::max(m_sel_start, m_sel_end);
+            s_clipboard = m_text_buffer.substr(s, e - s);
+            m_text_buffer.erase(s, e - s);
+            m_sel_start = m_sel_end = s;
+            changed = true;
+        }
+        ensure_cursor_visible();
+        if (changed && m_on_change) m_on_change(m_text_buffer);
+        return true;
+    }
+    
+    // Ctrl+V - Paste
+    if (ctrl && keyVal == 'v') {
+        if (!s_clipboard.empty()) {
+            if (has_selection) {
+                int s = std::min(m_sel_start, m_sel_end);
+                int e = std::max(m_sel_start, m_sel_end);
+                m_text_buffer.erase(s, e - s);
+                m_sel_start = m_sel_end = s;
+            }
+            m_text_buffer.insert(m_sel_end, s_clipboard);
+            m_sel_end += (int)s_clipboard.length();
+            m_sel_start = m_sel_end;
+            changed = true;
+        }
+        ensure_cursor_visible();
+        if (changed && m_on_change) m_on_change(m_text_buffer);
+        return true;
+    }
 
     if (key == KeyCode::Backspace) { 
-        if (m_sel_start != m_sel_end) {
+        if (has_selection) {
             int s = std::min(m_sel_start, m_sel_end);
             int e = std::max(m_sel_start, m_sel_end);
             m_text_buffer.erase(s, e - s);
             m_sel_start = m_sel_end = s;
             changed = true;
-        } else {
-            if (m_sel_end > 0) {
-                m_text_buffer.erase(m_sel_end - 1, 1);
-                m_sel_end--;
-                m_sel_start = m_sel_end;
-                changed = true;
-            }
+        } else if (m_sel_end > 0) {
+            int target = ctrl ? find_word_start(m_sel_end) : (m_sel_end - 1);
+            int count = m_sel_end - target;
+            m_text_buffer.erase(target, count);
+            m_sel_end = target;
+            m_sel_start = m_sel_end;
+            changed = true;
         }
+    } else if (key == KeyCode::Delete) {
+        if (has_selection) {
+            int s = std::min(m_sel_start, m_sel_end);
+            int e = std::max(m_sel_start, m_sel_end);
+            m_text_buffer.erase(s, e - s);
+            m_sel_start = m_sel_end = s;
+            changed = true;
+        } else if (m_sel_end < len) {
+            int target = ctrl ? find_word_end(m_sel_end) : (m_sel_end + 1);
+            int count = target - m_sel_end;
+            m_text_buffer.erase(m_sel_end, count);
+            changed = true;
+        }
+    } else if (key == KeyCode::Home) {
+        m_sel_end = 0;
+        if (!shift) m_sel_start = m_sel_end;
+        ensure_cursor_visible();
+    } else if (key == KeyCode::End) {
+        m_sel_end = len;
+        if (!shift) m_sel_start = m_sel_end;
+        ensure_cursor_visible();
     } else if (key == KeyCode::Left) {
-        if (m_sel_end > 0) {
-            m_sel_end--;
-            if (!shift) m_sel_start = m_sel_end; 
-            ensure_cursor_visible();
-            Widget::invalidate();
-        }
-    } else if (key == KeyCode::Right) {
-        if (m_sel_end < (int)m_text_buffer.length()) {
-            m_sel_end++;
+        if (has_selection && !shift) {
+            m_sel_end = std::min(m_sel_start, m_sel_end);
+            m_sel_start = m_sel_end;
+        } else if (m_sel_end > 0) {
+            m_sel_end = ctrl ? find_word_start(m_sel_end) : (m_sel_end - 1);
             if (!shift) m_sel_start = m_sel_end;
-            ensure_cursor_visible();
-            Widget::invalidate();
         }
-    } else if (keyVal >= 32 && keyVal < 127) {
-        if (m_sel_start != m_sel_end) {
+        ensure_cursor_visible();
+    } else if (key == KeyCode::Right) {
+        if (has_selection && !shift) {
+            m_sel_end = std::max(m_sel_start, m_sel_end);
+            m_sel_start = m_sel_end;
+        } else if (m_sel_end < len) {
+            m_sel_end = ctrl ? find_word_end(m_sel_end) : (m_sel_end + 1);
+            if (!shift) m_sel_start = m_sel_end;
+        }
+        ensure_cursor_visible();
+    } else if (keyVal >= 32 && keyVal < 127 && !ctrl) {
+        if (has_selection) {
             int s = std::min(m_sel_start, m_sel_end);
             int e = std::max(m_sel_start, m_sel_end);
             m_text_buffer.erase(s, e - s);
@@ -186,7 +307,9 @@ bool TextBox::on_key(KeyCode key) {
     
     if (changed) {
         ensure_cursor_visible();
-        Widget::invalidate();
+        if (m_on_change) {
+            m_on_change(m_text_buffer);
+        }
     }
     return true;
 }

@@ -7,6 +7,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <cstring>
+#include <format>
 
 #ifdef __ANDROID__
 #include <sys/poll.h>
@@ -53,6 +54,16 @@ void Input::set_shift(bool down) {
     m_state.shift_down = down;
 }
 
+void Input::set_ctrl(bool down) {
+    std::lock_guard<std::mutex> lock(m_mutex);
+    m_state.ctrl_down = down;
+}
+
+void Input::set_scroll(int y) {
+    std::lock_guard<std::mutex> lock(m_mutex);
+    m_state.scroll_y += y;
+}
+
 KeyCode Input::key() {
     std::lock_guard<std::mutex> lock(m_mutex);
     KeyCode key = m_state.last_key;
@@ -80,7 +91,19 @@ bool Input::shift() {
     return m_state.shift_down;
 }
 
-IF_ANDROID(
+bool Input::ctrl() {
+    std::lock_guard<std::mutex> lock(m_mutex);
+    return m_state.ctrl_down;
+}
+
+int Input::scroll_y() {
+    std::lock_guard<std::mutex> lock(m_mutex);
+    int y = m_state.scroll_y;
+    m_state.scroll_y = 0;
+    return y;
+}
+
+#ifdef __ANDROID__
 static KeyCode linux_code_to_ascii(int code, bool shift) {
     if (code >= KEY_A && code <= KEY_Z) {
         int val = 'a' + (code - KEY_A);
@@ -98,7 +121,7 @@ static KeyCode linux_code_to_ascii(int code, bool shift) {
     if (code == KEY_BACKSPACE) return KeyCode::Backspace;
     return KeyCode::None; 
 }
-)
+#endif
 
 void Input::run_thread() {
 #ifdef __ANDROID__

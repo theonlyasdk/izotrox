@@ -1,3 +1,6 @@
+# Helper makefile for building Izotrox
+# To run the project, run 'make'
+# To push files to remote Android device, run 'make push'
 TARGET      = izotrox
 SRCS        = $(shell find src -type f \( -name '*.cpp' -o -name '*.c' \))
 SDL_FLAGS   = $(shell pkg-config --libs --cflags sdl2)

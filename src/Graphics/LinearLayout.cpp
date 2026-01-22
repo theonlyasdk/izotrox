@@ -21,12 +21,16 @@ void LinearLayout::measure(int parent_w, int parent_h) {
         }
     }
     
-    // Adjust for padding
-    // ...
+    // Store content height for scrolling
+    m_content_height = h + 10; // Add padding
     
     // Policy check
-    if (m_width == MatchParent) w = parent_w;
-    if (m_height == MatchParent) h = parent_h;
+    if (m_width == (int)WidgetSizePolicy::MatchParent) w = parent_w;
+    else if (m_width > 0) w = m_width;
+    // else it stays as content width (w already accumulated or determined in loop)
+
+    if (m_height == (int)WidgetSizePolicy::MatchParent) h = parent_h;
+    else if (m_height > 0) h = m_height;
     
     m_measured_size = {0, 0, w, h};
 }
@@ -42,8 +46,8 @@ void LinearLayout::layout_children() {
         int ch = child->measured_height();
         
         // Handle MatchParent children?
-        if (child->width() == MatchParent) cw = m_bounds.w - 20; // minus padding
-        // if (child->height() == MatchParent) ch = ...; // Need residual space logic
+        if (child->width() == (int)WidgetSizePolicy::MatchParent) cw = m_bounds.w - 20; // minus padding
+        // if (child->height() == (int)WidgetSizePolicy::MatchParent) ch = ...; // Need residual space logic
         
         child->set_bounds({cur_x, cur_y, cw, ch});
         child->layout(); // Recurse

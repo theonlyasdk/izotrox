@@ -4,6 +4,7 @@
 #include "Widget.hpp"
 #include "Color.hpp"
 #include "Image.hpp"
+#include <functional>
 
 namespace Izo {
 
@@ -13,6 +14,7 @@ public:
 
     void set_value(float v);
     float value() const;
+    void set_on_change(std::function<void(float)> callback) { m_on_change = callback; }
 
     void draw_content(Painter& painter) override;
     void measure(int parent_w, int parent_h) override;
@@ -22,7 +24,8 @@ private:
     float m_val;
     Image* m_handle;
     Image* m_handle_focus;
-    bool m_is_pressed = false;
+    bool m_pressed = false;
+    std::function<void(float)> m_on_change;
 };
 
 } // namespace Izo

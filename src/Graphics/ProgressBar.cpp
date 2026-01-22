@@ -6,25 +6,26 @@
 
 namespace Izo {
 
-ProgressBar::ProgressBar(float progress) : m_val(progress) {}
+ProgressBar::ProgressBar(float progress) : m_value(progress) {
+    set_focusable(false);
+}
 
 void ProgressBar::set_progress(float v) { 
-    float new_p = std::clamp(v, 0.0f, 1.0f);
-    if (new_p != m_val) {
-        m_val = new_p;
-        Widget::invalidate();
+    float new_progress = std::clamp(v, 0.0f, 1.0f);
+    if (new_progress != m_value) {
+        m_value = new_progress;
     }
 }
 
-float ProgressBar::progress() const { return m_val; }
+float ProgressBar::progress() const { return m_value; }
 
 void ProgressBar::draw_content(Painter& painter) {
-    painter.fill_rounded_rect(m_bounds.x, m_bounds.y, m_bounds.w, m_bounds.h, 4, ThemeDB::the().color("ProgressBar.Background"));
-    painter.draw_rounded_rect(m_bounds.x, m_bounds.y, m_bounds.w, m_bounds.h, 4, Color::White); 
+    painter.fill_rect(m_bounds.x, m_bounds.y, m_bounds.w, m_bounds.h, ThemeDB::the().color("ProgressBar.Background"));
+    painter.draw_rect(m_bounds.x, m_bounds.y, m_bounds.w, m_bounds.h, Color::White); 
 
-    if (m_val > 0.0f) {
-        int fill_w = static_cast<int>(m_bounds.w * m_val);
-        painter.fill_rounded_rect(m_bounds.x, m_bounds.y, fill_w, m_bounds.h, 4, ThemeDB::the().color("ProgressBar.Fill"));
+    if (m_value > 0.0f) {
+        int fill_w = static_cast<int>(m_bounds.w * m_value);
+        painter.fill_rect(m_bounds.x, m_bounds.y, fill_w, m_bounds.h, ThemeDB::the().color("ProgressBar.Fill"));
     }
 }
 

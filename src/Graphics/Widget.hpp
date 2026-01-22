@@ -9,7 +9,7 @@
 
 namespace Izo {
 
-enum SizePolicy {
+enum class WidgetSizePolicy {
     Fixed = 0,
     MatchParent = -1,
     WrapContent = -2
@@ -23,6 +23,7 @@ public:
     // Drawing
     void draw(Painter& painter); // Template method
     virtual void draw_content(Painter& painter) = 0;
+    virtual void draw_focus(Painter& painter); // Called in separate pass for overlays
 
     virtual void update();
     
@@ -35,14 +36,18 @@ public:
     virtual bool on_touch(int tx, int ty, bool down, bool captured = false); // Template method
     virtual bool on_touch_event(int local_x, int local_y, bool down) { return false; } // For subclass handling
     virtual bool on_key(KeyCode key) { return false; }
+    virtual bool is_scrollable() const { return false; }
 
     // Properties
     void set_bounds(const IntRect& bounds) { m_bounds = bounds; }
     const IntRect& bounds() const { return m_bounds; }
     
     void set_width(int w) { m_width = w; }
-    void set_height(int h) { m_height = h; }
+    void set_width(WidgetSizePolicy p) { m_width = (int)p; }
     int width() const { return m_width; }
+
+    void set_height(int h) { m_height = h; }
+    void set_height(WidgetSizePolicy p) { m_height = (int)p; }
     int height() const { return m_height; }
     
     int measured_width() const { return m_measured_size.w; }
@@ -52,18 +57,20 @@ public:
     void hide();
     bool visible() const { return m_visible; }
 
-    void set_focusable(bool focusable) { m_is_focusable = focusable; }
-    bool focusable() const { return m_is_focusable; }
-    bool focused() const { return m_is_focused; }
+    void set_focusable(bool focusable) { m_focusable = focusable; }
+    bool focusable() const { return m_focusable; }
+    bool focused() const { return m_focused; }
     void set_focused(bool focused);
+    void cancel_gesture() { m_gesture_cancelled = true; }
+    
+    void set_padding(int l, int t, int r, int b) { 
+        m_padding_left = l; m_padding_top = t; m_padding_right = r; m_padding_bottom = b; 
+    }
     
     void set_show_focus_indicator(bool show) { m_show_focus_indicator = show; }
-
-    virtual void invalidate();
-    static bool dirty();
-    static void clear_dirty();
-    static const std::vector<IntRect>& get_dirty_rects();
-    static void add_dirty_rect(const IntRect& rect);
+    
+    void set_parent(Widget* parent) { m_parent = parent; }
+    Widget* parent() const { return m_parent; }
 
 protected:
     void handle_focus_logic(bool inside, bool down);
@@ -72,8 +79,8 @@ protected:
     IntRect m_bounds;
     IntRect m_measured_size;
     
-    int m_width = WrapContent;
-    int m_height = WrapContent;
+    int m_width = (int)WidgetSizePolicy::WrapContent;
+    int m_height = (int)WidgetSizePolicy::WrapContent;
     
     int m_padding_left = 0;
     int m_padding_right = 0;
@@ -82,12 +89,13 @@ protected:
 
     Animator<float> m_focus_anim;
     bool m_prev_touch_down = false;
-    bool m_is_focusable = false;
-    bool m_is_focused = false;
+    bool m_touch_started_inside = false;
+    bool m_gesture_cancelled = false;
+    bool m_focusable = false;
+    bool m_focused = false;
     bool m_visible = true;
     bool m_show_focus_indicator = true;
-
-    static std::vector<IntRect> s_dirty_rects;
+    Widget* m_parent = nullptr;
 };
 
 } // namespace Izo

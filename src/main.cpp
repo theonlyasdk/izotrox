@@ -1,6 +1,7 @@
 // Mozilla Public License version 2.0. (c) theonlyasdk 2026
 
 #include <iostream>
+#include <fstream>
 #include <unistd.h>
 #include <vector>
 #include <chrono>
@@ -8,6 +9,8 @@
 #include <cmath>
 #include <memory>
 #include <string>
+#include <format>
+#include <sstream>
 
 #include "Debug/Logger.hpp"
 #include "Input/Input.hpp"
@@ -24,22 +27,45 @@
 #include "Graphics/Slider.hpp"
 #include "Graphics/Image.hpp"
 #include "Graphics/ResourceManager.hpp"
-#include "Graphics/SplashScreen.hpp"
+#include "Views/SplashScreen.hpp"
 #include "Graphics/View.hpp"
 #include "Graphics/ListView.hpp"
+#include "Graphics/ListItem.hpp"
 #include "Core/Application.hpp"
 #include "Core/ThemeDB.hpp"
-#include "Platform/AndroidDevice.hpp"
+#include "Platform/Android/AndroidDevice.hpp"
+#include "Core/SystemStats.hpp"
 
 using namespace Izo;
 
 using FontManager = ResourceManager<Font>;
 using ImageManager = ResourceManager<Image>;
 
+void draw_debug_panel(Painter& painter, Font& font, float fps) {
+    static float timer = 0;
+    static std::string cached_text;
+    static int cached_w = 0;
+    static int cached_h = 0;
+
+    timer += Application::the().delta();
+    if (cached_text.empty() || timer >= 1000.0f) {
+        float temp = SystemStats::get_cpu_temp();
+        int mem = SystemStats::get_free_memory_mb();
+
+        cached_text = std::format("FPS: {:.1f} | Temp: {:.1f}C | Mem: {}MB", fps, temp, mem);
+        cached_w = font.width(cached_text) + 20;
+        cached_h = font.height() + 10;
+        timer = 0;
+    }
+    
+    painter.fill_rect(10, 10, cached_w, cached_h, Color(0, 0, 0, 128)); 
+    font.draw_text(painter, 20, 15, cached_text, Color::White);
+}
+
 int main(int argc, char* argv[]) {
     Logger::the().info("Izotrox Booting...");
 
-    ThemeDB::the().load("res/theme/default.ini");
+    ThemeDB::the().load("res/theme/nord.ini");
 
     int width = 800;
     int height = 600;
@@ -59,9 +85,14 @@ int main(int argc, char* argv[]) {
     FontManager fonts;
     ImageManager manager;
 
-    Font* systemFont = fonts.load("system-ui", "res/fonts/Roboto-Regular.ttf", 24.0f);
+    std::string fontFamily = ThemeDB::the().string_value("FontFamily", "res/fonts/Roboto-Regular.ttf");
+    float fontSize = std::stof(ThemeDB::the().string_value("FontSize", "24.0"));
+
+    Font* systemFont = fonts.load("system-ui", fontFamily, fontSize);
+    Font* inconsolata = fonts.load("inconsolata", "res/fonts/Inconsolata-Regular.ttf", 18.0f);
+
     if (!systemFont) {
-        Logger::the().error("CRITICAL: Could not load system font!");
+        Logger::the().error("Could not load system font!");
         return 1;
     }
 
@@ -83,8 +114,9 @@ int main(int argc, char* argv[]) {
     splash.next_step("Building UI...");
 
     auto root = std::make_shared<LinearLayout>(Orientation::Vertical);
-    root->set_width(MatchParent);
-    root->set_height(MatchParent);
+    root->set_width(WidgetSizePolicy::MatchParent);
+    root->set_height(WidgetSizePolicy::MatchParent);
+    root->set_show_focus_indicator(false);
 
     // Create View
     View view(root);
@@ -93,7 +125,7 @@ int main(int argc, char* argv[]) {
     bool running = true;
 
     auto lbl_title = std::make_shared<Label>("Izotrox UI Demo", systemFont, ThemeDB::the().color("Label.Text"));
-    lbl_title->set_width(MatchParent);
+    lbl_title->set_width(WidgetSizePolicy::MatchParent);
     root->add_child(lbl_title);
 
     auto btn_start_engine = std::make_shared<Button>("Start Engine", systemFont);
@@ -116,10 +148,19 @@ int main(int argc, char* argv[]) {
     root->add_child(pb_demo);
     
     auto slider_demo = std::make_shared<Slider>(sliderHandle, sliderHandleFocus, 0.5f);
+    slider_demo->set_width(WidgetSizePolicy::MatchParent);
+    slider_demo->set_on_change([&](float v) {
+        pb_demo->set_progress(v);
+        AndroidDevice::set_brightness((v/100)*255)
+    });
     root->add_child(slider_demo);
 
     auto tb_demo = std::make_shared<TextBox>("Enter something...", systemFont);
     tb_demo->set_focusable(true);
+    tb_demo->set_width(WidgetSizePolicy::MatchParent);
+    tb_demo->set_on_change([&](const std::string& text) {
+        Logger::the().info("Text changed: " + text);
+    });
     root->add_child(tb_demo);
     
     // Demo Multiline
@@ -128,30 +169,31 @@ int main(int argc, char* argv[]) {
     
     // Demo Wrap
     auto lbl_wrap_demo = std::make_shared<Label>("This is a very long text that should automatically wrap to the next line if the container width is not enough to hold it in a single line.", systemFont, ThemeDB::the().color("Label.Text"));
-    lbl_wrap_demo->set_width(MatchParent);
+    lbl_wrap_demo->set_width(WidgetSizePolicy::MatchParent);
     lbl_wrap_demo->set_wrap(true);
     root->add_child(lbl_wrap_demo);
 
     // ListView Demo
     auto listview = std::make_shared<ListView>();
-    listview->set_width(MatchParent);
-    listview->set_height(400); 
-    
-    std::vector<std::string> items;
-    for(int i=0; i<50; ++i) {
-        items.push_back("List Item " + std::to_string(i));
-    }
-    listview->set_items(items);
-    
-    listview->set_item_drawer([systemFont](Painter& p, int i, int x, int y, int w, int h) {
-        std::string text = "List Item " + std::to_string(i);
-        int th = systemFont->height();
-        int ty = y + (h - th) / 2;
-        systemFont->draw_text(p, x + 15, ty, text, ThemeDB::the().color("ListView.Text"));
-    });
-    
-    root->add_child(listview);
+    listview->set_height(400);
+    listview->set_width(WidgetSizePolicy::MatchParent);
 
+    for (int i = 0; i < 30; ++i) {
+        auto item = std::make_shared<ListItem>(Orientation::Vertical);
+        // item->set_height(60); 
+        item->set_padding(10, 10, 5, 5);
+
+        auto label = std::make_shared<Label>("Item #" + std::to_string(i), systemFont, ThemeDB::the().color("ListView.Text"));
+        label->set_focusable(false);
+        auto subLabel = std::make_shared<Label>("Details for " + std::to_string(i), systemFont, Color(150, 150, 150));
+        subLabel->set_focusable(false);
+        
+        item->add_child(label);
+        item->add_child(subLabel);
+
+        listview->add_item(item);
+    }
+    root->add_child(listview);
     view.resize(width, height);
 
     splash.next_step("Ready!");
@@ -159,19 +201,15 @@ int main(int argc, char* argv[]) {
     app.on_resize([&](int w, int h) {
         width = w;
         height = h;
-        canvas = std::make_unique<Canvas>(w, h);
-        painter = std::make_unique<Painter>(*canvas);
+        canvas->resize(w, h);
+        painter->set_canvas(*canvas);
         view.resize(w, h);
-        root->invalidate(); // Force redraw on resize
     });
 
-    // Initial draw
-    canvas->clear(ThemeDB::the().color("Window.Background"));
-    view.draw(*painter);
-    app.present(*canvas);
-    Widget::clear_dirty();
-
     auto last_time = std::chrono::high_resolution_clock::now();
+    int frame_count = 0;
+    float fps_timer = 0;
+    float current_fps = 0;
 
     while (running) {
         auto now = std::chrono::high_resolution_clock::now();
@@ -179,6 +217,14 @@ int main(int argc, char* argv[]) {
         last_time = now;
 
         app.set_delta(dt);
+
+        frame_count++;
+        fps_timer += dt;
+        if (fps_timer >= 1000.0f) {
+            current_fps = frame_count * 1000.0f / fps_timer;
+            frame_count = 0;
+            fps_timer = 0;
+        }
 
         if (!app.pump_events()) {
             running = false;
@@ -191,44 +237,15 @@ int main(int argc, char* argv[]) {
         
         KeyCode key = Input::the().key();
         if (key != KeyCode::None) view.on_key(key); 
+        
         view.update();
 
-        bool is_dirty = Widget::dirty();
+        canvas->clear(ThemeDB::the().color("Window.Background"));
+        view.draw(*painter);
 
-        if (is_dirty) {
-            auto dirty_rects = Widget::get_dirty_rects();
-            Color bg = ThemeDB::the().color("Window.Background");
-            
-            // Simple merging optimization: if too many rects, merge them all into one
-            if (dirty_rects.size() > 10) {
-                 IntRect combined = dirty_rects[0];
-                 for(size_t i=1; i<dirty_rects.size(); ++i) {
-                     // manual union
-                     int min_x = std::min(combined.x, dirty_rects[i].x);
-                     int min_y = std::min(combined.y, dirty_rects[i].y);
-                     int max_x = std::max(combined.x + combined.w, dirty_rects[i].x + dirty_rects[i].w);
-                     int max_y = std::max(combined.y + combined.h, dirty_rects[i].y + dirty_rects[i].h);
-                     combined = {min_x, min_y, max_x - min_x, max_y - min_y};
-                 }
-                 painter->set_clip(combined.x, combined.y, combined.w, combined.h);
-                 painter->fill_rect(combined.x, combined.y, combined.w, combined.h, bg);
-                 view.draw(*painter);
-                 painter->reset_clip();
-            } else {
-                for (const auto& rect : dirty_rects) {
-                    painter->set_clip(rect.x, rect.y, rect.w, rect.h);
-                    painter->fill_rect(rect.x, rect.y, rect.w, rect.h, bg);
-                    view.draw(*painter);
-                    painter->reset_clip();
-                }
-            }
+        draw_debug_panel(*painter, *inconsolata, current_fps);
 
-            app.present(*canvas);
-            Widget::clear_dirty();
-        } else {
-            // Sleep to reduce CPU usage when idle
-             std::this_thread::sleep_for(std::chrono::milliseconds(5));
-        }
+        app.present(*canvas);
     }
 
     Logger::the().info("Bye!");

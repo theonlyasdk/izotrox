@@ -22,7 +22,6 @@ bool Framebuffer::init(const std::string& device) {
     
     m_fd = open(device.c_str(), O_RDWR);
     if (m_fd == -1) {
-        // Fallback to standard linux fb0 if not android path
         if (device == "/dev/graphics/fb0") {
              m_fd = open("/dev/fb0", O_RDWR);
         }
@@ -42,12 +41,22 @@ bool Framebuffer::init(const std::string& device) {
         return false;
     }
 
+    Logger::the().info("Framebuffer ID: " + std::string(m_finfo.id));
+    Logger::the().info("Memory start: " + std::to_string(m_finfo.smem_start));
+    Logger::the().info("Memory length: " + std::to_string(m_finfo.smem_len));
+    Logger::the().info("Line length: " + std::to_string(m_finfo.line_length));
+    Logger::the().info("Resolution: " + std::to_string(m_vinfo.xres) + "x" + std::to_string(m_vinfo.yres));
+    Logger::the().info("Virtual resolution: " + std::to_string(m_vinfo.xres_virtual) + "x" + std::to_string(m_vinfo.yres_virtual));
+    Logger::the().info("Bits per pixel: " + std::to_string(m_vinfo.bits_per_pixel));
+    Logger::the().info("Red: len=" + std::to_string(m_vinfo.red.length) + ", offset=" + std::to_string(m_vinfo.red.offset));
+    Logger::the().info("Green: len=" + std::to_string(m_vinfo.green.length) + ", offset=" + std::to_string(m_vinfo.green.offset));
+    Logger::the().info("Blue: len=" + std::to_string(m_vinfo.blue.length) + ", offset=" + std::to_string(m_vinfo.blue.offset));
+    Logger::the().info("Alpha: len=" + std::to_string(m_vinfo.transp.length) + ", offset=" + std::to_string(m_vinfo.transp.offset));
+
     m_width = m_vinfo.xres;
     m_height = m_vinfo.yres;
     m_bpp = m_vinfo.bits_per_pixel;
     m_line_length = m_finfo.line_length;
-
-    Logger::the().info("FB Resolution: " + std::to_string(m_width) + "x" + std::to_string(m_height) + " " + std::to_string(m_bpp) + "bpp");
 
     // Try to enable double buffering
     m_vinfo.yres_virtual = m_vinfo.yres * 2;

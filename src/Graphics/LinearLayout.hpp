@@ -15,8 +15,12 @@ public:
     // Also override measure
     void measure(int parent_w, int parent_h) override;
     
+protected:
+    int content_height() const override { return m_content_height; }
+    
 private:
     Orientation m_orientation;
+    int m_content_height = 0;
 };
 
 } // namespace Izo

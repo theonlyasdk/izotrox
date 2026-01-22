@@ -15,6 +15,7 @@ public:
     void draw_content(Painter& painter) override;
     void measure(int parent_w, int parent_h) override;
     
+    void set_font(Font* font) { m_font = font; }
     void set_wrap(bool wrap) { m_wrap = wrap; }
 
 private:

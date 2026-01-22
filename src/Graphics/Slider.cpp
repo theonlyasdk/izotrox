@@ -9,13 +9,16 @@ namespace Izo {
 Slider::Slider(Image* handleImage, Image* handleFocusImage, float value) 
     : m_val(value), m_handle(handleImage), m_handle_focus(handleFocusImage) {
     set_focusable(true);
+    set_show_focus_indicator(false);
 }
 
 void Slider::set_value(float v) {
     float new_p = std::clamp(v, 0.0f, 1.0f);
     if (new_p != m_val) {
         m_val = new_p;
-        Widget::invalidate();
+        if (m_on_change) {
+            m_on_change(m_val);
+        }
     }
 }
 
@@ -33,7 +36,7 @@ void Slider::draw_content(Painter& painter) {
     }
     
     Image* imgToDraw = m_handle;
-    if ((m_is_pressed || m_is_focused) && m_handle_focus && m_handle_focus->valid()) {
+    if ((m_pressed || m_focused) && m_handle_focus && m_handle_focus->valid()) {
         imgToDraw = m_handle_focus;
     }
 
@@ -60,7 +63,7 @@ bool Slider::on_touch_event(int local_x, int local_y, bool down) {
     int hw = 16, hh = 16;
     
     Image* img = m_handle;
-    if ((m_is_pressed || m_is_focused) && m_handle_focus && m_handle_focus->valid()) img = m_handle_focus;
+    if ((m_pressed || m_focused) && m_handle_focus && m_handle_focus->valid()) img = m_handle_focus;
     
     if (img && img->valid()) {
         hw = img->width();
@@ -68,20 +71,26 @@ bool Slider::on_touch_event(int local_x, int local_y, bool down) {
     }
     
     // Handle pos relative to local 0,0
+    // Handle pos relative to local 0,0
     int hx = (int)(m_bounds.w * m_val) - hw / 2;
     int hy = (m_bounds.h - hh) / 2;
     
     bool overHandle = (local_x >= hx && local_x < hx + hw && local_y >= hy && local_y < hy + hh);
     bool insideTrack = (local_x >= 0 && local_x < m_bounds.w && local_y >= 0 && local_y < m_bounds.h);
     
-    m_is_pressed = down && (overHandle || insideTrack || m_is_pressed);
-
-    if (down) {
-        if (overHandle || m_is_focused || insideTrack) { 
-            float relativeX = (float)local_x;
-            float v = relativeX / (float)m_bounds.w;
-            set_value(v);
-        }
+    if (down && !m_pressed) {
+        // Initial press must be inside
+        m_pressed = (overHandle || insideTrack);
+    } else if (!down) {
+        m_pressed = false;
+    }
+    
+    // If pressed, we can drag anywhere
+    if (m_pressed) {
+        float relativeX = (float)local_x;
+        float v = relativeX / (float)m_bounds.w;
+        set_value(v);
+        return true; 
     }
     
     return down && (overHandle || insideTrack);

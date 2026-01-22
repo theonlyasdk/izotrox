@@ -7,39 +7,68 @@
 
 namespace Izo {
 
-Painter::Painter(Canvas& canvas) : m_canvas_ref(canvas), m_clip_rect{0, 0, canvas.width(), canvas.height()} {}
+Painter::Painter(Canvas& canvas) : m_canvas(&canvas), m_clip_rect{0, 0, canvas.width(), canvas.height()} {}
 
-void Painter::set_clip(int x, int y, int w, int h) {
-    IntRect r = {x, y, w, h};
-    IntRect screen = {0, 0, m_canvas_ref.width(), m_canvas_ref.height()};
-    m_clip_rect = r.intersection(screen);
+void Painter::set_canvas(Canvas& canvas) {
+    m_canvas = &canvas;
+    m_clip_rect = {0, 0, canvas.width(), canvas.height()};
+    m_clip_stack.clear();
+    m_tx = 0;
+    m_ty = 0;
+    m_translate_stack.clear();
 }
 
-void Painter::reset_clip() {
-    m_clip_rect = {0, 0, m_canvas_ref.width(), m_canvas_ref.height()};
+void Painter::push_clip(int x, int y, int w, int h) {
+    m_clip_stack.push_back(m_clip_rect);
+    IntRect r = {x + m_tx, y + m_ty, w, h};
+    m_clip_rect = r.intersection(m_clip_rect);
+}
+
+void Painter::pop_clip() {
+    if (!m_clip_stack.empty()) {
+        m_clip_rect = m_clip_stack.back();
+        m_clip_stack.pop_back();
+    }
+}
+
+void Painter::push_translate(int x, int y) {
+    m_translate_stack.push_back({m_tx, m_ty});
+    m_tx += x;
+    m_ty += y;
+}
+
+void Painter::pop_translate() {
+    if (!m_translate_stack.empty()) {
+        m_tx = m_translate_stack.back().x;
+        m_ty = m_translate_stack.back().y;
+        m_translate_stack.pop_back();
+    }
 }
 
 void Painter::draw_pixel(int x, int y, Color color) {
-    if (x >= m_clip_rect.x && x < m_clip_rect.right() && 
-        y >= m_clip_rect.y && y < m_clip_rect.bottom()) {
+    int dx = x + m_tx;
+    int dy = y + m_ty;
+    
+    if (dx >= m_clip_rect.x && dx < m_clip_rect.right() && 
+        dy >= m_clip_rect.y && dy < m_clip_rect.bottom()) {
         
         if (color.a == 0) return;
 
         if (color.a == 255) {
-            m_canvas_ref.set_pixel(x, y, color.as_argb());
+            m_canvas->set_pixel(dx, dy, color.as_argb());
         } else {
-            uint32_t bg = m_canvas_ref.pixel(x, y);
+            uint32_t bg = m_canvas->pixel(dx, dy);
             
             // Fast fixed-point alpha blending
             uint32_t a = color.a;
-            uint32_t inv_a = 255 - a;
+            uint32_t inv_a = 256 - a;
             
 #ifdef __ANDROID__
             Color bgC(bg);
             uint32_t r = (color.r * a + bgC.r * inv_a) >> 8;
             uint32_t g = (color.g * a + bgC.g * inv_a) >> 8;
             uint32_t b = (color.b * a + bgC.b * inv_a) >> 8;
-            m_canvas_ref.set_pixel(x, y, Color((uint8_t)r, (uint8_t)g, (uint8_t)b).to_argb());
+            m_canvas->set_pixel(dx, dy, Color((uint8_t)r, (uint8_t)g, (uint8_t)b).as_argb());
 #else
             uint32_t rb = bg & 0xFF00FF;
             uint32_t g  = bg & 0x00FF00;
@@ -50,14 +79,14 @@ void Painter::draw_pixel(int x, int y, Color color) {
             uint32_t res_rb = ((color_rb * a + rb * inv_a) >> 8) & 0xFF00FF;
             uint32_t res_g  = ((color_g * a + g * inv_a) >> 8) & 0x00FF00;
             
-            m_canvas_ref.set_pixel(x, y, 0xFF000000 | res_rb | res_g);
+            m_canvas->set_pixel(dx, dy, 0xFF000000 | res_rb | res_g);
 #endif
         }
     }
 }
 
 void Painter::fill_rect(int x, int y, int w, int h, Color color) {
-    IntRect r = {x, y, w, h};
+    IntRect r = {x + m_tx, y + m_ty, w, h};
     IntRect dest = r.intersection(m_clip_rect);
     
     if (dest.w <= 0 || dest.h <= 0) return;
@@ -66,16 +95,54 @@ void Painter::fill_rect(int x, int y, int w, int h, Color color) {
     
     if (color.a == 255) {
         for (int iy = 0; iy < dest.h; ++iy) {
-            uint32_t* row = m_canvas_ref.pixels() + (dest.y + iy) * m_canvas_ref.width() + dest.x;
+            uint32_t* row = m_canvas->pixels() + (dest.y + iy) * m_canvas->width() + dest.x;
             for (int ix = 0; ix < dest.w; ++ix) {
                 row[ix] = c;
             }
         }
     } else if (color.a > 0) {
+        uint32_t a = color.a;
+        uint32_t inv_a = 256 - a;
+        
         for (int iy = 0; iy < dest.h; ++iy) {
+            int py = dest.y + iy;
             for (int ix = 0; ix < dest.w; ++ix) {
-                draw_pixel(dest.x + ix, dest.y + iy, color);
+                int px = dest.x + ix;
+                uint32_t bg = m_canvas->pixel(px, py);
+                
+#ifdef __ANDROID__
+                Color bgC(bg);
+                uint32_t nr = (color.r * a + bgC.r * inv_a) >> 8;
+                uint32_t ng = (color.g * a + bgC.g * inv_a) >> 8;
+                uint32_t nb = (color.b * a + bgC.b * inv_a) >> 8;
+                m_canvas->set_pixel(px, py, Color((uint8_t)nr, (uint8_t)ng, (uint8_t)nb).as_argb());
+#else
+                uint32_t rb = bg & 0xFF00FF;
+                uint32_t g  = bg & 0x00FF00;
+                uint32_t color_rb = c & 0xFF00FF;
+                uint32_t color_g  = c & 0x00FF00;
+                uint32_t res_rb = ((color_rb * a + rb * inv_a) >> 8) & 0xFF00FF;
+                uint32_t res_g  = ((color_g * a + g * inv_a) >> 8) & 0x00FF00;
+                m_canvas->set_pixel(px, py, 0xFF000000 | res_rb | res_g);
+#endif
             }
+        }
+    }
+}
+
+void Painter::clear_rect(int x, int y, int w, int h, Color color) {
+    IntRect r = {x + m_tx, y + m_ty, w, h};
+    IntRect dest = r.intersection(m_clip_rect);
+    
+    if (dest.w <= 0 || dest.h <= 0) return;
+    
+    uint32_t c = color.as_argb();
+    
+    // Direct memory set/copy without alpha blending
+    for (int iy = 0; iy < dest.h; ++iy) {
+        uint32_t* row = m_canvas->pixels() + (dest.y + iy) * m_canvas->width() + dest.x;
+        for (int ix = 0; ix < dest.w; ++ix) {
+            row[ix] = c;
         }
     }
 }

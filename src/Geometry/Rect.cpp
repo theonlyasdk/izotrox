@@ -34,6 +34,28 @@ template <typename T> Rect<T> Rect<T>::intersection(const Rect &other) const {
   return {x1, y1, x2 - x1, y2 - y1};
 }
 
+template <typename T> Rect<T> Rect<T>::expanded(T amount) const {
+  return {x - amount, y - amount, w + amount * 2, h + amount * 2};
+}
+
+template <typename T> Rect<T> Rect<T>::contracted(T amount) const {
+  return {x + amount, y + amount, w - amount * 2, h - amount * 2};
+}
+
+template <typename T> void Rect<T>::expand(T amount) {
+  x -= amount;
+  y -= amount;
+  w += amount * 2;
+  h += amount * 2;
+}
+
+template <typename T> void Rect<T>::contract(T amount) {
+  x += amount;
+  y += amount;
+  w -= amount * 2;
+  h -= amount * 2;
+}
+
 } // namespace Izo
 
 template class Izo::Rect<int>;

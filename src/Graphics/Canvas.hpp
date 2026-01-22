@@ -31,6 +31,8 @@ public:
 
     uint32_t pixel(int x, int y) const;
 
+    void resize(int width, int height);
+
 private:
     int m_width;
     int m_height;

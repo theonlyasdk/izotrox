@@ -24,7 +24,7 @@ public:
 private:
     std::string m_text_str;
     Font* m_font;
-    bool m_is_pressed = false;
+    bool m_pressed = false;
     bool m_is_hovered = false;
     
     Animator<Color> m_bg_anim;

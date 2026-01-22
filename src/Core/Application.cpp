@@ -4,6 +4,7 @@
 
 #ifdef __ANDROID__
     #include "Device/Framebuffer.hpp"
+    #include "Platform/Android/AndroidDevice.hpp"
 #else
     #include "Platform/Linux/SDLApplication.hpp"
 #endif
@@ -51,7 +52,18 @@ bool Application::init() {
             return false;
         impl->width = impl->fb.width();
         impl->height = impl->fb.height();
-    )    
+    )
+    IF_DESKTOP(
+        if (impl->sdl_app) {
+            impl->sdl_app->set_on_resize([this](int w, int h) {
+                impl->width = w;
+                impl->height = h;
+                if (impl->on_resize) {
+                    impl->on_resize(w, h);
+                }
+            });
+        }
+    )
     return true;
 }
 
@@ -76,15 +88,7 @@ void Application::present(Canvas& canvas) {
     )
     IF_DESKTOP(
         if (impl->sdl_app) {
-            impl->sdl_app->present(canvas.pixels(), impl->width, impl->height);
-
-            if (impl->sdl_app->width() != impl->width || 
-                impl->sdl_app->height() != impl->height) {
-                impl->width = impl->sdl_app->width();
-                impl->height = impl->sdl_app->height();
-                if (impl->on_resize) 
-                    impl->on_resize(impl->width, impl->height);
-            }
+            impl->sdl_app->present(canvas.pixels(), canvas.width(), canvas.height());
         }
     )
 }

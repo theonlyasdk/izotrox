@@ -1,7 +1,7 @@
 #pragma once
-#include "Painter.hpp"
-#include "Canvas.hpp"
-#include "Font.hpp"
+#include "Graphics/Painter.hpp"
+#include "Graphics/Canvas.hpp"
+#include "Graphics/Font.hpp"
 #include "Core/Application.hpp"
 #include <string>
 

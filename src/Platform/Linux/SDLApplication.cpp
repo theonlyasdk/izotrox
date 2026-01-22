@@ -64,8 +64,12 @@ bool SDLApplication::pump_events() {
             m_running = false;
         } else if (e.type == SDL_WINDOWEVENT) {
             if (e.window.event == SDL_WINDOWEVENT_RESIZED) {
-                m_width = e.window.data1;
-                m_height = e.window.data2;
+                int w = e.window.data1;
+                int h = e.window.data2;
+                if (w <= 0 || h <= 0) continue;
+
+                m_width = w;
+                m_height = h;
                 
                 if (m_texture) SDL_DestroyTexture(m_texture);
                 m_texture = SDL_CreateTexture(m_renderer,
@@ -75,6 +79,8 @@ bool SDLApplication::pump_events() {
                 
                 if (m_on_resize) m_on_resize(m_width, m_height);
             }
+        } else if (e.type == SDL_MOUSEWHEEL) {
+             Izo::Input::the().set_scroll(e.wheel.y);
         } else if (e.type == SDL_MOUSEMOTION) {
             Izo::Input::the().set_touch(e.motion.x, e.motion.y, (e.motion.state & SDL_BUTTON_LMASK) != 0);
         } else if (e.type == SDL_MOUSEBUTTONDOWN) {
@@ -89,19 +95,37 @@ bool SDLApplication::pump_events() {
              bool down = (e.type == SDL_KEYDOWN);
              if (e.key.keysym.sym == SDLK_LSHIFT || e.key.keysym.sym == SDLK_RSHIFT) {
                  Izo::Input::the().set_shift(down);
+             } else if (e.key.keysym.sym == SDLK_LCTRL || e.key.keysym.sym == SDLK_RCTRL) {
+                 Izo::Input::the().set_ctrl(down);
              }
              
              if (down) {
-                 if (e.key.keysym.sym == SDLK_c && (e.key.keysym.mod & KMOD_CTRL)) {
-                     m_running = false;
-                 } else if (e.key.keysym.sym == SDLK_BACKSPACE) {
+                 if (e.key.keysym.sym == SDLK_BACKSPACE) {
                      Izo::Input::the().set_key(Izo::KeyCode::Backspace); 
+                 } else if (e.key.keysym.sym == SDLK_DELETE) {
+                     Izo::Input::the().set_key(Izo::KeyCode::Delete); 
                  } else if (e.key.keysym.sym == SDLK_RETURN) {
                      Izo::Input::the().set_key(Izo::KeyCode::Enter); 
                  } else if (e.key.keysym.sym == SDLK_LEFT) {
                      Izo::Input::the().set_key(Izo::KeyCode::Left);
                  } else if (e.key.keysym.sym == SDLK_RIGHT) {
                      Izo::Input::the().set_key(Izo::KeyCode::Right);
+                 } else if (e.key.keysym.sym == SDLK_UP) {
+                     Izo::Input::the().set_key(Izo::KeyCode::Up);
+                 } else if (e.key.keysym.sym == SDLK_DOWN) {
+                     Izo::Input::the().set_key(Izo::KeyCode::Down);
+                 } else if (e.key.keysym.sym == SDLK_HOME) {
+                     Izo::Input::the().set_key(Izo::KeyCode::Home);
+                 } else if (e.key.keysym.sym == SDLK_END) {
+                     Izo::Input::the().set_key(Izo::KeyCode::End);
+                 } else if (e.key.keysym.sym == SDLK_a && (e.key.keysym.mod & KMOD_CTRL)) {
+                     Izo::Input::the().set_key((Izo::KeyCode)'a');
+                 } else if (e.key.keysym.sym == SDLK_c && (e.key.keysym.mod & KMOD_CTRL)) {
+                     Izo::Input::the().set_key((Izo::KeyCode)'c');
+                 } else if (e.key.keysym.sym == SDLK_v && (e.key.keysym.mod & KMOD_CTRL)) {
+                     Izo::Input::the().set_key((Izo::KeyCode)'v');
+                 } else if (e.key.keysym.sym == SDLK_x && (e.key.keysym.mod & KMOD_CTRL)) {
+                     Izo::Input::the().set_key((Izo::KeyCode)'x');
                  }
              }
         }
@@ -110,7 +134,12 @@ bool SDLApplication::pump_events() {
 }
 
 void SDLApplication::present(const uint32_t* pixels, int width, int height) {
-    if (!m_texture || !m_renderer) return;
+    if (!m_texture || !m_renderer || !pixels) return;
+
+    if (width != (int)m_width || height != (int)m_height) {
+        // Mismatch between canvas and window size, skip this frame to prevent crash
+        return;
+    }
 
     SDL_UpdateTexture(m_texture, NULL, pixels, width * sizeof(uint32_t));
     

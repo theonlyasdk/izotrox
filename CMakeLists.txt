@@ -14,6 +14,8 @@ else()
     find_package(SDL2 REQUIRED)
     include_directories(${SDL2_INCLUDE_DIRS})
     file(GLOB_RECURSE PLATFORM_SOURCES "src/Platform/Linux/*.cpp")
+    # Include AndroidDevice even on Linux as it's used in main.cpp (with #ifdefs inside)
+    list(APPEND PLATFORM_SOURCES "src/Platform/Android/AndroidDevice.cpp")
 endif()
 
 
@@ -28,7 +30,7 @@ target_include_directories(izotrox PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_include_directories(izotrox PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 target_compile_definitions(izotrox PRIVATE LUA_USE_POSIX)
-target_compile_options(izotrox PRIVATE -O3)
+target_compile_options(izotrox PRIVATE )
 
 target_link_libraries(izotrox PRIVATE m)
 

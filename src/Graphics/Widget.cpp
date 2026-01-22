@@ -7,48 +7,66 @@
 
 namespace Izo {
 
-std::vector<IntRect> Widget::s_dirty_rects;
-
-Widget::Widget() : m_bounds{0, 0, 0, 0}, m_focus_anim(0.0f), m_is_focusable(true) {}
+Widget::Widget() : m_bounds{0, 0, 0, 0}, m_measured_size{0, 0, 0, 0}, m_focus_anim(0.0f), m_prev_touch_down(false), m_touch_started_inside(false), m_focusable(true) {}
 
 void Widget::draw(Painter& painter) {
     if (!m_visible) return;
-
     draw_content(painter);
+}
 
-    if (m_is_focusable && m_show_focus_indicator) {
+void Widget::draw_focus(Painter& painter) {
+    if (!m_visible) return;
+    if (m_focusable && m_show_focus_indicator) {
         draw_focus_outline(painter);
     }
 }
 
 void Widget::update() {
-    if (m_focus_anim.update(Application::the().delta())) 
-        invalidate();
+    m_focus_anim.update(Application::the().delta());
 }
 
 void Widget::measure(int parent_w, int parent_h) {
-    m_measured_size = {0, 0, 0, 0};
+    int w = 0, h = 0;
+    if (m_width == (int)WidgetSizePolicy::MatchParent) w = parent_w;
+    else if (m_width > 0) w = m_width;
+    
+    if (m_height == (int)WidgetSizePolicy::MatchParent) h = parent_h;
+    else if (m_height > 0) h = m_height;
+    
+    m_measured_size = {0, 0, w, h};
 }
 
 void Widget::handle_focus_logic(bool inside, bool down) {
-    bool old_focused = m_is_focused;
+    bool old_focused = m_focused;
 
-    if (down) {
-        if (inside && !m_prev_touch_down) { 
-            if (m_is_focusable) m_is_focused = true;
-        } else if (!inside && !m_prev_touch_down) {
-            // Clicked outside - lose focus
-            m_is_focused = false;
+    // On initial press
+    if (down && !m_prev_touch_down) {
+        m_touch_started_inside = inside;
+        m_gesture_cancelled = false;
+        // Lose focus if clicking outside
+        if (!inside) {
+            m_focused = false;
+        }
+    }
+
+    // On release - only focus if gesture wasn't cancelled and started inside
+    if (!down && m_prev_touch_down && !m_gesture_cancelled) {
+        if (inside && m_touch_started_inside && m_focusable) {
+            m_focused = true;
         }
     }
     
-    if (!down) m_prev_touch_down = false;
-    else m_prev_touch_down = true;
+    // Reset on release
+    if (!down) {
+        m_touch_started_inside = false;
+        m_gesture_cancelled = false;
+    }
     
-    if (old_focused != m_is_focused) {
+    m_prev_touch_down = down;
+    
+    if (old_focused != m_focused) {
         int anim_duration = ThemeDB::the().int_value("Widget.FocusAnimDuration", 6);
-        m_focus_anim.set_target(m_is_focused ? 1.0f : 0.0f, anim_duration, Easing::EaseOutCubic);
-        invalidate();
+        m_focus_anim.set_target(m_focused ? 1.0f : 0.0f, anim_duration, Easing::EaseOutCubic);
     }
 }
 
@@ -83,36 +101,12 @@ void Widget::draw_focus_outline(Painter& painter) {
 }
 
 void Widget::set_focused(bool focused) {
-    if (m_is_focused != focused) {
-        m_is_focused = focused;
-        invalidate();
+    if (m_focused != focused) {
+        m_focused = focused;
     }
 }
 
-void Widget::show() { if (!m_visible) { m_visible = true; invalidate(); } }
-void Widget::hide() { if (m_visible) { m_visible = false; invalidate(); } }
-
-void Widget::invalidate() { 
-    IntRect rect = m_bounds;
-    if (m_is_focusable && m_show_focus_indicator) {
-        int margin = ThemeDB::the().int_value("Widget.FocusThickness", 6);
-        rect.x -= margin;
-        rect.y -= margin;
-        rect.w += margin * 2;
-        rect.h += margin * 2;
-    }
-    add_dirty_rect(rect);
-}
-
-bool Widget::dirty() { return !s_dirty_rects.empty(); }
-void Widget::clear_dirty() { s_dirty_rects.clear(); }
-
-const std::vector<IntRect>& Widget::get_dirty_rects() {
-    return s_dirty_rects;
-}
-
-void Widget::add_dirty_rect(const IntRect& rect) {
-    s_dirty_rects.push_back(rect);
-}
+void Widget::show() { if (!m_visible) { m_visible = true; } }
+void Widget::hide() { if (m_visible) { m_visible = false; } }
 
 } // namespace Izo

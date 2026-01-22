@@ -27,7 +27,10 @@ void View::update() {
 }
 
 void View::draw(Painter& painter) {
-    if (m_root) m_root->draw(painter);
+    if (m_root) {
+        m_root->draw(painter);
+        m_root->draw_focus(painter);
+    }
 }
 
 void View::on_touch(int x, int y, bool down) {

@@ -14,7 +14,10 @@ enum class KeyCode : int {
     Left = 200,
     Right = 201,
     Up = 202,
-    Down = 203
+    Down = 203,
+    Home = 204,
+    End = 205,
+    Delete = 206
 };
 
 } // namespace Izo

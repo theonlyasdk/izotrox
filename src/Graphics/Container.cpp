@@ -6,17 +6,17 @@
 namespace Izo {
 
 void Container::add_child(std::shared_ptr<Widget> child) {
+    child->set_parent(this);
     m_children.push_back(child);
-    Widget::invalidate();
 }
 
 void Container::draw_content(Painter& painter) {
-    painter.set_clip(m_bounds.x, m_bounds.y, m_bounds.w, m_bounds.h);
+    painter.push_clip(m_bounds.x, m_bounds.y, m_bounds.w, m_bounds.h);
     for (auto& child : m_children) {
         if (child->visible())
             child->draw(painter);
     }
-    painter.reset_clip();
+    painter.pop_clip();
 }
 
 bool Container::on_touch(int tx, int ty, bool down, bool captured) {
@@ -28,26 +28,41 @@ bool Container::on_touch(int tx, int ty, bool down, bool captured) {
         return true;
     } 
     
+    std::shared_ptr<Widget> target = nullptr;
+    bool handled = false;
+
+    // Pass 1: Find target
     for (auto it = m_children.rbegin(); it != m_children.rend(); ++it) {
         auto& child = *it;
         if (!child->visible()) continue;
         
         bool inside = child->bounds().contains(tx, ty);
         if (inside) {
+            // Tentatively try to handle
             if (child->on_touch(tx, ty, down, false)) {
+                target = child;
+                handled = true;
                 if (down) m_captured_child = child;
-                return true;
+                break; // Found our target (top-most)
             }
-        } else {
-            // Call on_touch with inside=false to allow widgets to handle focus loss on click-outside
-            // But only if it's a press event (down=true)
-            if (down) {
-                child->on_touch(tx, ty, down, false);
+        }
+    }
+
+    // Pass 2: Focus Management
+    // If we simply clicked background (handled == false), we DO NOT clear focus. 
+    // This allows scrolling to happen without deselecting.
+    // If we clicked a child (handled == true) and it's a DOWN event, we clear focus of others.
+    
+    if (handled && down) {
+        for (auto& child : m_children) {
+            if (child != target && child->visible()) {
+                // Send inside=false to force focus loss
+                child->on_touch(tx, ty, down, false); 
             }
         }
     }
     
-    return false;
+    return handled;
 }
 
 bool Container::on_key(KeyCode key) {
@@ -80,7 +95,14 @@ void Container::collect_focusable_widgets(std::vector<std::shared_ptr<Widget>>& 
 }
 
 void Container::layout() {
-    invalidate();
+}
+
+void Container::draw_focus(Painter& painter) {
+    for (auto& child : m_children) {
+        if (child->visible())
+            child->draw_focus(painter);
+    }
+    Widget::draw_focus(painter);
 }
 
 } // namespace Izo

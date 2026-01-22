@@ -18,7 +18,7 @@ public:
     bool on_touch_event(int, int, bool) override;
 
 private:
-    float m_val;
+    float m_value;
 };
 
 } // namespace Izo
