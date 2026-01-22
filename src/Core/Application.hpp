@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <functional>
 #include <string>
 #include "Graphics/Canvas.hpp"
@@ -21,8 +22,8 @@ public:
     // On Android it copies canvas to framebuffer and swaps doublebuffer
     void present(Canvas& canvas);
 
-    int width() const;
-    int height() const;
+    uint32_t width() const;
+    uint32_t height() const;
 
     void on_resize(std::function<void(int, int)> callback);
 private:

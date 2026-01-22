@@ -3,7 +3,7 @@
 #pragma once
 #include "Canvas.hpp"
 #include "Color.hpp"
-#include "Core/Rect.hpp"
+#include "Geometry/Rect.hpp"
 #include <algorithm>
 
 namespace Izo {

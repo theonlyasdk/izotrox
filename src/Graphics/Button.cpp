@@ -33,14 +33,6 @@ void Button::update() {
 }
 
 bool Button::on_touch_event(int local_x, int local_y, bool down) {
-    // local_x/y are relative to m_bounds.
-    // inside check is implicit by on_touch calling us?
-    // Widget::on_touch checks bounds before calling handle_focus_logic.
-    // But it passes event to us regardless of inside if we are captured?
-    // Widget::on_touch only checks inside for focus logic.
-    // It passes `local_x` which might be outside.
-    // So we need to check inside.
-    
     // Bounds check: 0 <= local_x < w
     bool inside = (local_x >= 0 && local_x < m_bounds.w && local_y >= 0 && local_y < m_bounds.h);
     

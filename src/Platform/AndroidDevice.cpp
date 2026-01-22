@@ -1,12 +1,17 @@
-#include "MobileDevice.hpp"
+#include "AndroidDevice.hpp"
+#include "Debug/Logger.hpp"
+#include <cstdint>
+#include <format>
 #include <fstream>
 #include <string>
+#include <sys/types.h>
 
 namespace Izo {
 
-void MobileDevice::set_brightness(int value) {
+void AndroidDevice::set_brightness(uint8_t value) {
+    Logger::the().info(std::format("Setting brightness to {}", value));
 #ifdef __ANDROID__
-    // Try common brightness paths
+    // Some common brightness paths
     const char* paths[] = {
         "/sys/class/backlight/panel0-backlight/brightness",
         "/sys/class/leds/lcd-backlight/brightness",

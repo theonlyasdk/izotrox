@@ -3,7 +3,7 @@
 #pragma once
 #include "Painter.hpp"
 #include "Animator.hpp"
-#include "Core/Rect.hpp"
+#include "Geometry/Rect.hpp"
 #include "Input/KeyCode.hpp"
 
 namespace Izo {

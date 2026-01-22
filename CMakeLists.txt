@@ -20,11 +20,9 @@ endif()
 file(GLOB_RECURSE SOURCES "src/*.cpp" "src/*/*.cpp")
 list(FILTER SOURCES EXCLUDE REGEX ".*/Platform/.*")
 
-file(GLOB_RECURSE HEADERS
-     "include/**/*.h"
-     "include/**/*.hpp")
+file(GLOB_RECURSE HEADERS "include/**/*.h" "include/**/*.hpp")
 
-add_executable(izotrox ${SOURCES} ${HEADERS} ${PLATFORM_SOURCES} "src/Platform/MobileDevice.cpp")
+add_executable(izotrox ${SOURCES} ${HEADERS} ${PLATFORM_SOURCES})
 
 target_include_directories(izotrox PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_include_directories(izotrox PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -40,6 +38,4 @@ endif()
 
 if(ANDROID)
     install(TARGETS izotrox DESTINATION /data/adb/izotrox.dir/)
-else()
-    install(TARGETS izotrox DESTINATION /usr/local/bin/)
 endif()

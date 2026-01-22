@@ -7,7 +7,7 @@ namespace Izo {
 
 bool Widget::s_global_dirty = true;
 
-Widget::Widget() : m_bounds{0, 0, 0, 0}, m_focus_anim(0.0f) {}
+Widget::Widget() : m_bounds{0, 0, 0, 0}, m_focus_anim(0.0f), m_is_focusable(true) {}
 
 void Widget::draw(Painter& painter) {
     if (!m_visible) return;

@@ -29,7 +29,7 @@
 #include "Graphics/ListView.hpp"
 #include "Core/Application.hpp"
 #include "Core/ThemeDB.hpp"
-#include "Platform/MobileDevice.hpp"
+#include "Platform/AndroidDevice.hpp"
 
 using namespace Izo;
 
@@ -92,13 +92,13 @@ int main(int argc, char* argv[]) {
 
     bool running = true;
 
-    auto lbl = std::make_shared<Label>("Izotrox UI Demo", systemFont, ThemeDB::the().color("Label.Text"));
-    lbl->set_width(MatchParent);
-    root->add_child(lbl);
+    auto lbl_title = std::make_shared<Label>("Izotrox UI Demo", systemFont, ThemeDB::the().color("Label.Text"));
+    lbl_title->set_width(MatchParent);
+    root->add_child(lbl_title);
 
-    auto btn1 = std::make_shared<Button>("Start Engine", systemFont);
-    btn1->set_focusable(true);
-    root->add_child(btn1);
+    auto btn_start_engine = std::make_shared<Button>("Start Engine", systemFont);
+    btn_start_engine->set_focusable(true);
+    root->add_child(btn_start_engine);
 
     auto btn2 = std::make_shared<Button>("Settings", systemFont);
     btn2->set_focusable(true);
@@ -112,45 +112,45 @@ int main(int argc, char* argv[]) {
     });
     root->add_child(btn3);
 
-    auto pb = std::make_shared<ProgressBar>(0.0f);
-    root->add_child(pb);
+    auto pb_demo = std::make_shared<ProgressBar>(0.0f);
+    root->add_child(pb_demo);
     
-    auto slider = std::make_shared<Slider>(sliderHandle, sliderHandleFocus, 0.5f);
-    root->add_child(slider);
+    auto slider_demo = std::make_shared<Slider>(sliderHandle, sliderHandleFocus, 0.5f);
+    root->add_child(slider_demo);
 
-    auto tb = std::make_shared<TextBox>("Enter something...", systemFont);
-    tb->set_focusable(true);
-    root->add_child(tb);
+    auto tb_demo = std::make_shared<TextBox>("Enter something...", systemFont);
+    tb_demo->set_focusable(true);
+    root->add_child(tb_demo);
     
     // Demo Multiline
-    auto multiLbl = std::make_shared<Label>("Multi-line\nLabel Test", systemFont, ThemeDB::the().color("Label.Text"));
-    root->add_child(multiLbl);
+    auto lbl_multiline_demo = std::make_shared<Label>("Multi-line\nLabel Test", systemFont, ThemeDB::the().color("Label.Text"));
+    root->add_child(lbl_multiline_demo);
     
     // Demo Wrap
-    auto wrapLbl = std::make_shared<Label>("This is a very long text that should automatically wrap to the next line if the container width is not enough to hold it in a single line.", systemFont, ThemeDB::the().color("Label.Text"));
-    wrapLbl->set_width(MatchParent);
-    wrapLbl->set_wrap(true);
-    root->add_child(wrapLbl);
+    auto lbl_wrap_demo = std::make_shared<Label>("This is a very long text that should automatically wrap to the next line if the container width is not enough to hold it in a single line.", systemFont, ThemeDB::the().color("Label.Text"));
+    lbl_wrap_demo->set_width(MatchParent);
+    lbl_wrap_demo->set_wrap(true);
+    root->add_child(lbl_wrap_demo);
 
     // ListView Demo
-    auto listView = std::make_shared<ListView>();
-    listView->set_width(MatchParent);
-    listView->set_height(400); 
+    auto listview = std::make_shared<ListView>();
+    listview->set_width(MatchParent);
+    listview->set_height(400); 
     
     std::vector<std::string> items;
     for(int i=0; i<50; ++i) {
         items.push_back("List Item " + std::to_string(i));
     }
-    listView->set_items(items);
+    listview->set_items(items);
     
-    listView->set_item_drawer([systemFont](Painter& p, int i, int x, int y, int w, int h) {
+    listview->set_item_drawer([systemFont](Painter& p, int i, int x, int y, int w, int h) {
         std::string text = "List Item " + std::to_string(i);
         int th = systemFont->height();
         int ty = y + (h - th) / 2;
         systemFont->draw_text(p, x + 15, ty, text, ThemeDB::the().color("ListView.Text"));
     });
     
-    root->add_child(listView);
+    root->add_child(listview);
 
     view.resize(width, height);
 

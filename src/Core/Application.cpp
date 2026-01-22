@@ -1,5 +1,6 @@
 #include "Application.hpp"
 #include "Platform/PlatformMacros.hpp"
+#include <cstdint>
 
 #ifdef __ANDROID__
     #include "Device/Framebuffer.hpp"
@@ -36,7 +37,7 @@ Application::Application(int width, int height, const char* title)
 
 Application::~Application() {
     IF_ANDROID(
-        MobileDevice::set_brightness(0);
+        AndroidDevice::set_brightness(0);
     )
 }
 
@@ -73,17 +74,20 @@ void Application::present(Canvas& canvas) {
     IF_DESKTOP(
         if (impl->sdl_app) {
             impl->sdl_app->present(canvas.pixels(), impl->width, impl->height);
-            if (impl->sdl_app->width() != (uint32_t)impl->width || impl->sdl_app->height() != (uint32_t)impl->height) {
+
+            if (impl->sdl_app->width() != impl->width || 
+                impl->sdl_app->height() != impl->height) {
                 impl->width = impl->sdl_app->width();
                 impl->height = impl->sdl_app->height();
-                if (impl->on_resize) impl->on_resize(impl->width, impl->height);
+                if (impl->on_resize) 
+                    impl->on_resize(impl->width, impl->height);
             }
         }
     )
 }
 
-int Application::width() const { return impl->width; }
-int Application::height() const { return impl->height; }
+uint32_t Application::width() const { return impl->width; }
+uint32_t Application::height() const { return impl->height; }
 
 void Application::on_resize(std::function<void(int, int)> callback) {
     impl->on_resize = callback;

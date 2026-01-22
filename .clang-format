@@ -1,6 +1,6 @@
 ---
 AlignEscapedNewlines: Left
-AlignTrailingComments:
+AlignTrailingnmments:
     Kind: Always
     OverEmptyLines: 0
 BasedOnStyle: WebKit
@@ -11,6 +11,7 @@ BreakBeforeInheritanceComma: true
 BreakConstructorInitializers: BeforeComma
 IndentPPDirectives: AfterHash
 IndentRequiresClause: false
+ColumnLimit: 0
 InsertNewlineAtEOF: true
 LineEnding: LF
 NamespaceIndentation: None
