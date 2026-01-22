@@ -58,7 +58,7 @@ public:
         return Color(128, 128, 128); 
     }
 
-    int value(const std::string& name, int defaultVal = 0) {
+    int int_value(const std::string& name, int defaultVal = 0) {
         auto it = values.find(name);
         if (it != values.end()) return it->second;
         return defaultVal;

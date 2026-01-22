@@ -17,7 +17,7 @@ public:
     bool on_touch(int tx, int ty, bool down, bool captured = false) override;
     bool on_key(KeyCode key) override;
     
-    void invalidate() override;
+    // void invalidate() override; // Removed to avoid recursive invalidation
     void layout() override; 
 
     void collect_focusable_widgets(std::vector<std::shared_ptr<Widget>>& out_list);

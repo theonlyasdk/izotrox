@@ -162,16 +162,23 @@ int main(int argc, char* argv[]) {
         canvas = std::make_unique<Canvas>(w, h);
         painter = std::make_unique<Painter>(*canvas);
         view.resize(w, h);
+        root->invalidate(); // Force redraw on resize
     });
 
-    root->invalidate();
+    // Initial draw
+    canvas->clear(ThemeDB::the().color("Window.Background"));
+    view.draw(*painter);
+    app.present(*canvas);
+    Widget::clear_dirty();
 
-    auto lastTime = std::chrono::high_resolution_clock::now();
+    auto last_time = std::chrono::high_resolution_clock::now();
 
     while (running) {
-        auto currentTime = std::chrono::high_resolution_clock::now();
-        float dt = std::chrono::duration<float, std::chrono::milliseconds::period>(currentTime - lastTime).count();
-        lastTime = currentTime;
+        auto now = std::chrono::high_resolution_clock::now();
+        float dt = std::chrono::duration<float, std::chrono::milliseconds::period>(now - last_time).count();
+        last_time = now;
+
+        app.set_delta(dt);
 
         if (!app.pump_events()) {
             running = false;
@@ -189,12 +196,38 @@ int main(int argc, char* argv[]) {
         bool is_dirty = Widget::dirty();
 
         if (is_dirty) {
-            canvas->clear(ThemeDB::the().color("Window.Background"));
-
-            view.draw(*painter);
+            auto dirty_rects = Widget::get_dirty_rects();
+            Color bg = ThemeDB::the().color("Window.Background");
+            
+            // Simple merging optimization: if too many rects, merge them all into one
+            if (dirty_rects.size() > 10) {
+                 IntRect combined = dirty_rects[0];
+                 for(size_t i=1; i<dirty_rects.size(); ++i) {
+                     // manual union
+                     int min_x = std::min(combined.x, dirty_rects[i].x);
+                     int min_y = std::min(combined.y, dirty_rects[i].y);
+                     int max_x = std::max(combined.x + combined.w, dirty_rects[i].x + dirty_rects[i].w);
+                     int max_y = std::max(combined.y + combined.h, dirty_rects[i].y + dirty_rects[i].h);
+                     combined = {min_x, min_y, max_x - min_x, max_y - min_y};
+                 }
+                 painter->set_clip(combined.x, combined.y, combined.w, combined.h);
+                 painter->fill_rect(combined.x, combined.y, combined.w, combined.h, bg);
+                 view.draw(*painter);
+                 painter->reset_clip();
+            } else {
+                for (const auto& rect : dirty_rects) {
+                    painter->set_clip(rect.x, rect.y, rect.w, rect.h);
+                    painter->fill_rect(rect.x, rect.y, rect.w, rect.h, bg);
+                    view.draw(*painter);
+                    painter->reset_clip();
+                }
+            }
 
             app.present(*canvas);
             Widget::clear_dirty();
+        } else {
+            // Sleep to reduce CPU usage when idle
+             std::this_thread::sleep_for(std::chrono::milliseconds(5));
         }
     }
 

@@ -67,13 +67,6 @@ void Container::update() {
     }
 }
 
-void Container::invalidate() {
-    Widget::invalidate();
-    for (auto& child : m_children) {
-        child->invalidate();
-    }
-}
-
 void Container::collect_focusable_widgets(std::vector<std::shared_ptr<Widget>>& out_list) {
     for (auto& child : m_children) {
         if (!child->visible()) continue;

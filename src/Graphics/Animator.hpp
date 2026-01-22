@@ -4,11 +4,41 @@
 
 namespace Izo {
 
+// ------------------------------------------------------------
+//  Easing enum – add the new variants
+// ------------------------------------------------------------
 enum class Easing {
     Linear,
+
+    // Quadratic
     EaseInQuad,
     EaseOutQuad,
-    EaseInOutQuad
+    EaseInOutQuad,
+
+    // Cubic
+    EaseInCubic,
+    EaseOutCubic,
+    EaseInOutCubic,
+
+    // Quartic
+    EaseInQuart,
+    EaseOutQuart,
+    EaseInOutQuart,
+
+    // Quintic
+    EaseInQuint,
+    EaseOutQuint,
+    EaseInOutQuint,
+
+    // Bounce
+    BounceIn,
+    BounceOut,
+    BounceInOut,
+
+    // iOS‑style spring easing
+    SpringEaseIn,
+    SpringEaseOut,
+    SpringEaseBounce
 };
 
 template <typename T>
@@ -26,7 +56,7 @@ public:
     bool update(float dtMs);
 
 private:
-    float apply_easing(float t);
+    float apply_easing(float t) const;
     T interpolate(const T& a, const T& b, float t);
     T current;
     T start;

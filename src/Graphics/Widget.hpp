@@ -5,6 +5,7 @@
 #include "Animator.hpp"
 #include "Geometry/Rect.hpp"
 #include "Input/KeyCode.hpp"
+#include <vector>
 
 namespace Izo {
 
@@ -61,6 +62,8 @@ public:
     virtual void invalidate();
     static bool dirty();
     static void clear_dirty();
+    static const std::vector<IntRect>& get_dirty_rects();
+    static void add_dirty_rect(const IntRect& rect);
 
 protected:
     void handle_focus_logic(bool inside, bool down);
@@ -84,7 +87,7 @@ protected:
     bool m_visible = true;
     bool m_show_focus_indicator = true;
 
-    static bool s_global_dirty;
+    static std::vector<IntRect> s_dirty_rects;
 };
 
 } // namespace Izo

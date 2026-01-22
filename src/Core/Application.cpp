@@ -10,6 +10,8 @@
 
 namespace Izo {
 
+Application* Application::_instance = nullptr;
+
 /**
  * Application platform implementation
  */
@@ -33,6 +35,7 @@ struct Application::Impl {
 
 Application::Application(int width, int height, const char* title)
     : impl(std::make_unique<Impl>(width, height, title)) {
+    _instance = this;
 }
 
 Application::~Application() {

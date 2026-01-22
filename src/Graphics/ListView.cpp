@@ -38,7 +38,6 @@ void ListView::update() {
             m_scroll_y += m_velocity_y;
             Widget::invalidate();
 
-            // Spring back
             if (m_scroll_y > 0) {
                 m_velocity_y = (0 - m_scroll_y) * TENSION;
                 m_scrollbar_alpha = 255;
@@ -75,11 +74,8 @@ void ListView::draw_content(Painter& painter) {
     
     painter.fill_rect(m_bounds.x, m_bounds.y, m_bounds.w, m_bounds.h, bg);
 
-    // Set clip for items (1px inset to allow border to show perfectly if it overlaps)
-    // Actually, just m_bounds is fine if border is drawn AFTER.
     painter.set_clip(m_bounds.x, m_bounds.y, m_bounds.w, m_bounds.h);
 
-    // Optimized drawing: only visible items
     int start_idx = (int)(-m_scroll_y / m_item_height);
     if (start_idx < 0) start_idx = 0;
     
@@ -105,7 +101,6 @@ void ListView::draw_content(Painter& painter) {
     
     painter.reset_clip();
 
-    // Scrollbar
     if (m_scrollbar_alpha > 0) {
         int total_content_height = m_item_count * m_item_height;
         if (total_content_height > m_bounds.h) {
@@ -132,12 +127,11 @@ void ListView::draw_content(Painter& painter) {
             }
 
             Color thumb(150, 150, 150, (uint8_t)m_scrollbar_alpha);
-            painter.fill_rect(m_bounds.x + m_bounds.w - 6, (int)bar_y, (int)bar_h, 2, thumb);
+            painter.fill_rect(m_bounds.x + m_bounds.w - 6, (int)bar_y, 4, (int)bar_h, thumb);
         }
     }
 
     if (!focused()) {
-        // Draw border unclipped so AA corners work perfectly
         painter.draw_rect(m_bounds.x, m_bounds.y, m_bounds.w, m_bounds.h, ThemeDB::the().color("TextBox.Border"));
     }
 }
