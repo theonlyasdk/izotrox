@@ -33,8 +33,10 @@
 #include "Graphics/ListItem.hpp"
 #include "Core/Application.hpp"
 #include "Core/ThemeDB.hpp"
+#include "Core/ViewManager.hpp"
 #include "Platform/Android/AndroidDevice.hpp"
 #include "Core/SystemStats.hpp"
+#include "Views/SecondView.hpp"
 
 using namespace Izo;
 
@@ -65,7 +67,7 @@ void draw_debug_panel(Painter& painter, Font& font, float fps) {
 int main(int argc, char* argv[]) {
     Logger::the().info("Izotrox Booting...");
 
-    ThemeDB::the().load("res/theme/nord.ini");
+    ThemeDB::the().load("res/theme/light.ini");
 
     int width = 800;
     int height = 600;
@@ -118,10 +120,6 @@ int main(int argc, char* argv[]) {
     root->set_height(WidgetSizePolicy::MatchParent);
     root->set_show_focus_indicator(false);
 
-    // Create View
-    View view(root);
-    view.resize(width, height);
-
     bool running = true;
 
     auto lbl_title = std::make_shared<Label>("Izotrox UI Demo", systemFont, ThemeDB::the().color("Label.Text"));
@@ -144,6 +142,15 @@ int main(int argc, char* argv[]) {
     });
     root->add_child(btn3);
 
+    auto btn_second_view = std::make_shared<Button>("Go to Second View", systemFont);
+    btn_second_view->set_focusable(true);
+    btn_second_view->set_width(WidgetSizePolicy::MatchParent);
+    btn_second_view->set_on_click([systemFont]() {
+        auto secondView = SecondView::create(systemFont);
+        ViewManager::the().push(secondView, ViewTransition::SlideLeft);
+    });
+    root->add_child(btn_second_view);
+
     auto pb_demo = std::make_shared<ProgressBar>(0.0f);
     root->add_child(pb_demo);
     
@@ -151,7 +158,7 @@ int main(int argc, char* argv[]) {
     slider_demo->set_width(WidgetSizePolicy::MatchParent);
     slider_demo->set_on_change([&](float v) {
         pb_demo->set_progress(v);
-        AndroidDevice::set_brightness((v/100)*255)
+        AndroidDevice::set_brightness((v/100)*255);
     });
     root->add_child(slider_demo);
 
@@ -194,7 +201,10 @@ int main(int argc, char* argv[]) {
         listview->add_item(item);
     }
     root->add_child(listview);
-    view.resize(width, height);
+    
+    auto mainView = std::make_shared<View>(root);
+    ViewManager::the().push(mainView, ViewTransition::None);
+    ViewManager::the().resize(width, height);
 
     splash.next_step("Ready!");
 
@@ -203,7 +213,7 @@ int main(int argc, char* argv[]) {
         height = h;
         canvas->resize(w, h);
         painter->set_canvas(*canvas);
-        view.resize(w, h);
+        ViewManager::the().resize(w, h);
     });
 
     auto last_time = std::chrono::high_resolution_clock::now();
@@ -233,15 +243,15 @@ int main(int argc, char* argv[]) {
         int tx = Input::the().touch_x();
         int ty = Input::the().touch_y();
         bool down = Input::the().touch_down();
-        view.on_touch(tx, ty, down);
+        ViewManager::the().on_touch(tx, ty, down);
         
         KeyCode key = Input::the().key();
-        if (key != KeyCode::None) view.on_key(key); 
+        if (key != KeyCode::None) ViewManager::the().on_key(key); 
         
-        view.update();
+        ViewManager::the().update();
 
         canvas->clear(ThemeDB::the().color("Window.Background"));
-        view.draw(*painter);
+        ViewManager::the().draw(*painter);
 
         draw_debug_panel(*painter, *inconsolata, current_fps);
 

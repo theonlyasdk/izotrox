@@ -38,4 +38,14 @@ void AndroidDevice::set_front_flash(bool enable) {
 #endif
 }
 
+void AndroidDevice::set_back_flash(bool enable) {
+    Logger::the().info(std::format("Setting back flash to {}", enable));
+#ifdef __ANDROID__
+    std::ofstream f("/sys/class/camera/flash/back_flash");
+    if (f.is_open()) {
+        f << (enable ? "1" : "0");
+    }
+#endif
+}
+
 } // namespace Izo
