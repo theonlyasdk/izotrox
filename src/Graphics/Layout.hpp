@@ -14,8 +14,8 @@ public:
     void update() override;
     void draw_content(Painter& painter) override;
     void draw_focus(Painter& painter) override;
-    bool on_touch(int tx, int ty, bool down, bool captured = false) override;
-    bool on_touch_event(int local_x, int local_y, bool down) override;
+    bool on_touch(IntPoint point, bool down, bool captured = false) override;
+    bool on_touch_event(IntPoint point, bool down) override;
     bool is_scrollable() const override { return true; }
 
 protected:

@@ -16,7 +16,7 @@ public:
 
     void draw_content(Painter& painter) override;
     void update() override;
-    bool on_touch_event(int local_x, int local_y, bool down) override;
+    bool on_touch_event(IntPoint point, bool down) override;
     void measure(int parent_w, int parent_h) override;
     
     void set_on_click(std::function<void()> callback) { m_on_click = callback; }

@@ -2,7 +2,6 @@
 
 #include "Button.hpp"
 #include "Core/ThemeDB.hpp"
-#include <cmath>
 
 namespace Izo {
 
@@ -23,7 +22,7 @@ void Button::draw_content(Painter& painter) {
         
         if (m_pressed) ty += 1;
         
-        m_font->draw_text(painter, tx, ty, m_text_str, ThemeDB::the().color("Button.Text"));
+        m_font->draw_text(painter, {tx, ty}, m_text_str, ThemeDB::the().color("Button.Text"));
     }
 }
 
@@ -32,9 +31,8 @@ void Button::update() {
     Widget::update(); 
 }
 
-bool Button::on_touch_event(int local_x, int local_y, bool down) {
-    // Bounds check: 0 <= local_x < w
-    bool inside = (local_x >= 0 && local_x < m_bounds.w && local_y >= 0 && local_y < m_bounds.h);
+bool Button::on_touch_event(IntPoint point, bool down) {
+    bool inside = m_bounds.contains(point);
     
     bool old_pressed = m_pressed;
     bool old_hovered = m_is_hovered;
@@ -59,7 +57,6 @@ bool Button::on_touch_event(int local_x, int local_y, bool down) {
         m_bg_anim.set_target(target, 200, Easing::EaseOutQuad);
     }
     
-    // Focus handled by base Widget
     return true; // Consume event if interactive
 }
 

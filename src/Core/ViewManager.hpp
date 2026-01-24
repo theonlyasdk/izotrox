@@ -1,6 +1,7 @@
 #pragma once
 #include "Graphics/View.hpp"
 #include "Graphics/Animator.hpp"
+#include "Geometry/Point.hpp"
 #include <vector>
 #include <memory>
 #include <functional>
@@ -23,7 +24,7 @@ public:
     void resize(int w, int h);
     void update();
     void draw(Painter& painter);
-    void on_touch(int x, int y, bool down);
+    void on_touch(IntPoint point, bool down);
     void on_key(KeyCode key);
     
     bool is_animating() const { return m_animating; }

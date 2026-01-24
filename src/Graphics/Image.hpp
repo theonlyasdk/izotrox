@@ -1,6 +1,7 @@
 #pragma once
 #include "Canvas.hpp"
 #include "Painter.hpp"
+#include "Geometry/Point.hpp"
 #include <string>
 
 namespace Izo {
@@ -27,8 +28,8 @@ public:
     };
     
     // Draw this image onto a canvas at (x,y)
-    void draw(Painter& painter, int x, int y);
-    void draw_scaled(Painter& painter, int x, int y, int w, int h, Anchor anchor = Anchor::TopLeft);
+    void draw(Painter& painter, IntPoint pos);
+    void draw_scaled(Painter& painter, const IntRect& rect, Anchor anchor = Anchor::TopLeft);
 
 private:
     int w = 0, h = 0, channels = 0;

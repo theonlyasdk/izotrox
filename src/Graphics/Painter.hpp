@@ -14,23 +14,23 @@ public:
     Painter(Canvas& canvas);
 
     void set_canvas(Canvas& canvas);
-    void push_clip(int x, int y, int w, int h);
+    void push_clip(const IntRect& rect);
     void pop_clip();
     
-    void push_translate(int x, int y);
+    void push_translate(IntPoint offset);
     void pop_translate();
 
-    void draw_pixel(int x, int y, Color color);
-    void fill_rect(int x, int y, int w, int h, Color color);
+    void draw_pixel(IntPoint point, Color color);
+    void fill_rect(const IntRect& rect, Color color);
     
     // Fills the rect with a color, replacing existing pixels (no alpha blending)
-    void clear_rect(int x, int y, int w, int h, Color color);
+    void clear_rect(const IntRect& rect, Color color);
 
-    void draw_rect(int x, int y, int w, int h, Color color);
-    void draw_line(int x1, int y1, int x2, int y2, Color color);
+    void draw_rect(const IntRect& rect, Color color);
+    void draw_line(IntPoint p1, IntPoint p2, Color color);
     
-    void fill_rounded_rect(int x, int y, int w, int h, int radius, Color color);
-    void draw_rounded_rect(int x, int y, int w, int h, int radius, Color color, int thickness = 1);
+    void fill_rounded_rect(const IntRect& rect, int radius, Color color);
+    void draw_rounded_rect(const IntRect& rect, int radius, Color color, int thickness = 1);
 
     Canvas& canvas() { return *m_canvas; }
 

@@ -18,6 +18,10 @@ template <typename T> bool Rect<T>::contains(T px, T py) const {
   return px >= x && px < right() && py >= y && py < bottom();
 }
 
+template <typename T> bool Rect<T>::contains(const Point<T>& point) const {
+    return contains(point.x, point.y);
+}
+
 template <typename T> bool Rect<T>::intersects(const Rect &other) const {
   return x < other.right() && right() > other.x && y < other.bottom() &&
          bottom() > other.y;

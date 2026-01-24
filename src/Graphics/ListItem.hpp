@@ -14,9 +14,9 @@ public:
     void update() override;
     
     // Override Container::on_touch to handle self-focus
-    bool on_touch(int tx, int ty, bool down, bool captured = false) override;
+    bool on_touch(IntPoint point, bool down, bool captured = false) override;
     
-    bool on_touch_event(int local_x, int local_y, bool down) override;
+    bool on_touch_event(IntPoint point, bool down) override;
     
     void set_selected(bool sel) { m_selected = sel; }
     bool is_selected() const { return m_selected; }

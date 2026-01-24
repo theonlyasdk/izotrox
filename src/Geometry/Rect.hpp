@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "Geometry/Point.hpp"
 namespace Izo {
 
 template <typename T>
@@ -15,6 +16,7 @@ public:
     T bottom() const;
 
     bool contains(T px, T py) const;
+    bool contains(const Point<T>& point) const;
     bool intersects(const Rect& other) const;
     Rect intersection(const Rect& other) const;
     Rect expanded(T amount) const;

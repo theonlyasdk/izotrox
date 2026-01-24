@@ -14,7 +14,7 @@ public:
     void update() override;
     
     // Override on_touch to dispatch to children
-    bool on_touch(int tx, int ty, bool down, bool captured = false) override;
+    bool on_touch(IntPoint point, bool down, bool captured = false) override;
     bool on_key(KeyCode key) override;
     void draw_focus(Painter& painter) override;
     

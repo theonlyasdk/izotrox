@@ -100,10 +100,10 @@ int Font::width(const std::string& text) {
     return w;
 }
 
-void Font::draw_text(Painter& painter, int x, int y, const std::string& text, Color color) {
+void Font::draw_text(Painter& painter, IntPoint pos, const std::string& text, Color color) {
     if (!validState) return;
 
-    int curX = x;
+    int curX = pos.x;
 
     for (char c : text) {
         if (c < 32 || c >= 127) continue;
@@ -116,7 +116,7 @@ void Font::draw_text(Painter& painter, int x, int y, const std::string& text, Co
         int gh = y2 - y1;
 
         int drawX = curX + x1;
-        int drawY = y + baseline + y1;
+        int drawY = pos.y + baseline + y1;
 
         for (int row = 0; row < gh; row++) {
             for (int col = 0; col < gw; col++) {
@@ -125,7 +125,7 @@ void Font::draw_text(Painter& painter, int x, int y, const std::string& text, Co
                      uint8_t finalAlpha = (uint8_t)((color.a * alpha) / 255);
                      Color finalColor = color;
                      finalColor.a = finalAlpha;
-                     painter.draw_pixel(drawX + col, drawY + row, finalColor);
+                     painter.draw_pixel({drawX + col, drawY + row}, finalColor);
                 }
             }
         }
@@ -206,14 +206,14 @@ void Font::measure_multiline(const std::string& text, int& out_w, int& out_h, in
     out_h = totalH;
 }
 
-void Font::draw_text_multiline(Painter& painter, int x, int y, const std::string& text, Color color, int max_width) {
+void Font::draw_text_multiline(Painter& painter, IntPoint pos, const std::string& text, Color color, int max_width) {
     if (!validState) return;
     
     int lineHeight = height();
-    int curY = y;
+    int curY = pos.y;
     
     auto draw_line_str = [&](const std::string& l) {
-        draw_text(painter, x, curY, l, color);
+        draw_text(painter, {pos.x, curY}, l, color);
         curY += lineHeight;
     };
 

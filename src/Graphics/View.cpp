@@ -33,8 +33,8 @@ void View::draw(Painter& painter) {
     }
 }
 
-void View::on_touch(int x, int y, bool down) {
-    if (m_root) m_root->on_touch(x, y, down);
+void View::on_touch(IntPoint point, bool down) {
+    if (m_root) m_root->on_touch(point, down);
 }
 
 void View::on_key(KeyCode key) {

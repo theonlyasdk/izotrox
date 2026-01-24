@@ -1,15 +1,15 @@
 // Mozilla Public License version 2.0. (c) theonlyasdk 2026
 
 #include "Input.hpp"
-#include "Platform/PlatformMacros.hpp"
 #include <Debug/Logger.hpp>
-#include <vector>
 #include <fcntl.h>
 #include <unistd.h>
-#include <cstring>
-#include <format>
+
+// #define __ANDROID__
 
 #ifdef __ANDROID__
+#include <cstring>
+#include <format>
 #include <sys/poll.h>
 #include <linux/input.h>
 #include <sys/ioctl.h>
@@ -37,10 +37,9 @@ Input::~Input() {
     }
 }
 
-void Input::set_touch(int x, int y, bool down) {
+void Input::set_touch(IntPoint point, bool down) {
     std::lock_guard<std::mutex> lock(m_mutex);
-    m_state.touch_x = x;
-    m_state.touch_y = y;
+    m_state.touch_point = point;
     m_state.touch_down = down;
 }
 
@@ -71,14 +70,9 @@ KeyCode Input::key() {
     return key;
 }
 
-int Input::touch_x() {
+IntPoint Input::touch_point() {
     std::lock_guard<std::mutex> lock(m_mutex);
-    return m_state.touch_x;
-}
-
-int Input::touch_y() {
-    std::lock_guard<std::mutex> lock(m_mutex);
-    return m_state.touch_y;
+    return m_state.touch_point;
 }
 
 bool Input::touch_down() {
@@ -221,7 +215,7 @@ void Input::run_thread() {
         }
         
         if (touch_updated) {
-            set_touch(lx, ly, ldown);
+            set_touch(IntPoint(lx, ly), ldown);
         }
     }
     

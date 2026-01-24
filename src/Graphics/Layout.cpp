@@ -59,10 +59,10 @@ void Layout::update() {
 }
 
 void Layout::draw_content(Painter& painter) {
-    painter.push_clip(m_bounds.x, m_bounds.y, m_bounds.w, m_bounds.h);
+    painter.push_clip(m_bounds);
 
     // Apply scroll offset via translation
-    painter.push_translate(0, (int)m_scroll_y);
+    painter.push_translate({0, (int)m_scroll_y});
     
     // Virtual viewport in absolute coordinates shifted by scroll
     // Child Y is absolute
@@ -113,7 +113,7 @@ void Layout::draw_content(Painter& painter) {
             }
 
             Color thumb(150, 150, 150, (uint8_t)m_scrollbar_alpha);
-            painter.fill_rect(m_bounds.x + m_bounds.w - 6, (int)bar_y, 4, (int)bar_h, thumb);
+            painter.fill_rect({m_bounds.x + m_bounds.w - 6, (int)bar_y, 4, (int)bar_h}, thumb);
         }
     }
 
@@ -121,8 +121,8 @@ void Layout::draw_content(Painter& painter) {
 }
 
 void Layout::draw_focus(Painter& painter) {
-    painter.push_clip(m_bounds.x, m_bounds.y, m_bounds.w, m_bounds.h);
-    painter.push_translate(0, (int)m_scroll_y);
+    painter.push_clip(m_bounds);
+    painter.push_translate({0, (int)m_scroll_y});
     
     for (auto& child : m_children) {
         if (child->visible())
@@ -135,25 +135,25 @@ void Layout::draw_focus(Painter& painter) {
     Widget::draw_focus(painter);
 }
 
-bool Layout::on_touch(int tx, int ty, bool down, bool captured) {
+bool Layout::on_touch(IntPoint point, bool down, bool captured) {
     if (!m_visible) return false;
 
     // Adjust touch coordinate for scroll offset when checking children
-    int adjusted_ty = ty - (int)m_scroll_y;
+    IntPoint adjusted_point = { point.x, point.y - (int)m_scroll_y };
 
     // On initial press, setup state
     if (down && !m_prev_touch_down) {
-        m_initial_touch_x = tx;
-        m_initial_touch_y = ty;
-        m_potential_swipe = m_bounds.contains(tx, ty);
+        m_initial_touch_x = point.x;
+        m_initial_touch_y = point.y;
+        m_potential_swipe = m_bounds.contains(point);
         m_has_intercepted = false;
         m_is_dragging = false;
-        m_last_touch_y = ty;
+        m_last_touch_y = point.y;
     }
 
     // If we've intercepted the touch for scrolling, handle it directly
     if (m_has_intercepted) {
-        bool res = on_touch_event(tx - m_bounds.x, ty - m_bounds.y, down);
+        bool res = on_touch_event({point.x - m_bounds.x, point.y - m_bounds.y}, down);
         if (!down) {
             m_has_intercepted = false;
             m_potential_swipe = false;
@@ -163,7 +163,7 @@ bool Layout::on_touch(int tx, int ty, bool down, bool captured) {
     }
 
     // Let container dispatch to children first
-    bool result = Container::on_touch(tx, adjusted_ty, down, captured);
+    bool result = Container::on_touch(adjusted_point, down, captured);
 
     // Check for swipe interception
     if (down && m_potential_swipe && !m_has_intercepted) {
@@ -171,8 +171,8 @@ bool Layout::on_touch(int tx, int ty, bool down, bool captured) {
         if (m_captured_child && m_captured_child->is_scrollable()) {
             m_potential_swipe = false;
         } else {
-            int dx = std::abs(tx - m_initial_touch_x);
-            int dy = std::abs(ty - m_initial_touch_y);
+            int dx = std::abs(point.x - m_initial_touch_x);
+            int dy = std::abs(point.y - m_initial_touch_y);
             const int SLOP = 10;
 
             if (dy > SLOP && dy > dx) {
@@ -180,7 +180,7 @@ bool Layout::on_touch(int tx, int ty, bool down, bool captured) {
                 m_has_intercepted = true;
                 if (m_captured_child) {
                     m_captured_child->cancel_gesture();
-                    m_captured_child->on_touch(-10000, -10000, false, true);
+                    m_captured_child->on_touch({-10000, -10000}, false, true);
                     m_captured_child = nullptr;
                 }
                 m_is_dragging = true;
@@ -192,14 +192,14 @@ bool Layout::on_touch(int tx, int ty, bool down, bool captured) {
     }
 
     // If no child handled and we're pressing on the layout, start dragging
-    if (!result && down && m_bounds.contains(tx, ty)) {
-        result = on_touch_event(tx - m_bounds.x, ty - m_bounds.y, down);
+    if (!result && down && m_bounds.contains(point)) {
+        result = on_touch_event({point.x - m_bounds.x, point.y - m_bounds.y}, down);
     }
 
     // Handle release
     if (!down) {
         if (m_is_dragging) {
-            on_touch_event(tx - m_bounds.x, ty - m_bounds.y, down);
+            on_touch_event({point.x - m_bounds.x, point.y - m_bounds.y}, down);
         }
         m_potential_swipe = false;
     }
@@ -208,8 +208,8 @@ bool Layout::on_touch(int tx, int ty, bool down, bool captured) {
     return result || m_has_intercepted;
 }
 
-bool Layout::on_touch_event(int local_x, int local_y, bool down) {
-    int ty = m_bounds.y + local_y; 
+bool Layout::on_touch_event(IntPoint point, bool down) {
+    int ty = m_bounds.y + point.y; 
     
     int total_content_height = content_height();
     int max_scroll = (total_content_height > m_bounds.h) ? -(total_content_height - m_bounds.h) : 0;

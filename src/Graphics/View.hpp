@@ -2,6 +2,7 @@
 
 #pragma once
 #include "Widget.hpp"
+#include "Geometry/Point.hpp"
 #include <memory>
 #include "Input/KeyCode.hpp"
 
@@ -16,7 +17,7 @@ public:
     void draw(Painter& painter);
     
     // Event injection
-    void on_touch(int x, int y, bool down);
+    void on_touch(IntPoint point, bool down);
     void on_key(KeyCode key);
 
 private:

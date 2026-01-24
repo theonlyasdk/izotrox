@@ -31,7 +31,7 @@ void SplashScreen::render() {
     std::string title = "Izotrox";
     int tw = font.width(title);
     int th = font.height();
-    font.draw_text(painter, (width - tw) / 2, (height - th) / 2, title, Color::Black);
+    font.draw_text(painter, {(width - tw) / 2, (height - th) / 2}, title, Color::Black);
     
     float completed_steps = (float)currentStep / (float)totalSteps;
     int completed_percent = (int)(completed_steps * 100);
@@ -41,16 +41,16 @@ void SplashScreen::render() {
     int pw = font.width(pctStr);
 
     int pctY = height - barh - th - 5; 
-    font.draw_text(painter, (width - pw) / 2, pctY, pctStr, Color(200, 200, 200));
+    font.draw_text(painter, {(width - pw) / 2, pctY}, pctStr, Color(200, 200, 200));
     
     if (!currentStatus.empty()) {
         int sw = font.width(currentStatus);
-        font.draw_text(painter, (width - sw) / 2, pctY - th - 5, currentStatus, Color(150, 150, 150));
+        font.draw_text(painter, {(width - sw) / 2, pctY - th - 5}, currentStatus, Color(150, 150, 150));
     }
 
-    painter.fill_rect(0, height - barh, width, barh, Color(50, 50, 50));
+    painter.fill_rect({0, height - barh, width, barh}, Color(50, 50, 50));
     int fillW = (int)(width * completed_steps);
-    painter.fill_rect(0, height - barh, fillW, barh, Color(0, 120, 215));
+    painter.fill_rect({0, height - barh, fillW, barh}, Color(0, 120, 215));
     
     app.present(canvas);
 }

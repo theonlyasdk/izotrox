@@ -11,7 +11,7 @@ void Container::add_child(std::shared_ptr<Widget> child) {
 }
 
 void Container::draw_content(Painter& painter) {
-    painter.push_clip(m_bounds.x, m_bounds.y, m_bounds.w, m_bounds.h);
+    painter.push_clip(m_bounds);
     for (auto& child : m_children) {
         if (child->visible())
             child->draw(painter);
@@ -19,9 +19,9 @@ void Container::draw_content(Painter& painter) {
     painter.pop_clip();
 }
 
-bool Container::on_touch(int tx, int ty, bool down, bool captured) {
+bool Container::on_touch(IntPoint point, bool down, bool captured) {
     if (m_captured_child) {
-        m_captured_child->on_touch(tx, ty, down, true);
+        m_captured_child->on_touch(point, down, true);
         if (!down) {
             m_captured_child = nullptr;
         }
@@ -36,10 +36,10 @@ bool Container::on_touch(int tx, int ty, bool down, bool captured) {
         auto& child = *it;
         if (!child->visible()) continue;
         
-        bool inside = child->bounds().contains(tx, ty);
+        bool inside = child->bounds().contains(point);
         if (inside) {
             // Tentatively try to handle
-            if (child->on_touch(tx, ty, down, false)) {
+            if (child->on_touch(point, down, false)) {
                 target = child;
                 handled = true;
                 if (down) m_captured_child = child;
@@ -49,15 +49,11 @@ bool Container::on_touch(int tx, int ty, bool down, bool captured) {
     }
 
     // Pass 2: Focus Management
-    // If we simply clicked background (handled == false), we DO NOT clear focus. 
-    // This allows scrolling to happen without deselecting.
-    // If we clicked a child (handled == true) and it's a DOWN event, we clear focus of others.
-    
     if (handled && down) {
         for (auto& child : m_children) {
             if (child != target && child->visible()) {
-                // Send inside=false to force focus loss
-                child->on_touch(tx, ty, down, false); 
+                // Send inside=false by passing coordinates far away
+                child->on_touch(point, down, false); 
             }
         }
     }

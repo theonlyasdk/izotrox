@@ -5,7 +5,6 @@
 #include "Animator.hpp"
 #include "Geometry/Rect.hpp"
 #include "Input/KeyCode.hpp"
-#include <vector>
 
 namespace Izo {
 
@@ -33,8 +32,8 @@ public:
     virtual IntRect content_box() const { return {0, 0, m_bounds.w, m_bounds.h}; } // Default content is full size
 
     // Input
-    virtual bool on_touch(int tx, int ty, bool down, bool captured = false); // Template method
-    virtual bool on_touch_event(int local_x, int local_y, bool down) { return false; } // For subclass handling
+    virtual bool on_touch(IntPoint point, bool down, bool captured = false); // Template method
+    virtual bool on_touch_event(IntPoint point, bool down) { return false; } // For subclass handling
     virtual bool on_key(KeyCode key) { return false; }
     virtual bool is_scrollable() const { return false; }
 
@@ -56,6 +55,7 @@ public:
     void show();
     void hide();
     bool visible() const { return m_visible; }
+    bool hovering() const;
 
     void set_focusable(bool focusable) { m_focusable = focusable; }
     bool focusable() const { return m_focusable; }
@@ -87,7 +87,6 @@ protected:
     int m_padding_top = 0;
     int m_padding_bottom = 0;
 
-    Animator<float> m_focus_anim;
     bool m_prev_touch_down = false;
     bool m_touch_started_inside = false;
     bool m_gesture_cancelled = false;
@@ -95,6 +94,7 @@ protected:
     bool m_focused = false;
     bool m_visible = true;
     bool m_show_focus_indicator = true;
+    Animator<float> m_focus_anim;
     Widget* m_parent = nullptr;
 };
 

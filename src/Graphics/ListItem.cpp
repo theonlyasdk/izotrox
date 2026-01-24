@@ -15,7 +15,7 @@ ListItem::ListItem(Orientation orientation) : LinearLayout(orientation) {
 
 void ListItem::draw_content(Painter& painter) {
     if (m_selected) {
-        painter.fill_rect(m_bounds.x, m_bounds.y, m_bounds.w, m_bounds.h, ThemeDB::the().color("ListItem.Focus"));
+        painter.fill_rect(m_bounds, ThemeDB::the().color("ListItem.Focus"));
     }
     Container::draw_content(painter);
 }
@@ -24,11 +24,11 @@ void ListItem::update() {
     Container::update();
 }
 
-bool ListItem::on_touch(int tx, int ty, bool down, bool captured) {
-    bool handled = Container::on_touch(tx, ty, down, captured);
+bool ListItem::on_touch(IntPoint point, bool down, bool captured) {
+    bool handled = Container::on_touch(point, down, captured);
     
     if (!handled && m_visible) {
-         bool inside = m_bounds.contains(tx, ty);
+         bool inside = m_bounds.contains(point);
          
          // On release inside, notify parent ListView to select this item
          if (!down && inside && m_touch_started_inside) {
@@ -50,7 +50,7 @@ bool ListItem::on_touch(int tx, int ty, bool down, bool captured) {
     return handled;
 }
 
-bool ListItem::on_touch_event(int local_x, int local_y, bool down) {
+bool ListItem::on_touch_event(IntPoint point, bool down) {
     return true;
 }
 

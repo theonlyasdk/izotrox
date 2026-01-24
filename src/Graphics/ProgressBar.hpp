@@ -15,7 +15,7 @@ public:
 
     void draw_content(Painter& painter) override;
     void measure(int parent_w, int parent_h) override;
-    bool on_touch_event(int, int, bool) override;
+    bool on_touch_event(IntPoint point, bool down) override;
 
 private:
     float m_value;

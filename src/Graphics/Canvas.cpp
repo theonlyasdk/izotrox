@@ -34,15 +34,15 @@ void Canvas::clear(Color color) {
     }
 }
 
-void Canvas::set_pixel(int x, int y, uint32_t color) {
-    if (x >= 0 && x < m_width && y >= 0 && y < m_height) {
-        m_pixels[y * m_width + x] = color;
+void Canvas::set_pixel(IntPoint point, uint32_t color) {
+    if (point.x >= 0 && point.x < m_width && point.y >= 0 && point.y < m_height) {
+        m_pixels[point.y * m_width + point.x] = color;
     }
 }
 
-uint32_t Canvas::pixel(int x, int y) const {
-    if (x >= 0 && x < m_width && y >= 0 && y < m_height) {
-        return m_pixels[y * m_width + x];
+uint32_t Canvas::pixel(IntPoint point) const {
+    if (point.x >= 0 && point.x < m_width && point.y >= 0 && point.y < m_height) {
+        return m_pixels[point.y * m_width + point.x];
     }
     return 0;
 }

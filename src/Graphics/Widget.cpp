@@ -3,7 +3,7 @@
 #include "Widget.hpp"
 #include "Core/Application.hpp"
 #include "Core/ThemeDB.hpp"
-#include <cstdlib>
+#include "Input/Input.hpp"
 
 namespace Izo {
 
@@ -70,18 +70,17 @@ void Widget::handle_focus_logic(bool inside, bool down) {
     }
 }
 
-bool Widget::on_touch(int tx, int ty, bool down, bool captured) {
+bool Widget::on_touch(IntPoint point, bool down, bool captured) {
     if (!m_visible) return false;
     
-    bool inside = m_bounds.contains(tx, ty);
+    bool inside = m_bounds.contains(point);
     handle_focus_logic(inside, down);
     
     if (!inside && !captured) return false;
 
-    int local_x = tx - m_bounds.x;
-    int local_y = ty - m_bounds.y;
+    IntPoint local_point = { point.x - m_bounds.x, point.y - m_bounds.y };
     
-    return on_touch_event(local_x, local_y, down);
+    return on_touch_event(local_point, down);
 }
 
 void Widget::draw_focus_outline(Painter& painter) {
@@ -95,7 +94,7 @@ void Widget::draw_focus_outline(Painter& painter) {
 
         for (int i = 0; i < max_thickness; i++) {
             float new_exp = expansion * (max_thickness - i)/max_thickness;
-            painter.draw_rect(m_bounds.x - new_exp, m_bounds.y - new_exp, m_bounds.w + new_exp*2, m_bounds.h + new_exp*2, color);
+            painter.draw_rect({ (int)(m_bounds.x - new_exp), (int)(m_bounds.y - new_exp), (int)(m_bounds.w + new_exp*2), (int)(m_bounds.h + new_exp*2) }, color);
         }
     }
 }
@@ -104,6 +103,10 @@ void Widget::set_focused(bool focused) {
     if (m_focused != focused) {
         m_focused = focused;
     }
+}
+
+bool Widget::hovering() const {
+    return m_bounds.contains(Input::the().touch_point());
 }
 
 void Widget::show() { if (!m_visible) { m_visible = true; } }

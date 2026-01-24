@@ -82,11 +82,11 @@ bool SDLApplication::pump_events() {
         } else if (e.type == SDL_MOUSEWHEEL) {
              Izo::Input::the().set_scroll(e.wheel.y);
         } else if (e.type == SDL_MOUSEMOTION) {
-            Izo::Input::the().set_touch(e.motion.x, e.motion.y, (e.motion.state & SDL_BUTTON_LMASK) != 0);
+            Izo::Input::the().set_touch({e.motion.x, e.motion.y}, (e.motion.state & SDL_BUTTON_LMASK) != 0);
         } else if (e.type == SDL_MOUSEBUTTONDOWN) {
-             Izo::Input::the().set_touch(e.button.x, e.button.y, true);
+             Izo::Input::the().set_touch({e.button.x, e.button.y}, true);
         } else if (e.type == SDL_MOUSEBUTTONUP) {
-             Izo::Input::the().set_touch(e.button.x, e.button.y, false);
+             Izo::Input::the().set_touch({e.button.x, e.button.y}, false);
         } else if (e.type == SDL_TEXTINPUT) {
             if (e.text.text[0]) {
                  Izo::Input::the().set_key((Izo::KeyCode)e.text.text[0]);

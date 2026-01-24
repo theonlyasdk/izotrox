@@ -11,7 +11,7 @@ Label::Label(const std::string& text, Font* font, Color color)
 void Label::draw_content(Painter& painter) {
     if (m_font) {
         int maxW = m_wrap ? m_bounds.w : -1;
-        m_font->draw_text_multiline(painter, m_bounds.x, m_bounds.y, m_text_str, m_color, maxW);
+        m_font->draw_text_multiline(painter, {m_bounds.x, m_bounds.y}, m_text_str, m_color, maxW);
     }
 }
 

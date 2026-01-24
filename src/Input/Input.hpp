@@ -5,13 +5,13 @@
 #include <atomic>
 #include <mutex>
 #include <thread>
+#include "Geometry/Point.hpp"
 #include "KeyCode.hpp"
 
 namespace Izo {
 
 struct InputState {
-    int touch_x = 0;
-    int touch_y = 0;
+    IntPoint touch_point = {0, 0};
     bool touch_down = false;
     bool shift_down = false;
     bool ctrl_down = false;
@@ -27,8 +27,7 @@ public:
     void init();
     void update();
 
-    int touch_x();
-    int touch_y();
+    IntPoint touch_point();
     bool touch_down();
     bool shift();
     bool ctrl();
@@ -36,7 +35,7 @@ public:
     
     KeyCode key();
 
-    void set_touch(int x, int y, bool down);
+    void set_touch(IntPoint point, bool down);
     void set_key(KeyCode key);
     void set_shift(bool down);
     void set_ctrl(bool down);

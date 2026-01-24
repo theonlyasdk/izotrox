@@ -1,5 +1,6 @@
 #pragma once
 #include "Color.hpp"
+#include "Geometry/Point.hpp"
 #include <vector>
 #include <memory>
 #include <span>
@@ -27,9 +28,9 @@ public:
 
     void clear(Color color);
 
-    void set_pixel(int x, int y, uint32_t color);
+    void set_pixel(IntPoint point, uint32_t color);
 
-    uint32_t pixel(int x, int y) const;
+    uint32_t pixel(IntPoint point) const;
 
     void resize(int width, int height);
 

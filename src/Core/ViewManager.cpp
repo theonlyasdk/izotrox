@@ -74,19 +74,19 @@ void ViewManager::draw(Painter& painter) {
         int offset = (int)(t * m_width);
         
         if (m_current_transition == ViewTransition::SlideLeft) {
-            painter.push_translate(-offset, 0);
+            painter.push_translate({-offset, 0});
             m_outgoing_view->draw(painter);
             painter.pop_translate();
             
-            painter.push_translate(m_width - offset, 0);
+            painter.push_translate({m_width - offset, 0});
             m_stack.back()->draw(painter);
             painter.pop_translate();
         } else if (m_current_transition == ViewTransition::SlideRight) {
-            painter.push_translate(offset, 0);
+            painter.push_translate({offset, 0});
             m_outgoing_view->draw(painter);
             painter.pop_translate();
             
-            painter.push_translate(-m_width + offset, 0);
+            painter.push_translate({-m_width + offset, 0});
             m_stack.back()->draw(painter);
             painter.pop_translate();
         }
@@ -95,10 +95,10 @@ void ViewManager::draw(Painter& painter) {
     }
 }
 
-void ViewManager::on_touch(int x, int y, bool down) {
+void ViewManager::on_touch(IntPoint point, bool down) {
     if (m_animating) return;
     if (!m_stack.empty()) {
-        m_stack.back()->on_touch(x, y, down);
+        m_stack.back()->on_touch(point, down);
     }
 }
 

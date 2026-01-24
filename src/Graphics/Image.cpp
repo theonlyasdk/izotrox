@@ -16,7 +16,7 @@ Image::~Image() {
     if (data) stbi_image_free(data);
 }
 
-void Image::draw(Painter& painter, int x, int y) {
+void Image::draw(Painter& painter, IntPoint pos) {
     if (!data) return;
     
     for (int iy = 0; iy < h; ++iy) {
@@ -28,17 +28,19 @@ void Image::draw(Painter& painter, int x, int y) {
             uint8_t a = data[offset+3];
             
             if (a > 0) {
-                painter.draw_pixel(x + ix, y + iy, Color(r, g, b, a));
+                painter.draw_pixel({pos.x + ix, pos.y + iy}, Color(r, g, b, a));
             }
         }
     }
 }
 
-void Image::draw_scaled(Painter& painter, int x, int y, int dw, int dh, Anchor anchor) {
-    if (!data || dw <= 0 || dh <= 0) return;
+void Image::draw_scaled(Painter& painter, const IntRect& rect, Anchor anchor) {
+    if (!data || rect.w <= 0 || rect.h <= 0) return;
 
-    int dx = x;
-    int dy = y;
+    int dx = rect.x;
+    int dy = rect.y;
+    int dw = rect.w;
+    int dh = rect.h;
 
     switch (anchor) {
         case Anchor::TopLeft: break;
@@ -67,7 +69,7 @@ void Image::draw_scaled(Painter& painter, int x, int y, int dw, int dh, Anchor a
             uint8_t a = data[offset+3];
             
             if (a > 0) {
-                painter.draw_pixel(dx + ix, dy + iy, Color(r, g, b, a));
+                painter.draw_pixel({dx + ix, dy + iy}, Color(r, g, b, a));
             }
         }
     }

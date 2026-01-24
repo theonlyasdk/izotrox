@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include "Geometry/Point.hpp"
 #include "Painter.hpp"
 
 typedef struct stbtt_fontinfo stbtt_fontinfo;
@@ -22,11 +23,11 @@ public:
     float size() const { return sizeVal; }
     int height() const;
 
-    void draw_text(Painter& painter, int x, int y, const std::string& text, Color color);
+    void draw_text(Painter& painter, IntPoint pos, const std::string& text, Color color);
     int width(const std::string& text);
 
     // Multiline / Wrapping support
-    void draw_text_multiline(Painter& painter, int x, int y, const std::string& text, Color color, int max_width = -1);
+    void draw_text_multiline(Painter& painter, IntPoint pos, const std::string& text, Color color, int max_width = -1);
     void measure_multiline(const std::string& text, int& out_w, int& out_h, int max_width = -1);
 
 private:

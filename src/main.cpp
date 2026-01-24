@@ -60,8 +60,8 @@ void draw_debug_panel(Painter& painter, Font& font, float fps) {
         timer = 0;
     }
     
-    painter.fill_rect(10, 10, cached_w, cached_h, Color(0, 0, 0, 128)); 
-    font.draw_text(painter, 20, 15, cached_text, Color::White);
+    painter.fill_rect({10, 10, cached_w, cached_h}, Color(0, 0, 0, 128)); 
+    font.draw_text(painter, {20, 15}, cached_text, Color::White);
 }
 
 int main(int argc, char* argv[]) {
@@ -240,10 +240,9 @@ int main(int argc, char* argv[]) {
             running = false;
         }
 
-        int tx = Input::the().touch_x();
-        int ty = Input::the().touch_y();
+        IntPoint tp = Input::the().touch_point();
         bool down = Input::the().touch_down();
-        ViewManager::the().on_touch(tx, ty, down);
+        ViewManager::the().on_touch(tp, down);
         
         KeyCode key = Input::the().key();
         if (key != KeyCode::None) ViewManager::the().on_key(key); 

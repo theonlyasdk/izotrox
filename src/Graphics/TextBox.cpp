@@ -93,14 +93,14 @@ void TextBox::ensure_cursor_visible() {
 }
 
 void TextBox::draw_content(Painter& painter) {
-    painter.fill_rect(m_bounds.x, m_bounds.y, m_bounds.w, m_bounds.h, ThemeDB::the().color("TextBox.Background"));
+    painter.fill_rect(m_bounds, ThemeDB::the().color("TextBox.Background"));
 
     Color border = m_border_anim.value();
-    painter.draw_rect(m_bounds.x, m_bounds.y, m_bounds.w, m_bounds.h, border);
+    painter.draw_rect(m_bounds, border);
 
     if (m_font) {
         int padding = 5;
-        painter.push_clip(m_bounds.x + padding, m_bounds.y + padding, m_bounds.w - 2 * padding, m_bounds.h - 2 * padding);
+        painter.push_clip({m_bounds.x + padding, m_bounds.y + padding, m_bounds.w - 2 * padding, m_bounds.h - 2 * padding});
         
         int draw_x = m_bounds.x + padding - m_scroll_x;
         int draw_y = m_bounds.y + padding;
@@ -115,19 +115,19 @@ void TextBox::draw_content(Painter& painter) {
             int x1 = m_font->width(pre_sel);
             int sw = m_font->width(sel_txt);
             
-            painter.fill_rect(draw_x + x1, draw_y, sw, m_font->height(), ThemeDB::the().color("TextBox.Selection"));
+            painter.fill_rect({draw_x + x1, draw_y, sw, m_font->height()}, ThemeDB::the().color("TextBox.Selection"));
         }
 
         if (m_text_buffer.empty()) {
-            m_font->draw_text(painter, draw_x, draw_y, m_placeholder, ThemeDB::the().color("TextBox.Placeholder"));
+            m_font->draw_text(painter, {draw_x, draw_y}, m_placeholder, ThemeDB::the().color("TextBox.Placeholder"));
         } else {
-            m_font->draw_text(painter, draw_x, draw_y, m_text_buffer, ThemeDB::the().color("TextBox.Text"));
+            m_font->draw_text(painter, {draw_x, draw_y}, m_text_buffer, ThemeDB::the().color("TextBox.Text"));
         }
         
         if (m_focused && m_cursor_visible) {
              std::string pre_cursor = m_text_buffer.substr(0, m_sel_end);
              int cx = m_font->width(pre_cursor);
-             painter.fill_rect(draw_x + cx, draw_y, 2, m_font->height(), ThemeDB::the().color("TextBox.Cursor"));
+             painter.fill_rect({draw_x + cx, draw_y, 2, m_font->height()}, ThemeDB::the().color("TextBox.Cursor"));
         }
         
         painter.pop_clip();
@@ -151,12 +151,12 @@ void TextBox::update() {
     }
 }
 
-bool TextBox::on_touch_event(int local_x, int local_y, bool down) {
-    bool inside = (local_x >= 0 && local_x < m_bounds.w && local_y >= 0 && local_y < m_bounds.h);
+bool TextBox::on_touch_event(IntPoint point, bool down) {
+    bool inside = m_bounds.contains(point);
     
     if (down) {
         if (inside) {
-            int text_local_x = local_x - 5 + m_scroll_x;
+            int text_local_x = point.x - 5 + m_scroll_x;
             int idx = get_cursor_index(text_local_x);
             if (!m_is_dragging) {
                 m_sel_start = idx;
