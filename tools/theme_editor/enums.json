@@ -1,0 +1,21 @@
+{
+    "Easing": [
+        "Linear",
+        "EaseInQuad", "EaseOutQuad", "EaseInOutQuad",
+        "EaseInCubic", "EaseOutCubic", "EaseInOutCubic",
+        "EaseInQuart", "EaseOutQuart", "EaseInOutQuart",
+        "EaseInQuint", "EaseOutQuint", "EaseInOutQuint",
+        "BounceIn", "BounceOut", "BounceInOut",
+        "SpringEaseIn", "SpringEaseOut", "SpringEaseBounce"
+    ],
+    "ViewTransition": [
+        "None", "ThemeTransition", "SlideLeft", "SlideRight",
+        "PushLeft", "PushRight", "PushBottom", "MaterialUFade"
+    ],
+    "WidgetSizePolicy": [
+        "Fixed", "MatchParent", "WrapContent"
+    ],
+    "Alignment": [
+        "Start", "Center", "End", "Stretch"
+    ]
+}

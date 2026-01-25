@@ -29,15 +29,23 @@ template <typename T> void Animator<T>::snap_to(T targetVal) {
 template <typename T> T Animator<T>::value() const { return current; }
 template <typename T> bool Animator<T>::is_running() const { return running; }
 
+template <typename T> void Animator<T>::set_loop(bool loop) {
+    m_loop = loop;
+}
+
 template <typename T> bool Animator<T>::update(float dtMs) {
   if (!running)
     return false;
 
   elapsed += dtMs;
   if (elapsed >= duration) {
-    current = target;
-    running = false;
-    return true;
+    if (m_loop) {
+        elapsed = std::fmod(elapsed, duration);
+    } else {
+        current = target;
+        running = false;
+        return true;
+    }
   }
 
   float t = elapsed / duration;

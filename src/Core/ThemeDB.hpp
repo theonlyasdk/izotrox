@@ -2,6 +2,7 @@
 
 #include "Graphics/Color.hpp"
 #include "Graphics/ColorVariant.hpp"
+#include "Graphics/Animator.hpp"
 #include <map>
 #include <string>
 #include <vector>
@@ -21,6 +22,11 @@ public:
 
     int int_value(const std::string& name, int defaultVal = 0);
     std::string string_value(const std::string& name, const std::string& defaultVal = "");
+
+    template<typename T>
+    T enum_value(const std::string& name, T defaultVal) {
+        return defaultVal;
+    }
 
 private:
     std::string current_path;

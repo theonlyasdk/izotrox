@@ -1,6 +1,7 @@
 #include "SecondView.hpp"
 #include "Core/ViewManager.hpp"
 #include "Core/ThemeDB.hpp"
+#include "Graphics/OptionBox.hpp"
 
 namespace Izo {
 
@@ -19,10 +20,29 @@ std::shared_ptr<View> SecondView::create(Font* font) {
     description->set_wrap(true);
     root->add_child(description);
 
+    // Demo OptionBox
+    auto optionLabel = std::make_shared<Label>("Select a theme:", font);
+    optionLabel->set_width(WidgetSizePolicy::MatchParent);
+    root->add_child(optionLabel);
+
+    auto optionBox = std::make_shared<OptionBox>(font);
+    optionBox->set_width(WidgetSizePolicy::MatchParent);
+    optionBox->add_option("default");
+    optionBox->add_option("catppuccin-mocha");
+    optionBox->add_option("dracula");
+    optionBox->add_option("ios-dark");
+    optionBox->add_option("tokyo-night");
+    optionBox->set_selected_index(0);
+    optionBox->set_on_change([](int index, const std::string& value) {
+        std::string theme_path = "res/theme/" + value + ".ini";
+        ThemeDB::the().load(theme_path);
+    });
+    root->add_child(optionBox);
+
     auto backBtn = std::make_shared<Button>("Go Back", font);
     backBtn->set_width(WidgetSizePolicy::MatchParent);
     backBtn->set_on_click([]() {
-        ViewManager::the().pop(ViewTransition::SlideRight);
+        ViewManager::the().pop();
     });
     root->add_child(backBtn);
 

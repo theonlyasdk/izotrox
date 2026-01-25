@@ -7,11 +7,13 @@
 
 namespace Izo {
 
-Painter::Painter(Canvas& canvas) : m_canvas(&canvas), m_clip_rect{0, 0, canvas.width(), canvas.height()} {}
+Painter::Painter(Canvas& canvas) : m_canvas(&canvas) {
+    m_current_clip = { {0, 0, canvas.width(), canvas.height()}, 0 };
+}
 
 void Painter::set_canvas(Canvas& canvas) {
     m_canvas = &canvas;
-    m_clip_rect = {0, 0, canvas.width(), canvas.height()};
+    m_current_clip = { {0, 0, canvas.width(), canvas.height()}, 0 };
     m_clip_stack.clear();
     m_tx = 0;
     m_ty = 0;
@@ -19,14 +21,19 @@ void Painter::set_canvas(Canvas& canvas) {
 }
 
 void Painter::push_clip(const IntRect& rect) {
-    m_clip_stack.push_back(m_clip_rect);
+    push_rounded_clip(rect, 0);
+}
+
+void Painter::push_rounded_clip(const IntRect& rect, int radius) {
+    m_clip_stack.push_back(m_current_clip);
     IntRect r = {rect.x + m_tx, rect.y + m_ty, rect.w, rect.h};
-    m_clip_rect = r.intersection(m_clip_rect);
+    IntRect new_rect = r.intersection(m_current_clip.rect);
+    m_current_clip = { new_rect, radius };
 }
 
 void Painter::pop_clip() {
     if (!m_clip_stack.empty()) {
-        m_clip_rect = m_clip_stack.back();
+        m_current_clip = m_clip_stack.back();
         m_clip_stack.pop_back();
     }
 }
@@ -48,18 +55,48 @@ void Painter::pop_translate() {
 void Painter::draw_pixel(IntPoint point, Color color) {
     int dx = point.x + m_tx;
     int dy = point.y + m_ty;
+    const IntRect& cr = m_current_clip.rect;
 
-    if (dx >= m_clip_rect.x && dx < m_clip_rect.right() && 
-        dy >= m_clip_rect.y && dy < m_clip_rect.bottom()) {
+    if (dx >= cr.x && dx < cr.right() && 
+        dy >= cr.y && dy < cr.bottom()) {
 
-        if (color.a == 0) return;
+        if (m_current_clip.radius > 0) {
+            int rx = m_current_clip.rect.x;
+            int ry = m_current_clip.rect.y;
+            int rw = m_current_clip.rect.w;
+            int rh = m_current_clip.rect.h;
+            int r = m_current_clip.radius;
+            
+            bool in_corner = false;
+            int cx = 0, cy = 0;
+            
+            if (dx < rx + r && dy < ry + r) { cx = rx + r; cy = ry + r; in_corner = true; } // TL
+            else if (dx >= rx + rw - r && dy < ry + r) { cx = rx + rw - r; cy = ry + r; in_corner = true; } // TR
+            else if (dx < rx + r && dy >= ry + rh - r) { cx = rx + r; cy = ry + rh - r; in_corner = true; } // BL
+            else if (dx >= rx + rw - r && dy >= ry + rh - r) { cx = rx + rw - r; cy = ry + rh - r; in_corner = true; } // BR
+            
+            if (in_corner) {
+                int dist_sq = (dx - cx + (dx<cx?0.5:0.5)) * (dx - cx + 0.5) + (dy - cy + 0.5) * (dy - cy + 0.5); // Int approx? Using float logic from before is better?
+                // Re-use float logic for smooth edge if desired, or simple check
+                // "take roundness into accounts"
+                float fdx = (float)dx + 0.5f;
+                float fdy = (float)dy + 0.5f;
+                float fcx = (float)cx;
+                float fcy = (float)cy;
+                float dist = std::sqrt((fdx-fcx)*(fdx-fcx) + (fdy-fcy)*(fdy-fcy));
+                if (dist > (float)r) return;
+                // We could apply AA here too...
+            }
+        }
 
-        if (color.a == 255) {
+        uint8_t final_a = (uint8_t)(color.a * m_global_alpha);
+        if (final_a == 0) return;
+
+        if (final_a == 255) {
             m_canvas->set_pixel({dx, dy}, color.as_argb());
         } else {
             uint32_t bg = m_canvas->pixel({dx, dy});
-
-            uint32_t a = color.a;
+            uint32_t a = final_a;
             uint32_t inv_a = 256 - a;
 
 #ifdef __ANDROID__
@@ -71,13 +108,10 @@ void Painter::draw_pixel(IntPoint point, Color color) {
 #else
             uint32_t rb = bg & 0xFF00FF;
             uint32_t g  = bg & 0x00FF00;
-
             uint32_t color_rb = color.as_argb() & 0xFF00FF;
             uint32_t color_g  = color.as_argb() & 0x00FF00;
-
             uint32_t res_rb = ((color_rb * a + rb * inv_a) >> 8) & 0xFF00FF;
             uint32_t res_g  = ((color_g * a + g * inv_a) >> 8) & 0x00FF00;
-
             m_canvas->set_pixel({dx, dy}, 0xFF000000 | res_rb | res_g);
 #endif
         }
@@ -86,21 +120,40 @@ void Painter::draw_pixel(IntPoint point, Color color) {
 
 void Painter::fill_rect(const IntRect& rect, Color color) {
     IntRect r = {rect.x + m_tx, rect.y + m_ty, rect.w, rect.h};
-    IntRect dest = r.intersection(m_clip_rect);
+    IntRect dest = r.intersection(m_current_clip.rect);
 
     if (dest.w <= 0 || dest.h <= 0) return;
 
-    uint32_t c = color.as_argb();
+    // Apply global alpha
+    Color final_color = color;
+    final_color.a = (uint8_t)(color.a * m_global_alpha);
+    if (final_color.a == 0) return;
 
-    if (color.a == 255) {
+    if (m_current_clip.radius > 0) {
+        // Slow path for rounded clip
+        for (int iy = 0; iy < dest.h; ++iy) {
+            for (int ix = 0; ix < dest.w; ++ix) {
+                draw_pixel({dest.x + ix - m_tx, dest.y + iy - m_ty}, color); 
+                // Passed original color because draw_pixel applies alpha/clip again?
+                // draw_pixel applies translation again.
+                // We are iterating dest (absolute coords).
+                // draw_pixel takes local coords.
+            }
+        }
+        return;
+    }
+
+    uint32_t c = final_color.as_argb();
+
+    if (final_color.a == 255) {
         for (int iy = 0; iy < dest.h; ++iy) {
             uint32_t* row = m_canvas->pixels() + (dest.y + iy) * m_canvas->width() + dest.x;
             for (int ix = 0; ix < dest.w; ++ix) {
                 row[ix] = c;
             }
         }
-    } else if (color.a > 0) {
-        uint32_t a = color.a;
+    } else {
+        uint32_t a = final_color.a;
         uint32_t inv_a = 256 - a;
 
         for (int iy = 0; iy < dest.h; ++iy) {
@@ -111,9 +164,9 @@ void Painter::fill_rect(const IntRect& rect, Color color) {
 
 #ifdef __ANDROID__
                 Color bgC(bg);
-                uint32_t nr = (color.r * a + bgC.r * inv_a) >> 8;
-                uint32_t ng = (color.g * a + bgC.g * inv_a) >> 8;
-                uint32_t nb = (color.b * a + bgC.b * inv_a) >> 8;
+                uint32_t nr = (final_color.r * a + bgC.r * inv_a) >> 8;
+                uint32_t ng = (final_color.g * a + bgC.g * inv_a) >> 8;
+                uint32_t nb = (final_color.b * a + bgC.b * inv_a) >> 8;
                 m_canvas->set_pixel({px, py}, Color((uint8_t)nr, (uint8_t)ng, (uint8_t)nb).as_argb());
 #else
                 uint32_t rb = bg & 0xFF00FF;
@@ -130,19 +183,7 @@ void Painter::fill_rect(const IntRect& rect, Color color) {
 }
 
 void Painter::clear_rect(const IntRect& rect, Color color) {
-    IntRect r = {rect.x + m_tx, rect.y + m_ty, rect.w, rect.h};
-    IntRect dest = r.intersection(m_clip_rect);
-
-    if (dest.w <= 0 || dest.h <= 0) return;
-
-    uint32_t c = color.as_argb();
-
-    for (int iy = 0; iy < dest.h; ++iy) {
-        uint32_t* row = m_canvas->pixels() + (dest.y + iy) * m_canvas->width() + dest.x;
-        for (int ix = 0; ix < dest.w; ++ix) {
-            row[ix] = c;
-        }
-    }
+    fill_rect(rect, color);
 }
 
 void Painter::draw_rect(const IntRect& rect, Color color) {
@@ -172,96 +213,151 @@ void Painter::draw_line(IntPoint p1, IntPoint p2, Color color) {
     }
 }
 
-static void draw_corner_aa(Painter& p, IntPoint center, int radius, int quad, Color color, bool filled, int thickness = 1) {
+static void draw_corner(Painter& p, IntPoint center, int radius, int quad, Color color, bool filled, int thickness = 1) {
     int cx = center.x;
     int cy = center.y;
-    int x_start = (quad == 0 || quad == 2) ? cx - radius : cx;
-    int x_end = (quad == 0 || quad == 2) ? cx : cx + radius;
-    int y_start = (quad == 0 || quad == 1) ? cy - radius : cy;
-    int y_end = (quad == 0 || quad == 1) ? cy : cy + radius;
-
-    if (quad == 0 || quad == 2) x_start--; else x_end++;
-    if (quad == 0 || quad == 1) y_start--; else y_end++;
-
     float r = (float)radius;
 
-    for (int y = y_start; y <= y_end; y++) {
-        for (int x = x_start; x <= x_end; x++) {
-            float dx = (float)x - (float)cx;
-            float dy = (float)y - (float)cy;
-            float dist_sq = dx*dx + dy*dy;
-            float dist = sqrtf(dist_sq);
+    for (int y = 0; y < radius; y++) {
+        for (int x = 0; x < radius; x++) {
+            float dx = (float)x + 0.5f;
+            float dy = (float)y + 0.5f;
+            float dist = std::sqrt(dx*dx + dy*dy);
 
+            float alpha = 0.0f;
             if (filled) {
                 if (dist <= r - 0.5f) {
-                    p.draw_pixel({x, y}, color);
+                    alpha = 1.0f;
                 } else if (dist < r + 0.5f) {
-                    float alpha = 1.0f - (dist - (r - 0.5f));
-                    Color c = color;
-                    c.a = (uint8_t)(c.a * std::clamp(alpha, 0.0f, 1.0f));
-                    p.draw_pixel({x, y}, c);
+                    alpha = 1.0f - (dist - (r - 0.5f));
                 }
             } else {
+                float t = (float)thickness;
+                float half_t = t / 2.0f;
+                float center_r = r - half_t;
+                float d = std::abs(dist - center_r);
+                if (d < half_t - 0.5f) {
+                    alpha = 1.0f;
+                } else if (d < half_t + 0.5f) {
+                    alpha = 1.0f - (d - (half_t - 0.5f));
+                }
+            }
 
-                 float t = (float)thickness;
-                 float half_t = t / 2.0f;
-                 float center_r = r - half_t;
-                 float d = fabsf(dist - center_r);
+            if (alpha > 0.0f) {
+                Color c = color;
+                c.a = (uint8_t)(c.a * std::clamp(alpha, 0.0f, 1.0f));
 
-                 if (d < half_t - 0.5f) {
-                     p.draw_pixel({x, y}, color);
-                 } else if (d < half_t + 0.5f) {
-                     float alpha = 1.0f - (d - (half_t - 0.5f));
-                     Color c = color;
-                     c.a = (uint8_t)(c.a * std::clamp(alpha, 0.0f, 1.0f));
-                     p.draw_pixel({x, y}, c);
-                 }
+                int px = (quad == 0 || quad == 2) ? cx - 1 - x : cx + x;
+                int py = (quad == 0 || quad == 1) ? cy - 1 - y : cy + y;
+                
+                p.draw_pixel({px, py}, c);
             }
         }
     }
 }
 
-void Painter::fill_rounded_rect(const IntRect& rect, int radius, Color color) {
+void Painter::fill_rounded_rect(const IntRect& rect,
+                                int radius,
+                                Color color,
+                                int corners)
+{
     if (radius <= 0) {
         fill_rect(rect, color);
         return;
     }
+    int maxR = std::min(rect.w, rect.h) / 2;
+    radius = std::min(radius, maxR);
+    
+    // Central column
+    fill_rect({rect.x + radius,
+               rect.y,
+               rect.w - 2 * radius,
+               rect.h},
+              color);
+    
+    // Left side (between corners)
+    fill_rect({rect.x,
+               rect.y + radius,
+               radius,
+               rect.h - 2 * radius},
+              color);
+              
+    // Right side (between corners)
+    fill_rect({rect.x + rect.w - radius,
+               rect.y + radius,
+               radius,
+               rect.h - 2 * radius},
+              color);
 
-    int min_side = std::min(rect.w, rect.h);
-    if (radius * 2 > min_side) radius = min_side / 2;
-
-    fill_rect({rect.x + radius, rect.y, rect.w - 2 * radius, rect.h}, color);
-    fill_rect({rect.x, rect.y + radius, radius, rect.h - 2 * radius}, color);
-    fill_rect({rect.x + rect.w - radius, rect.y + radius, radius, rect.h - 2 * radius}, color);
-
-    draw_corner_aa(*this, {rect.x + radius, rect.y + radius}, radius, 0, color, true);
-    draw_corner_aa(*this, {rect.x + rect.w - radius, rect.y + radius}, radius, 1, color, true);
-    draw_corner_aa(*this, {rect.x + radius, rect.y + rect.h - radius}, radius, 2, color, true);
-    draw_corner_aa(*this, {rect.x + rect.w - radius, rect.y + rect.h - radius}, radius, 3, color, true);
-}
-
-void Painter::draw_rounded_rect(const IntRect& rect, int radius, Color color, int thickness) {
-    if (radius <= 0) {
-
-        fill_rect({rect.x, rect.y, rect.w, thickness}, color);
-        fill_rect({rect.x, rect.y + rect.h - thickness, rect.w, thickness}, color);
-        fill_rect({rect.x, rect.y + thickness, thickness, rect.h - thickness * 2}, color);
-        fill_rect({rect.x + rect.w - thickness, rect.y + thickness, thickness, rect.h - thickness * 2}, color);
-        return;
+    // Top Left
+    if (corners & Corner::TopLeft) {
+        draw_corner(*this, {rect.x + radius, rect.y + radius}, radius, 0, color, true);
+    } else {
+        fill_rect({rect.x, rect.y, radius, radius}, color);
     }
 
-    int min_side = std::min(rect.w, rect.h);
-    if (radius * 2 > min_side) radius = min_side / 2;
+    // Top Right
+    if (corners & Corner::TopRight) {
+        draw_corner(*this, {rect.x + rect.w - radius, rect.y + radius}, radius, 1, color, true);
+    } else {
+        fill_rect({rect.x + rect.w - radius, rect.y, radius, radius}, color);
+    }
 
-    fill_rect({rect.x + radius, rect.y, rect.w - 2 * radius, thickness}, color);
-    fill_rect({rect.x + radius, rect.y + rect.h - thickness, rect.w - 2 * radius, thickness}, color);
-    fill_rect({rect.x, rect.y + radius, thickness, rect.h - 2 * radius}, color);
-    fill_rect({rect.x + rect.w - thickness, rect.y + radius, thickness, rect.h - 2 * radius}, color);
+    // Bottom Left
+    if (corners & Corner::BottomLeft) {
+        draw_corner(*this, {rect.x + radius, rect.y + rect.h - radius}, radius, 2, color, true);
+    } else {
+        fill_rect({rect.x, rect.y + rect.h - radius, radius, radius}, color);
+    }
 
-    draw_corner_aa(*this, {rect.x + radius, rect.y + radius}, radius, 0, color, false, thickness);
-    draw_corner_aa(*this, {rect.x + rect.w - radius, rect.y + radius}, radius, 1, color, false, thickness);
-    draw_corner_aa(*this, {rect.x + radius, rect.y + rect.h - radius}, radius, 2, color, false, thickness);
-    draw_corner_aa(*this, {rect.x + rect.w - radius, rect.y + rect.h - radius}, radius, 3, color, false, thickness);
+    // Bottom Right
+    if (corners & Corner::BottomRight) {
+        draw_corner(*this, {rect.x + rect.w - radius, rect.y + rect.h - radius}, radius, 3, color, true);
+    } else {
+        fill_rect({rect.x + rect.w - radius, rect.y + rect.h - radius, radius, radius}, color);
+    }
 }
+
+void Painter::draw_rounded_rect(const IntRect& rect,
+                                int radius,
+                                Color color,
+                                int thickness)
+{
+    if (radius <= 0) {
+        fill_rect({rect.x, rect.y, rect.w, thickness}, color);
+        fill_rect({rect.x, rect.y + rect.h - thickness, rect.w, thickness}, color);
+        fill_rect({rect.x, rect.y + thickness, thickness, rect.h - 2 * thickness}, color);
+        fill_rect({rect.x + rect.w - thickness, rect.y + thickness,
+                   thickness, rect.h - 2 * thickness}, color);
+        return;
+    }
+    int maxR = std::min(rect.w, rect.h) / 2;
+    radius = std::min(radius, maxR);
+    fill_rect({rect.x + radius,
+               rect.y,
+               rect.w - 2 * radius,
+               thickness},
+              color);
+    fill_rect({rect.x + radius,
+               rect.y + rect.h - thickness,
+               rect.w - 2 * radius,
+               thickness},
+              color);
+    fill_rect({rect.x,
+               rect.y + radius,
+               thickness,
+               rect.h - 2 * radius},
+              color);
+    fill_rect({rect.x + rect.w - thickness,
+               rect.y + radius,
+               thickness,
+               rect.h - 2 * radius},
+              color);
+    draw_corner(*this, {rect.x + radius, rect.y + radius}, radius, 0, color, false, thickness);
+    draw_corner(*this, {rect.x + rect.w - radius, rect.y + radius}, radius, 1, color, false, thickness);
+    draw_corner(*this, {rect.x + radius, rect.y + rect.h - radius}, radius, 2, color, false, thickness);
+    draw_corner(*this, {rect.x + rect.w - radius, rect.y + rect.h - radius}, radius, 3, color, false, thickness);
+}
+
 
 } 

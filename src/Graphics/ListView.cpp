@@ -164,7 +164,8 @@ void ListView::draw_content(Painter& painter) {
     if (bg.a == 0) bg = ThemeDB::the().color("Window.Background");
     
     IntRect b = screen_bounds();
-    painter.fill_rect(b, bg);
+    int roundness = ThemeDB::the().int_value("Widget.Roundness", 6);
+    painter.fill_rounded_rect(b, roundness, bg);
 
     Layout::draw_content(painter);
     
@@ -172,21 +173,39 @@ void ListView::draw_content(Painter& painter) {
     int visible_top = b.y;
     int visible_bottom = b.y + b.h;
 
-    painter.push_clip(b);
+    painter.push_rounded_clip(b, roundness);
 
-    for (auto& child : m_children) {
+// In ListView::draw_content
+    for (size_t i = 0; i < m_children.size(); ++i) {
+        auto& child = m_children[i];
         if (!child->visible()) continue;
+        
+        // Draw selection
+        auto item = std::dynamic_pointer_cast<ListItem>(child);
+        if (item && item->is_selected()) {
+             IntRect cb = child->screen_bounds();
+             int corners = 0;
+             if (i == 0) corners |= Painter::TopLeft | Painter::TopRight;
+             if (i == m_children.size() - 1) corners |= Painter::BottomLeft | Painter::BottomRight;
+             if (m_children.size() == 1) corners = Painter::AllCorners;
+             int bgRoundness = ThemeDB::the().int_value("Widget.Roundness", 6);
+             painter.fill_rounded_rect(cb, bgRoundness, ThemeDB::the().color("ListItem.Focus"), corners);
+        }
+
         IntRect cb = child->screen_bounds();
         int item_y = cb.y;
         
         if (item_y + cb.h >= visible_top && item_y <= visible_bottom) {
-             int line_y = item_y + cb.h - 1; 
-             painter.fill_rect({cb.x, line_y, b.w, 1}, divColor);
+             // Divider
+             if (i < m_children.size() - 1) { // Not last
+                 int line_y = item_y + cb.h - 1; 
+                 painter.fill_rect({cb.x, line_y, b.w, 1}, divColor);
+             }
         }
     }
     
     painter.pop_clip();
-    painter.draw_rect(b, ThemeDB::the().color("ListView.Border"));
+    painter.draw_rounded_rect(b, roundness, ThemeDB::the().color("ListView.Border"));
 }
 
 }

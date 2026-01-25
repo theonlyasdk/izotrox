@@ -92,10 +92,11 @@ void TextBox::ensure_cursor_visible() {
 
 void TextBox::draw_content(Painter& painter) {
     IntRect b = screen_bounds();
-    painter.fill_rect(b, ThemeDB::the().color("TextBox.Background"));
+    int roundness = ThemeDB::the().int_value("Widget.Roundness", 6);
+    painter.fill_rounded_rect(b, roundness, ThemeDB::the().color("TextBox.Background"));
 
     Color border = m_border_anim.value();
-    painter.draw_rect(b, border);
+    painter.draw_rounded_rect(b, roundness, border);
 
     if (m_font) {
         int padding = 5;

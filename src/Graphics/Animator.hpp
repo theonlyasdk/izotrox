@@ -44,6 +44,8 @@ public:
     T value() const;
     bool is_running() const;
 
+    void set_loop(bool loop);
+
     bool update(float dtMs);
 
 private:
@@ -56,6 +58,7 @@ private:
     float elapsed = 0.0f;
     Easing easing = Easing::EaseInOutQuad;
     bool running = false;
+    bool m_loop = false;
 };
 
 } 

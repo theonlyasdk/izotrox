@@ -34,6 +34,24 @@ void View::draw(Painter& painter) {
 }
 
 void View::on_touch(IntPoint point, bool down) {
+    if (down && m_root) {
+        // Unfocus widgets if clicked outside their bounds
+        auto rootContainer = std::dynamic_pointer_cast<Container>(m_root);
+        if (rootContainer) {
+            std::vector<std::shared_ptr<Widget>> focusables;
+            rootContainer->collect_focusable_widgets(focusables);
+            for (auto& w : focusables) {
+                if (!w->screen_bounds().contains(point)) {
+                    w->set_focused(false);
+                }
+            }
+        } else {
+             // If root is not container but is widget
+             if (!m_root->screen_bounds().contains(point)) {
+                 m_root->set_focused(false);
+             }
+        }
+    }
     if (m_root) m_root->on_touch(point, down);
 }
 

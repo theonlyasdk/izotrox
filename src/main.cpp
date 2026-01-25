@@ -70,10 +70,24 @@ int main(int argc, char* argv[]) {
     Logger::the().info("Izotrox Booting...");
     Logger::the().enable_logging_to_file();
 
-    ThemeDB::the().load("res/theme/ios-dark.ini");
+    // Parse command line arguments
+    std::string theme_name = "default";
+    for (int i = 1; i < argc; i++) {
+        std::string arg = argv[i];
+        if (arg == "--theme" && i + 1 < argc) {
+            theme_name = argv[++i];
+        }
+    }
+    
+    std::string theme_path = "res/theme/" + theme_name + ".ini";
+    if (!ThemeDB::the().load(theme_path)) {
+        Logger::the().warn("Failed to load theme '" + theme_name + "', falling back to default");
+        ThemeDB::the().load("res/theme/default.ini");
+    }
 
     int width = 800;
     int height = 600;
+    bool running = true;
 
     Application app(width, height, "Izotrox");
     if (!app.init()) {
@@ -90,12 +104,9 @@ int main(int argc, char* argv[]) {
     FontManager fonts;
     ImageManager manager;
 
-    std::string fontFamily = ThemeDB::the().string_value("FontFamily", "res/fonts/Roboto-Regular.ttf");
-    float fontSize = std::stof(ThemeDB::the().string_value("FontSize", "24.0"));
-
+    std::string fontFamily = ThemeDB::the().string_value("FontFamily", "res/fonts/Inter-Bold.ttf");
+    float fontSize = std::stof(ThemeDB::the().string_value("FontSize", "64.0"));
     Font* systemFont = fonts.load("system-ui", fontFamily, fontSize);
-    Font* inconsolata = fonts.load("inconsolata", "res/fonts/Inconsolata-Regular.ttf", 18.0f);
-
     if (!systemFont) {
         Logger::the().error("Could not load system font!");
         return 1;
@@ -115,14 +126,16 @@ int main(int argc, char* argv[]) {
 
     splash.next_step("Loading Fonts...");
 
+    Font* toast_font = fonts.load("toast", fontFamily, fontSize/2);
+    Font* inconsolata = fonts.load("inconsolata", "res/fonts/Inconsolata-Regular.ttf", 18.0f);
+    ToastManager::the().set_font(toast_font);
+
     splash.next_step("Building UI...");
 
     auto root = std::make_shared<LinearLayout>(Orientation::Vertical);
     root->set_width(WidgetSizePolicy::MatchParent);
     root->set_height(WidgetSizePolicy::MatchParent);
     root->set_show_focus_indicator(false);
-
-    bool running = true;
 
     auto lbl_title = std::make_shared<Label>("Izotrox UI Demo", systemFont);
     lbl_title->set_width(WidgetSizePolicy::MatchParent);
@@ -149,7 +162,7 @@ int main(int argc, char* argv[]) {
     btn_second_view->set_width(WidgetSizePolicy::MatchParent);
     btn_second_view->set_on_click([systemFont]() {
         auto secondView = SecondView::create(systemFont);
-        ViewManager::the().push(secondView, ViewTransition::SlideRight);
+        ViewManager::the().push(secondView);
     });
     root->add_child(btn_second_view);
 
@@ -209,8 +222,6 @@ int main(int argc, char* argv[]) {
     auto mainView = std::make_shared<View>(root);
     ViewManager::the().push(mainView, ViewTransition::None);
     ViewManager::the().resize(width, height);
-    
-    ToastManager::the().set_font(systemFont);
 
     splash.next_step("Ready!");
 

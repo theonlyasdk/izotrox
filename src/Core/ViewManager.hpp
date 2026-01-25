@@ -10,16 +10,25 @@ namespace Izo {
 
 enum class ViewTransition {
     None,
-    SlideLeft,
-    SlideRight
+    ThemeTransition,
+    SlideLeft,  // Standard slide used currently
+    SlideRight, // Standard slide used currently
+    PushLeft,   // iOS style Left
+    PushRight,  // iOS style Right
+    PushBottom, // iOS style Bottom
+    MaterialUFade // Android 12 scale+fade
 };
 
 class ViewManager {
 public:
     static ViewManager& the();
 
-    void push(std::shared_ptr<View> view, ViewTransition transition = ViewTransition::SlideLeft);
-    void pop(ViewTransition transition = ViewTransition::SlideRight);
+    void push(std::shared_ptr<View> view, ViewTransition transition = ViewTransition::ThemeTransition);
+    void pop(ViewTransition transition = ViewTransition::ThemeTransition);
+
+    void show_dialog(std::shared_ptr<Widget> dialog);
+    void dismiss_dialog();
+    bool has_active_dialog() const { return m_dialog != nullptr; }
 
     void resize(int w, int h);
     void update();
@@ -32,13 +41,16 @@ public:
 
 private:
     ViewManager() = default;
+    void setup_transition(ViewTransition transition, bool is_pop);
 
     std::vector<std::shared_ptr<View>> m_stack;
     std::shared_ptr<View> m_outgoing_view;
+    std::shared_ptr<Widget> m_dialog;
 
     Animator<float> m_transition_anim;
     ViewTransition m_current_transition = ViewTransition::None;
     bool m_animating = false;
+    bool m_is_pop = false;
 
     int m_width = 0;
     int m_height = 0;

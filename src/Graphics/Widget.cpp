@@ -44,13 +44,13 @@ void Widget::handle_focus_logic(bool inside, bool down) {
         m_gesture_cancelled = false;
 
         if (!inside) {
-            m_focused = false;
+            set_focused(false);
         }
     }
 
     if (!down && m_prev_touch_down && !m_gesture_cancelled) {
         if (inside && m_touch_started_inside && m_focusable) {
-            m_focused = true;
+            set_focused(true);
         }
     }
 
@@ -60,11 +60,6 @@ void Widget::handle_focus_logic(bool inside, bool down) {
     }
 
     m_prev_touch_down = down;
-
-    if (old_focused != m_focused) {
-        int anim_duration = ThemeDB::the().int_value("Widget.FocusAnimDuration", 6);
-        m_focus_anim.set_target(m_focused ? 1.0f : 0.0f, anim_duration, Easing::EaseOutCubic);
-    }
 }
 
 bool Widget::on_touch(IntPoint point, bool down, bool captured) {
@@ -84,23 +79,32 @@ bool Widget::on_touch(IntPoint point, bool down, bool captured) {
 void Widget::draw_focus_outline(Painter& painter) {
     float t = m_focus_anim.value();
     if (t > 0) {
-        int max_thickness = ThemeDB::the().int_value("Widget.FocusThickness", 6);
-        float expansion = max_thickness * (1 - t); 
+        int max_thickness = ThemeDB::the().int_value("Widget.FocusThickness", 12);
+        float expansion = max_thickness * (1.0f - t); 
         uint8_t alpha = (uint8_t)(255 * t);
         Color theme_focus = ThemeDB::the().color("Widget.Focus");
         Color color(theme_focus.r, theme_focus.g, theme_focus.b, alpha);
 
         IntRect b = screen_bounds();
-        for (int i = 0; i < max_thickness; i++) {
-            float new_exp = expansion * (max_thickness - i)/max_thickness;
-            painter.draw_rect({ (int)(b.x - new_exp), (int)(b.y - new_exp), (int)(b.w + new_exp*2), (int)(b.h + new_exp*2) }, color);
-        }
+
+        int draw_thickness = (int)(max_thickness * (1.0f - t)) + 1;
+        if (draw_thickness < 1) draw_thickness = 1;
+        int exp_int = (int)expansion;
+        
+        painter.draw_rounded_rect({ 
+            b.x - exp_int, 
+            b.y - exp_int, 
+            b.w + exp_int * 2, 
+            b.h + exp_int * 2 
+        }, ThemeDB::the().int_value("Widget.Roundness", 6), color, draw_thickness);
     }
 }
 
 void Widget::set_focused(bool focused) {
     if (m_focused != focused) {
         m_focused = focused;
+        int anim_duration = ThemeDB::the().int_value("Widget.FocusAnimDuration", 300);
+        m_focus_anim.set_target(m_focused ? 1.0f : 0.0f, anim_duration, Easing::EaseOutCubic);
     }
 }
 

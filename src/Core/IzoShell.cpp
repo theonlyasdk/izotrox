@@ -56,9 +56,9 @@ IzoShell::IzoShell() {
                 std::string path = "res/theme/" + theme_name + ".ini";
                 
                 if (ThemeDB::the().load(path)) {
-                    Logger::the().info("Theme loaded: " + theme_name + " (" + path + ")");
+                    ToastManager::the().show("Theme loaded: " + theme_name + " (" + path + ")");
                 } else {
-                    Logger::the().error("Failed to load theme: " + path);
+                    ToastManager::the().show("Failed to load theme: " + path);
                 }
             } else if (subcmd == "list") {
                 std::string theme_dir = "res/theme";
@@ -142,14 +142,9 @@ IzoShell::IzoShell() {
                 message += args[i];
                 if (i < args.size() - 1) message += " ";
             }
-            
-            // We need to include Toast.hpp but IzoShell.cpp doesn't have it yet.
-            // I'll add the include in the next step or assume it's there?
-            // Wait, I can't add include here. I should probably add include first.
-            // Accessing ToastManager directly here requires including Toast.hpp in IzoShell.cpp
-            // Let's assume I'll add the include.
-             Logger::the().info("Showing toast: " + message);
-             ToastManager::the().show(message);
+
+            Logger::the().info("Showing toast: " + message);
+            ToastManager::the().show(message);
         });
 }
 

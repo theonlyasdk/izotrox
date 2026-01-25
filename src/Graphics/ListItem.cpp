@@ -14,9 +14,6 @@ ListItem::ListItem(Orientation orientation) : LinearLayout(orientation) {
 }
 
 void ListItem::draw_content(Painter& painter) {
-    if (m_selected) {
-        painter.fill_rect(screen_bounds(), ThemeDB::the().color("ListItem.Focus"));
-    }
     Container::draw_content(painter);
 }
 

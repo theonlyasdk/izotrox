@@ -1,5 +1,3 @@
-
-
 #pragma once
 #include "Widget.hpp"
 #include "Font.hpp"
@@ -17,6 +15,7 @@ public:
     void draw_content(Painter& painter) override;
     void update() override;
     bool on_touch_event(IntPoint point, bool down) override;
+    bool on_key(KeyCode key) override;
     void measure(int parent_w, int parent_h) override;
 
     void set_on_click(std::function<void()> callback) { m_on_click = callback; }
@@ -28,6 +27,8 @@ private:
     bool m_is_hovered = false;
 
     Animator<Color> m_bg_anim;
+    Animator<float> m_scroll_anim{0.0f};
+    bool m_should_scroll = false;
 
     std::function<void()> m_on_click;
 };

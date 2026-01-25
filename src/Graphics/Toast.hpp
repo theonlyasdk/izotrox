@@ -18,7 +18,7 @@ public:
         Done
     };
 
-    Toast(const std::string& message, Font* font, int duration_ms);
+    Toast(const std::string& message, int duration_ms);
     
     void update(float delta);
     void draw(class Painter& painter, int screen_width, int screen_height);
@@ -47,6 +47,7 @@ public:
     void draw(class Painter& painter, int screen_width, int screen_height);
     
     void set_font(Font* font) { m_font = font; }
+    Font* font() const { return m_font; }
     
 private:
     ToastManager() = default;

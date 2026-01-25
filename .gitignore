@@ -37,3 +37,4 @@ compile_commands.json
 /ankrypton_for_reference
 logs
 *.log
+__pycache__

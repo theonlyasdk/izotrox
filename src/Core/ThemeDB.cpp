@@ -1,6 +1,7 @@
 #include "ThemeDB.hpp"
 #include "Debug/Logger.hpp"
 #include "File.hpp"
+#include "ViewManager.hpp"
 #include <sstream>
 #include <iostream>
 #include <algorithm>
@@ -131,4 +132,48 @@ Color ThemeDB::parse_color(const std::string& s) {
     return Color(0, 0, 0);
 }
 
-} 
+template<>
+Easing ThemeDB::enum_value<Easing>(const std::string& name, Easing defaultVal) {
+    std::string val = string_value(name, "");
+    if (val.empty()) return defaultVal;
+
+    if (val == "Linear") return Easing::Linear;
+    if (val == "EaseInQuad") return Easing::EaseInQuad;
+    if (val == "EaseOutQuad") return Easing::EaseOutQuad;
+    if (val == "EaseInOutQuad") return Easing::EaseInOutQuad;
+    if (val == "EaseInCubic") return Easing::EaseInCubic;
+    if (val == "EaseOutCubic") return Easing::EaseOutCubic;
+    if (val == "EaseInOutCubic") return Easing::EaseInOutCubic;
+    if (val == "EaseInQuart") return Easing::EaseInQuart;
+    if (val == "EaseOutQuart") return Easing::EaseOutQuart;
+    if (val == "EaseInOutQuart") return Easing::EaseInOutQuart;
+    if (val == "EaseInQuint") return Easing::EaseInQuint;
+    if (val == "EaseOutQuint") return Easing::EaseOutQuint;
+    if (val == "EaseInOutQuint") return Easing::EaseInOutQuint;
+    if (val == "BounceIn") return Easing::BounceIn;
+    if (val == "BounceOut") return Easing::BounceOut;
+    if (val == "BounceInOut") return Easing::BounceInOut;
+    if (val == "SpringEaseIn") return Easing::SpringEaseIn;
+    if (val == "SpringEaseOut") return Easing::SpringEaseOut;
+    if (val == "SpringEaseBounce") return Easing::SpringEaseBounce;
+
+    return defaultVal;
+}
+
+template<>
+ViewTransition ThemeDB::enum_value<ViewTransition>(const std::string& name, ViewTransition defaultVal) {
+    std::string val = string_value(name, "");
+    if (val.empty()) return defaultVal;
+
+    if (val == "None") return ViewTransition::None;
+    if (val == "SlideLeft") return ViewTransition::SlideLeft;
+    if (val == "SlideRight") return ViewTransition::SlideRight;
+    if (val == "PushLeft") return ViewTransition::PushLeft;
+    if (val == "PushRight") return ViewTransition::PushRight;
+    if (val == "PushBottom") return ViewTransition::PushBottom;
+    if (val == "MaterialUFade") return ViewTransition::MaterialUFade;
+    
+    return defaultVal;
+}
+
+}

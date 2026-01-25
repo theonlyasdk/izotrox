@@ -1,5 +1,3 @@
-
-
 #include "Container.hpp"
 #include "Input/Input.hpp"
 
@@ -37,7 +35,6 @@ bool Container::on_touch(IntPoint point, bool down, bool captured) {
 
         bool inside = child->screen_bounds().contains(point);
         if (inside) {
-
             if (child->on_touch(point, down, false)) {
                 target = child;
                 handled = true;
@@ -47,10 +44,9 @@ bool Container::on_touch(IntPoint point, bool down, bool captured) {
         }
     }
 
-    if (handled && down) {
+    if (down) {
         for (auto& child : m_children) {
             if (child != target && child->visible()) {
-
                 child->on_touch(point, down, false); 
             }
         }
@@ -60,7 +56,6 @@ bool Container::on_touch(IntPoint point, bool down, bool captured) {
 }
 
 bool Container::on_scroll(int y) {
-
     IntPoint mouse = Input::the().touch_point();
 
     for (auto it = m_children.rbegin(); it != m_children.rend(); ++it) {
