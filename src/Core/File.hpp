@@ -10,4 +10,4 @@ public:
     static std::string read_all_text(const std::string& path);
 };
 
-} // namespace Izo
+} 

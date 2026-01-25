@@ -27,4 +27,4 @@ private:
     std::string currentStatus;
 };
 
-} // namespace Izo
+} 

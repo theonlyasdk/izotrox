@@ -1,8 +1,9 @@
-// Mozilla Public License version 2.0. (c) theonlyasdk 2026
+
 
 #include "Layout.hpp"
 #include "Input/Input.hpp"
 #include "Core/ThemeDB.hpp"
+#include "Core/Application.hpp"
 #include <cmath>
 
 namespace Izo {
@@ -17,30 +18,58 @@ void Layout::layout() {
     layout_children();
 }
 
+void Layout::smooth_scroll_to_index(int index) {
+
+}
+
+void Layout::smooth_scroll_to(int target_y) {
+    m_auto_scrolling = true;
+    m_auto_scroll_target = (float)target_y;
+
+    int total_content_height = content_height();
+    int max_scroll = (total_content_height > layout_bounds().h) ? -(total_content_height - layout_bounds().h) : 0;
+
+    if (m_auto_scroll_target > 0) m_auto_scroll_target = 0;
+    if (m_auto_scroll_target < max_scroll) m_auto_scroll_target = max_scroll;
+}
+
 void Layout::update() {
     int total_content_height = content_height();
-    int max_scroll = (total_content_height > m_bounds.h) ? -(total_content_height - m_bounds.h) : 0;
+    int max_scroll = (total_content_height > layout_bounds().h) ? -(total_content_height - layout_bounds().h) : 0;
 
-    // Removed direct input polling for scroll here.
-    // Handling is moved to on_scroll.
+    if (m_auto_scrolling) {
+        float diff = m_auto_scroll_target - m_scroll_y;
+
+        m_velocity_y = diff * AUTO_SCROLL_SPEED * Application::the().delta();
+
+        if (std::abs(diff) < 1.0f && std::abs(m_velocity_y) < 1.0f) {
+            m_scroll_y = m_auto_scroll_target;
+            m_velocity_y = 0;
+            m_auto_scrolling = false;
+        }
+    }
 
     if (!m_is_dragging) {
-        if (std::abs(m_velocity_y) > 0.001f || m_scroll_y > 0 || m_scroll_y < max_scroll) {
+        if (std::abs(m_velocity_y) > 0.001f || m_scroll_y > 0 || m_scroll_y < max_scroll || m_auto_scrolling) {
             m_scroll_y += m_velocity_y;
 
-            if (m_scroll_y > 0) {
-                m_velocity_y = (0 - m_scroll_y) * TENSION;
-                m_scrollbar_alpha = 255;
-                if (std::abs(m_scroll_y) < 0.5f) { m_scroll_y = 0; m_velocity_y = 0; }
-            } else if (m_scroll_y < max_scroll) {
-                m_velocity_y = (max_scroll - m_scroll_y) * TENSION;
-                m_scrollbar_alpha = 255;
-                if (std::abs(m_scroll_y - max_scroll) < 0.5f) { m_scroll_y = max_scroll; m_velocity_y = 0; }
-            } else if (std::abs(m_velocity_y) > MIN_VELOCITY) {
-                m_velocity_y *= FRICTION;
-                m_scrollbar_alpha = 255;
+            if (!m_auto_scrolling) {
+                if (m_scroll_y > 0) {
+                    m_velocity_y = (0 - m_scroll_y) * TENSION;
+                    m_scrollbar_alpha = 255;
+                    if (std::abs(m_scroll_y) < 0.5f) { m_scroll_y = 0; m_velocity_y = 0; }
+                } else if (m_scroll_y < max_scroll) {
+                    m_velocity_y = (max_scroll - m_scroll_y) * TENSION;
+                    m_scrollbar_alpha = 255;
+                    if (std::abs(m_scroll_y - max_scroll) < 0.5f) { m_scroll_y = max_scroll; m_velocity_y = 0; }
+                } else if (std::abs(m_velocity_y) > MIN_VELOCITY) {
+                    m_velocity_y *= FRICTION;
+                    m_scrollbar_alpha = 255;
+                } else {
+                    m_velocity_y = 0;
+                }
             } else {
-                m_velocity_y = 0;
+                 m_scrollbar_alpha = 255;
             }
         } else {
              if (m_scrollbar_alpha > 0) {
@@ -49,6 +78,7 @@ void Layout::update() {
             }
         }
     } else {
+        m_auto_scrolling = false; 
         m_scrollbar_alpha = 255;
     }
 
@@ -57,74 +87,65 @@ void Layout::update() {
 
 bool Layout::on_scroll(int y) {
     if (!m_visible) return false;
-    
-    // First, let children handle it if they are hovered
+
     if (Container::on_scroll(y)) return true;
-    
-    // Check if we are hovered and have content overflow or are actively scrolling
+
     int total_content_height = content_height();
-    if (total_content_height <= m_bounds.h) return false;
-    
+    if (total_content_height <= layout_bounds().h) return false;
+
     IntPoint mouse = Input::the().touch_point();
-    if (bounds().contains(mouse)) {
+    if (screen_bounds().contains(mouse)) {
         if (y != 0) {
             m_velocity_y += (float)y * 12.0f;
             m_scrollbar_alpha = 255;
             return true;
         }
     }
-    
+
     return false;
 }
 
 void Layout::draw_content(Painter& painter) {
-    IntRect b = bounds();
+    IntRect b = screen_bounds();
     painter.push_clip(b);
 
-    // Virtual viewport in absolute coordinates shifted by scroll
-    // Child Y is absolute (screen coords now, via bounds())
-    // Visible Frame Top = b.y
-    // Visible Frame Bottom = b.y + b.h
-    // Add margin for focus outlines (e.g. 20px) to prevent culling artifacts
     int margin = 20;
     int visible_top = b.y - margin;
     int visible_bottom = b.y + b.h + margin;
 
     for (auto& child : m_children) {
         if (!child->visible()) continue;
-        
-        IntRect cb = child->bounds();
+
+        IntRect cb = child->screen_bounds();
         int child_y = cb.y;
         int child_h = cb.h;
-        
-        // Culling: Check intersection
+
         if (child_y + child_h >= visible_top && child_y <= visible_bottom) {
              child->draw(painter);
         }
     }
-    
-    // Draw scrollbar (Inside Clip)
+
     if (m_scrollbar_alpha > 0) {
         int total_content_height = content_height();
-        if (total_content_height > m_bounds.h) {
-            float view_ratio = (float)m_bounds.h / total_content_height;
-            int max_scroll = -(total_content_height - m_bounds.h);
-            
-            float bar_h = (float)m_bounds.h * view_ratio;
+        if (total_content_height > layout_bounds().h) {
+            float view_ratio = (float)layout_bounds().h / total_content_height;
+            int max_scroll = -(total_content_height - layout_bounds().h);
+
+            float bar_h = (float)layout_bounds().h * view_ratio;
             float bar_y;
 
             if (m_scroll_y > 0) {
                 float overscroll = m_scroll_y;
-                float size_factor = 1.0f - (overscroll / (float)m_bounds.h);
+                float size_factor = 1.0f - (overscroll / (float)layout_bounds().h);
                 if (size_factor < 0.2f) size_factor = 0.2f;
                 bar_h *= size_factor;
                 bar_y = (float)b.y;
             } else if (m_scroll_y < max_scroll) {
                 float overscroll = max_scroll - m_scroll_y;
-                float size_factor = 1.0f - (overscroll / (float)m_bounds.h);
+                float size_factor = 1.0f - (overscroll / (float)layout_bounds().h);
                 if (size_factor < 0.2f) size_factor = 0.2f;
                 bar_h *= size_factor;
-                bar_y = (float)b.y + (float)m_bounds.h - bar_h;
+                bar_y = (float)b.y + (float)layout_bounds().h - bar_h;
             } else {
                 bar_y = (float)b.y + (-m_scroll_y * view_ratio);
             }
@@ -138,40 +159,34 @@ void Layout::draw_content(Painter& painter) {
 }
 
 void Layout::draw_focus(Painter& painter) {
-    painter.push_clip(bounds());
-    // painter.push_translate({0, (int)m_scroll_y}); // Removed translation
-    
+    painter.push_clip(screen_bounds());
+
     for (auto& child : m_children) {
         if (child->visible())
             child->draw_focus(painter);
     }
-    
-    // painter.pop_translate();
+
     painter.pop_clip();
-    
+
     Widget::draw_focus(painter);
 }
 
 bool Layout::on_touch(IntPoint point, bool down, bool captured) {
     if (!m_visible) return false;
 
-    // Adjust touch coordinate for scroll offset when checking children
-    // IntPoint adjusted_point = { point.x, point.y - (int)m_scroll_y }; // REMOVED: bounds() handles adjusted coords
     IntPoint adjusted_point = point;
 
-    // On initial press, setup state
     if (down && !m_prev_touch_down) {
         m_initial_touch_x = point.x;
         m_initial_touch_y = point.y;
-        m_potential_swipe = bounds().contains(point);
+        m_potential_swipe = screen_bounds().contains(point);
         m_has_intercepted = false;
         m_is_dragging = false;
         m_last_touch_y = point.y;
     }
 
-    // If we've intercepted the touch for scrolling, handle it directly
     if (m_has_intercepted) {
-        bool res = on_touch_event({point.x - bounds().x, point.y - bounds().y}, down);
+        bool res = on_touch_event({point.x - screen_bounds().x, point.y - screen_bounds().y}, down);
         if (!down) {
             m_has_intercepted = false;
             m_potential_swipe = false;
@@ -180,12 +195,10 @@ bool Layout::on_touch(IntPoint point, bool down, bool captured) {
         return res;
     }
 
-    // Let container dispatch to children first
     bool result = Container::on_touch(adjusted_point, down, captured);
 
-    // Check for swipe interception
     if (down && m_potential_swipe && !m_has_intercepted) {
-        // Don't intercept if a scrollable child is handling it
+
         if (m_captured_child && m_captured_child->is_scrollable()) {
             m_potential_swipe = false;
         } else {
@@ -194,7 +207,7 @@ bool Layout::on_touch(IntPoint point, bool down, bool captured) {
             const int SLOP = 10;
 
             if (dy > SLOP && dy > dx) {
-                // Intercept for scrolling
+
                 m_has_intercepted = true;
                 if (m_captured_child) {
                     m_captured_child->cancel_gesture();
@@ -209,48 +222,30 @@ bool Layout::on_touch(IntPoint point, bool down, bool captured) {
         }
     }
 
-    // If no child handled and we're pressing on the layout, start dragging
-    if (!result && down && bounds().contains(point)) {
-        result = on_touch_event({point.x - bounds().x, point.y - bounds().y}, down);
+    if (!result && down && screen_bounds().contains(point)) {
+        result = on_touch_event({point.x - screen_bounds().x, point.y - screen_bounds().y}, down);
     }
 
-    // Handle release
     if (!down) {
         if (m_is_dragging) {
-            on_touch_event({point.x - bounds().x, point.y - bounds().y}, down);
+            on_touch_event({point.x - screen_bounds().x, point.y - screen_bounds().y}, down);
         }
         m_potential_swipe = false;
     }
+
+    handle_focus_logic(screen_bounds().contains(point), down);
 
     m_prev_touch_down = down;
     return result || m_has_intercepted;
 }
 
 bool Layout::on_touch_event(IntPoint point, bool down) {
-    // point is relative to bounds() TopLeft.
-    // m_bounds.y is usually static layout pos. 
-    // We want delta from visual touch.
-    // If point is (0,0), that means touched at Visual Top Left.
-    // ty should represent global Y or consistent local Y?
-    // m_last_touch_y was stored as global Y in on_touch? No:
-    // m_last_touch_y = point.y (Global) in on_touch line 151.
-    // Here point is local.
-    // Let's rely on Screen Coords for scrolling math to avoid confusion.
-    // But on_touch passes local point.
-    
-    // Actually, on_touch lines:
-    // m_last_touch_y = point.y (Global Point passed to on_touch).
-    
-    // on_touch_event is getting {point.x - bounds().x, ... }
-    // So point is local.
-    
-    // To maintain existing logic:
-    // ty = bounds().y + point.y;
-    int ty = bounds().y + point.y; 
-    
+
+    int ty = screen_bounds().y + point.y; 
+
     int total_content_height = content_height();
-    int max_scroll = (total_content_height > m_bounds.h) ? -(total_content_height - m_bounds.h) : 0;
-    
+    int max_scroll = (total_content_height > layout_bounds().h) ? -(total_content_height - layout_bounds().h) : 0;
+
     if (down) {
         m_scrollbar_alpha = 255;
         if (!m_is_dragging) {
@@ -274,4 +269,4 @@ bool Layout::on_touch_event(IntPoint point, bool down) {
     }
 }
 
-} // namespace Izo
+} 

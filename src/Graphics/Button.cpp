@@ -1,4 +1,4 @@
-// Mozilla Public License version 2.0. (c) theonlyasdk 2026
+
 
 #include "Button.hpp"
 #include "Core/ThemeDB.hpp"
@@ -11,7 +11,7 @@ Button::Button(const std::string& text, Font* font)
       m_bg_anim(ThemeDB::the().color("Button.Background")) {}
 
 void Button::draw_content(Painter& painter) {
-    IntRect b = bounds();
+    IntRect b = screen_bounds();
     Color c = m_bg_anim.value();
     painter.fill_rect(b, c);
     painter.draw_rect(b, ThemeDB::the().color("Button.Text"));
@@ -21,15 +21,15 @@ void Button::draw_content(Painter& painter) {
         int th = m_font->height();
         int tx = b.x + (b.w - tw) / 2;
         int ty = b.y + (b.h - th) / 2;
-        
+
         if (m_pressed) ty += 1;
-        
+
         m_font->draw_text(painter, {tx, ty}, m_text_str, ThemeDB::the().color("Button.Text"));
     }
 }
 
 void Button::update() {
-    m_is_hovered = bounds().contains(Input::the().touch_point());
+    m_is_hovered = screen_bounds().contains(Input::the().touch_point());
 
     if (m_is_hovered) {
         m_bg_anim.set_target(ThemeDB::the().color("Button.Hover"), 200, Easing::EaseOutQuad);
@@ -46,7 +46,7 @@ bool Button::on_touch_event(IntPoint point, bool down) {
 
     bool old_pressed = m_pressed;
     bool old_hovered = m_is_hovered;
-    
+
     m_is_hovered = inside; 
 
     if (inside) {
@@ -54,20 +54,20 @@ bool Button::on_touch_event(IntPoint point, bool down) {
     } else {
         m_pressed = false;
     }
-    
+
     if (old_pressed && !m_pressed && inside && !down) {
         if (m_on_click) m_on_click();
     }
-    
+
     if (old_pressed != m_pressed || old_hovered != m_is_hovered) {
         Color target = ThemeDB::the().color("Button.Background");
         if (m_pressed) target = ThemeDB::the().color("Button.Pressed");
         else if (m_is_hovered) target = ThemeDB::the().color("Button.Hover");
-        
+
         m_bg_anim.set_target(target, 200, Easing::EaseOutQuad);
     }
-    
-    return true; // Consume event if interactive
+
+    return true; 
 }
 
 void Button::measure(int parent_w, int parent_h) {
@@ -79,4 +79,4 @@ void Button::measure(int parent_w, int parent_h) {
     m_measured_size = {0, 0, mw, mh};
 }
 
-} // namespace Izo
+} 

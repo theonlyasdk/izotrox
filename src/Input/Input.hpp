@@ -1,4 +1,4 @@
-// Mozilla Public License version 2.0. (c) theonlyasdk 2026
+
 
 #pragma once
 
@@ -16,7 +16,7 @@ struct InputState {
     bool shift_down = false;
     bool ctrl_down = false;
     int scroll_y = 0;
-    
+
     KeyCode last_key = KeyCode::None;
 };
 
@@ -32,7 +32,7 @@ public:
     bool shift();
     bool ctrl();
     int scroll_y();
-    
+
     KeyCode key();
 
     void set_touch(IntPoint point, bool down);
@@ -49,9 +49,9 @@ private:
 
     InputState m_state;
     std::mutex m_mutex;
-    
+
     std::atomic<bool> m_running{false};
     std::thread m_worker_thread;
 };
 
-} // namespace Izo
+} 

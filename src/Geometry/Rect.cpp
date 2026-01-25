@@ -1,4 +1,4 @@
-// Mozilla Public License version 2.0. (c) theonlyasdk 2026
+
 
 #include <algorithm>
 
@@ -60,7 +60,7 @@ template <typename T> void Rect<T>::contract(T amount) {
   h -= amount * 2;
 }
 
-} // namespace Izo
+} 
 
 template class Izo::Rect<int>;
 template class Izo::Rect<float>;

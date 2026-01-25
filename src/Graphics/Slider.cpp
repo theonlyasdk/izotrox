@@ -1,4 +1,4 @@
-// Mozilla Public License version 2.0. (c) theonlyasdk 2026
+
 
 #include "Slider.hpp"
 #include "Core/ThemeDB.hpp"
@@ -25,11 +25,10 @@ void Slider::set_value(float v) {
 float Slider::value() const { return m_val; }
 
 void Slider::draw_content(Painter& painter) {
-    IntRect b = bounds();
+    IntRect b = screen_bounds();
     int trackH = 4;
     int ty = b.y + (b.h - trackH) / 2;
-    
-    // Use handle width to inset
+
     int hw = 16;
     Image* imgToDraw = m_handle;
     if (m_pressed && m_handle_focus && m_handle_focus->valid()) {
@@ -38,21 +37,18 @@ void Slider::draw_content(Painter& painter) {
     if (imgToDraw && imgToDraw->valid()) {
         hw = imgToDraw->width();
     }
-    
+
     int available_travel = b.w - hw;
     int h_offset = hw / 2 + (int)(available_travel * m_val);
 
-    // Track
-    // Track should span full width or just between handle centers? Usually full width.
-    painter.fill_rounded_rect({b.x, ty, b.w, trackH}, 2, ThemeDB::the().color("Slider.Track"));
-    
+    painter.fill_rect({b.x, ty, b.w, trackH}, ThemeDB::the().color("Slider.Track"));
+
     if (m_val > 0.0f) {
-        // Active part: from start to handle center? 
-        // Let's go from start to handle center.
+
         int fillW = h_offset;
-        painter.fill_rounded_rect({b.x, ty, fillW, trackH}, 2, ThemeDB::the().color("Slider.Active"));
+        painter.fill_rect({b.x, ty, fillW, trackH}, ThemeDB::the().color("Slider.Active"));
     }
-    
+
     if (imgToDraw && imgToDraw->valid()) {
         int hh = imgToDraw->height();
         int hx = b.x + h_offset - hw / 2;
@@ -61,7 +57,7 @@ void Slider::draw_content(Painter& painter) {
     } else {
         int hx = b.x + h_offset;
         int hy = b.y + b.h / 2;
-        painter.fill_rounded_rect({hx - 8, hy - 8, 16, 16}, 8, Color::White);
+        painter.fill_rect({hx - 8, hy - 8, 16, 16}, Color::White);
     }
 }
 
@@ -70,11 +66,11 @@ void Slider::measure(int parent_w, int parent_h) {
 }
 
 bool Slider::on_touch_event(IntPoint point, bool down) {
-    // If not pressed, we must be inside. If pressed, we capture everything.
+
     if (!m_pressed && !content_box().contains(point)) return false;
 
     int hw = 16, hh = 16;
-    
+
     Image* img = m_handle;
     if ((m_pressed || m_focused) && m_handle_focus && m_handle_focus->valid()) img = m_handle_focus;
 
@@ -82,34 +78,26 @@ bool Slider::on_touch_event(IntPoint point, bool down) {
         hw = img->width();
         hh = img->height();
     }
-    
-    // Handle pos relative to local 0,0
-    // Handle pos relative to local 0,0
+
     int available_travel = m_bounds.w - hw;
     int h_offset = hw / 2 + (int)(available_travel * m_val);
-    
+
     int hx = h_offset - hw / 2;
     int hy = (m_bounds.h - hh) / 2;
-    
+
     bool overHandle = (point.x >= hx && point.x < hx + hw && point.y >= hy && point.y < hy + hh);
     bool insideTrack = (point.x >= 0 && point.x < m_bounds.w && point.y >= 0 && point.y < m_bounds.h);
-    
+
     if (down && !m_pressed) {
-        // Initial press must be inside
+
         m_pressed = (overHandle || insideTrack);
     } else if (!down) {
         m_pressed = false;
     }
-    
-    // If pressed, we can drag anywhere
+
     if (m_pressed) {
         float relativeX = (float)point.x;
-        // Adjust for inset
-        // center = hw/2 + val * (w - hw)
-        // val * (w - hw) = center - hw/2
-        // val = (center - hw/2) / (w - hw)
-        // Here relativeX is 'center' (mouse pos relative to widget)
-        
+
         float available = (float)(m_bounds.w - hw);
         if (available > 0) {
             float v = (relativeX - hw/2.0f) / available;
@@ -119,8 +107,8 @@ bool Slider::on_touch_event(IntPoint point, bool down) {
         }
         return true; 
     }
-    
+
     return down && (overHandle || insideTrack);
 }
 
-} // namespace Izo
+} 

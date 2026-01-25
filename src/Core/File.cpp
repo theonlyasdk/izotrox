@@ -12,4 +12,4 @@ std::string File::read_all_text(const std::string& path) {
     return buffer.str();
 }
 
-} // namespace Izo
+} 

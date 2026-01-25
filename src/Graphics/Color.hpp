@@ -14,7 +14,6 @@ struct Color {
     constexpr Color(uint32_t argb) {
         a = (argb >> 24) & 0xFF;
 
-        /* In Android we use BGR subpixel ordering */
         IF_ANDROID(
             b = (argb >> 16) & 0xFF;
             g = (argb >> 8)  & 0xFF;
@@ -44,4 +43,4 @@ struct Color {
     static const Color Transparent;
 };
 
-} // namespace Izo
+} 

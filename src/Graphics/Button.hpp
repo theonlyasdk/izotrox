@@ -1,4 +1,4 @@
-// Mozilla Public License version 2.0. (c) theonlyasdk 2026
+
 
 #pragma once
 #include "Widget.hpp"
@@ -18,7 +18,7 @@ public:
     void update() override;
     bool on_touch_event(IntPoint point, bool down) override;
     void measure(int parent_w, int parent_h) override;
-    
+
     void set_on_click(std::function<void()> callback) { m_on_click = callback; }
 
 private:
@@ -26,10 +26,10 @@ private:
     Font* m_font;
     bool m_pressed = false;
     bool m_is_hovered = false;
-    
+
     Animator<Color> m_bg_anim;
-    
+
     std::function<void()> m_on_click;
 };
 
-} // namespace Izo
+} 

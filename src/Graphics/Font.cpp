@@ -54,7 +54,7 @@ void Font::load() {
     for (int i = 32; i < 127; i++) {
         int x1, y1, x2, y2;
         stbtt_GetCodepointBitmapBox(info.get(), i, scale, scale, &x1, &y1, &x2, &y2);
-        
+
         int w = x2 - x1;
         int h = y2 - y1;
 
@@ -73,7 +73,7 @@ void Font::load() {
         glyphs[i].y0 = curY;
         glyphs[i].x1 = x1;
         glyphs[i].y1 = y1;
-        
+
         int adv, lsb;
         stbtt_GetCodepointHMetrics(info.get(), i, &adv, &lsb);
         glyphs[i].advance = (int)(adv * scale);
@@ -109,7 +109,7 @@ void Font::draw_text(Painter& painter, IntPoint pos, const std::string& text, Co
         if (c < 32 || c >= 127) continue;
 
         const Glyph& g = glyphs[(int)c];
-        
+
         int x1, y1, x2, y2;
         stbtt_GetCodepointBitmapBox(info.get(), c, scale, scale, &x1, &y1, &x2, &y2);
         int gw = x2 - x1;
@@ -145,29 +145,26 @@ void Font::measure_multiline(const std::string& text, int& out_w, int& out_h, in
     std::string line;
     std::stringstream ss(text);
     std::string segment;
-    
-    // We need to handle \n manually
-    // Split by \n first?
-    
+
     int maxW = 0;
     int totalH = 0;
-    
+
     auto process_line = [&](std::string l) {
         if (max_width <= 0) {
             int w = width(l);
             if (w > maxW) maxW = w;
             totalH += lineHeight;
         } else {
-             // Word wrap
+
              std::stringstream wordSS(l);
              std::string word;
              std::string currentLine;
              int currentW = 0;
-             
+
              while (wordSS >> word) {
                  int wordW = width(word);
                  int spaceW = width(" ");
-                 
+
                  if (currentLine.empty()) {
                      currentLine = word;
                      currentW = wordW;
@@ -176,7 +173,7 @@ void Font::measure_multiline(const std::string& text, int& out_w, int& out_h, in
                          currentLine += " " + word;
                          currentW += spaceW + wordW;
                      } else {
-                         // New line
+
                          if (currentW > maxW) maxW = currentW;
                          totalH += lineHeight;
                          currentLine = word;
@@ -190,7 +187,7 @@ void Font::measure_multiline(const std::string& text, int& out_w, int& out_h, in
              }
         }
     };
-    
+
     size_t start = 0;
     size_t end = text.find('\n');
     while (end != std::string::npos) {
@@ -199,7 +196,7 @@ void Font::measure_multiline(const std::string& text, int& out_w, int& out_h, in
         end = text.find('\n', start);
     }
     process_line(text.substr(start));
-    
+
     if (totalH == 0 && !text.empty()) totalH = lineHeight;
 
     out_w = maxW;
@@ -208,10 +205,10 @@ void Font::measure_multiline(const std::string& text, int& out_w, int& out_h, in
 
 void Font::draw_text_multiline(Painter& painter, IntPoint pos, const std::string& text, Color color, int max_width) {
     if (!validState) return;
-    
+
     int lineHeight = height();
     int curY = pos.y;
-    
+
     auto draw_line_str = [&](const std::string& l) {
         draw_text(painter, {pos.x, curY}, l, color);
         curY += lineHeight;
@@ -219,7 +216,7 @@ void Font::draw_text_multiline(Painter& painter, IntPoint pos, const std::string
 
     size_t start = 0;
     size_t end = text.find('\n');
-    
+
     auto process_line = [&](std::string l) {
         if (max_width <= 0) {
             draw_line_str(l);
@@ -228,11 +225,11 @@ void Font::draw_text_multiline(Painter& painter, IntPoint pos, const std::string
              std::string word;
              std::string currentLine;
              int currentW = 0;
-             
+
              while (wordSS >> word) {
                  int wordW = width(word);
                  int spaceW = width(" ");
-                 
+
                  if (currentLine.empty()) {
                      currentLine = word;
                      currentW = wordW;
@@ -261,4 +258,4 @@ void Font::draw_text_multiline(Painter& painter, IntPoint pos, const std::string
     process_line(text.substr(start));
 }
 
-} // namespace Izo
+} 

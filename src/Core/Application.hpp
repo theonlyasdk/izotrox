@@ -14,14 +14,10 @@ public:
     Application(int width, int height, const char* title);
     ~Application();
 
-    // Returns false if initialization failed
     bool init();
 
-    // Returns false if the application should quit
     bool pump_events();
 
-    // Present the canvas to the screen
-    // On Android it copies canvas to framebuffer and swaps doublebuffer
     void present(Canvas& canvas);
 
     uint32_t width() const;
@@ -30,6 +26,7 @@ public:
     float delta() const noexcept { return _delta; }
     void set_delta(float dt) noexcept { _delta = dt; }
 
+    void quit();
     void on_resize(std::function<void(int, int)> callback);
 private:
     float _delta{0.f};
@@ -39,4 +36,4 @@ private:
     static Application* _instance;
 };
 
-} // namespace Izo
+} 

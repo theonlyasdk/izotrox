@@ -11,9 +11,9 @@ ViewManager& ViewManager::the() {
 
 void ViewManager::push(std::shared_ptr<View> view, ViewTransition transition) {
     if (m_animating) return;
-    
+
     view->resize(m_width, m_height);
-    
+
     if (!m_stack.empty() && transition != ViewTransition::None) {
         m_outgoing_view = m_stack.back();
         m_current_transition = transition;
@@ -21,14 +21,14 @@ void ViewManager::push(std::shared_ptr<View> view, ViewTransition transition) {
         m_transition_anim.snap_to(0.0f);
         m_transition_anim.set_target(1.0f, 500, Easing::EaseOutCubic);
     }
-    
+
     m_stack.push_back(view);
 }
 
 void ViewManager::pop(ViewTransition transition) {
     if (m_animating) return;
     if (m_stack.size() <= 1) return;
-    
+
     if (transition != ViewTransition::None) {
         m_outgoing_view = m_stack.back();
         m_current_transition = transition;
@@ -36,7 +36,7 @@ void ViewManager::pop(ViewTransition transition) {
         m_transition_anim.snap_to(0.0f);
         m_transition_anim.set_target(1.0f, 500, Easing::EaseOutCubic);
     }
-    
+
     m_stack.pop_back();
 }
 
@@ -60,7 +60,7 @@ void ViewManager::update() {
             m_current_transition = ViewTransition::None;
         }
     }
-    
+
     if (!m_stack.empty()) {
         int scroll = Input::the().scroll_y();
         if (scroll != 0) {
@@ -72,17 +72,17 @@ void ViewManager::update() {
 
 void ViewManager::draw(Painter& painter) {
     if (m_stack.empty()) return;
-    
+
     float t = m_transition_anim.value();
-    
+
     if (m_animating && m_outgoing_view) {
         int offset = (int)(t * m_width);
-        
+
         if (m_current_transition == ViewTransition::SlideLeft) {
             painter.push_translate({-offset, 0});
             m_outgoing_view->draw(painter);
             painter.pop_translate();
-            
+
             painter.push_translate({m_width - offset, 0});
             m_stack.back()->draw(painter);
             painter.pop_translate();
@@ -90,7 +90,7 @@ void ViewManager::draw(Painter& painter) {
             painter.push_translate({offset, 0});
             m_outgoing_view->draw(painter);
             painter.pop_translate();
-            
+
             painter.push_translate({-m_width + offset, 0});
             m_stack.back()->draw(painter);
             painter.pop_translate();
@@ -114,4 +114,4 @@ void ViewManager::on_key(KeyCode key) {
     }
 }
 
-} // namespace Izo
+} 

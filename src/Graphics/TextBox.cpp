@@ -1,5 +1,3 @@
-// Mozilla Public License version 2.0. (c) theonlyasdk 2026
-
 #include "TextBox.hpp"
 #include "Core/ThemeDB.hpp"
 #include "Input/Input.hpp"
@@ -37,7 +35,7 @@ int TextBox::get_cursor_index(int lx) {
     int best_idx = 0;
     int best_dist = 10000;
     int cur_x = 0;
-    
+
     for (size_t i = 0; i <= m_text_buffer.length(); ++i) {
         int dist = abs(cur_x - lx);
         if (dist < best_dist) {
@@ -71,18 +69,18 @@ int TextBox::find_word_end(int pos) {
 
 void TextBox::ensure_cursor_visible() {
     if (!m_font) return;
-    
+
     std::string pre_cursor = m_text_buffer.substr(0, m_sel_end);
     int cursor_x = m_font->width(pre_cursor);
-    int visible_w = m_bounds.w - 10;
-    
+    int visible_w = m_bounds.w - 12; 
+
     if (cursor_x < m_scroll_x) {
         m_scroll_x = cursor_x;
     }
     else if (cursor_x > m_scroll_x + visible_w) {
         m_scroll_x = cursor_x - visible_w;
     }
-    
+
     int total_w = m_font->width(m_text_buffer);
     if (total_w < visible_w) m_scroll_x = 0;
     else if (m_scroll_x > total_w - visible_w) m_scroll_x = total_w - visible_w;
@@ -93,7 +91,7 @@ void TextBox::ensure_cursor_visible() {
 }
 
 void TextBox::draw_content(Painter& painter) {
-    IntRect b = bounds();
+    IntRect b = screen_bounds();
     painter.fill_rect(b, ThemeDB::the().color("TextBox.Background"));
 
     Color border = m_border_anim.value();
@@ -101,36 +99,53 @@ void TextBox::draw_content(Painter& painter) {
 
     if (m_font) {
         int padding = 5;
-        painter.push_clip({b.x + padding, b.y + padding, b.w - 2 * padding, b.h - 2 * padding});
-        
+        IntRect clip = {b.x + padding, b.y + padding, b.w - 2 * padding, b.h - 2 * padding};
+        painter.push_clip(clip);
+
         int draw_x = b.x + padding - m_scroll_x;
         int draw_y = b.y + padding;
-        
-        if (m_sel_start != m_sel_end) {
-            int s = std::min(m_sel_start, m_sel_end);
-            int e = std::max(m_sel_start, m_sel_end);
-            
-            std::string pre_sel = m_text_buffer.substr(0, s);
-            std::string sel_txt = m_text_buffer.substr(s, e - s);
-            
-            int x1 = m_font->width(pre_sel);
-            int sw = m_font->width(sel_txt);
-            
-            painter.fill_rect({draw_x + x1, draw_y, sw, m_font->height()}, ThemeDB::the().color("TextBox.Selection"));
-        }
 
         if (m_text_buffer.empty()) {
             m_font->draw_text(painter, {draw_x, draw_y}, m_placeholder, ThemeDB::the().color("TextBox.Placeholder"));
         } else {
-            m_font->draw_text(painter, {draw_x, draw_y}, m_text_buffer, ThemeDB::the().color("TextBox.Text"));
+            int visible_w = b.w - 2 * padding;
+            int start_idx = 0;
+            int end_idx = (int)m_text_buffer.length();
+
+            int cur_w = 0;
+            for (int i = 0; i < (int)m_text_buffer.length(); ++i) {
+                int char_w = m_font->width(m_text_buffer.substr(i, 1));
+                if (cur_w + char_w < m_scroll_x) {
+                    start_idx = i + 1;
+                }
+                cur_w += char_w;
+                if (cur_w > m_scroll_x + visible_w) {
+                    end_idx = i + 1;
+                    break;
+                }
+            }
+
+            if (m_sel_start != m_sel_end) {
+                int s = std::min(m_sel_start, m_sel_end);
+                int e = std::max(m_sel_start, m_sel_end);
+
+                int x1 = m_font->width(m_text_buffer.substr(0, s));
+                int sw = m_font->width(m_text_buffer.substr(s, e - s));
+
+                painter.fill_rect({draw_x + x1, draw_y, sw, m_font->height()}, ThemeDB::the().color("TextBox.Selection"));
+            }
+
+            std::string visible_text = m_text_buffer.substr(start_idx, end_idx - start_idx);
+            int offset_x = m_font->width(m_text_buffer.substr(0, start_idx));
+            m_font->draw_text(painter, {draw_x + offset_x, draw_y}, visible_text, ThemeDB::the().color("TextBox.Text"));
         }
-        
+
         if (m_focused && m_cursor_visible) {
              std::string pre_cursor = m_text_buffer.substr(0, m_sel_end);
              int cx = m_font->width(pre_cursor);
              painter.fill_rect({draw_x + cx, draw_y, 2, m_font->height()}, ThemeDB::the().color("TextBox.Cursor"));
         }
-        
+
         painter.pop_clip();
     }
 }
@@ -146,6 +161,25 @@ void TextBox::update() {
             m_cursor_visible = !m_cursor_visible;
             m_cursor_timer = 0.0f;
         }
+
+        if (m_is_dragging) {
+            IntPoint mouse = Input::the().touch_point();
+            IntRect b = screen_bounds();
+            int padding = 5;
+            if (mouse.x < b.x + padding) {
+                m_scroll_x -= 5;
+                if (m_scroll_x < 0) m_scroll_x = 0;
+                int text_local_x = mouse.x - b.x - padding + m_scroll_x;
+                m_sel_end = get_cursor_index(text_local_x);
+            } else if (mouse.x > b.x + b.w - padding) {
+                int total_w = m_font->width(m_text_buffer);
+                int visible_w = b.w - 2 * padding;
+                m_scroll_x += 5;
+                if (m_scroll_x > total_w - visible_w) m_scroll_x = std::max(0, total_w - visible_w);
+                int text_local_x = mouse.x - b.x - padding + m_scroll_x;
+                m_sel_end = get_cursor_index(text_local_x);
+            }
+        }
     } else {
         m_cursor_visible = false;
         m_cursor_timer = 0.0f;
@@ -153,24 +187,18 @@ void TextBox::update() {
 }
 
 bool TextBox::on_touch_event(IntPoint point, bool down) {
-    bool inside = content_box().contains(point);
-    
     if (down) {
-        if (inside) {
-            int text_local_x = point.x - 5 + m_scroll_x;
-            int idx = get_cursor_index(text_local_x);
-            if (!m_is_dragging) {
-                m_sel_start = idx;
-                m_sel_end = idx;
-                m_is_dragging = true;
-            } else {
-                m_sel_end = idx;
-            }
-            ensure_cursor_visible();
-            return true;
+        int text_local_x = point.x - 5 + m_scroll_x;
+        int idx = get_cursor_index(text_local_x);
+        if (!m_is_dragging) {
+            m_sel_start = idx;
+            m_sel_end = idx;
+            m_is_dragging = true;
         } else {
-             m_is_dragging = false;
+            m_sel_end = idx;
         }
+        ensure_cursor_visible();
+        return true;
     } else {
         m_is_dragging = false;
     }
@@ -187,15 +215,13 @@ bool TextBox::on_key(KeyCode key) {
     int len = (int)m_text_buffer.length();
     bool has_selection = (m_sel_start != m_sel_end);
 
-    // Ctrl+A - Select All
     if (ctrl && keyVal == 'a') {
         m_sel_start = 0;
         m_sel_end = len;
         ensure_cursor_visible();
         return true;
     }
-    
-    // Ctrl+C - Copy
+
     if (ctrl && keyVal == 'c') {
         if (has_selection) {
             int s = std::min(m_sel_start, m_sel_end);
@@ -204,8 +230,7 @@ bool TextBox::on_key(KeyCode key) {
         }
         return true;
     }
-    
-    // Ctrl+X - Cut
+
     if (ctrl && keyVal == 'x') {
         if (has_selection) {
             int s = std::min(m_sel_start, m_sel_end);
@@ -219,8 +244,7 @@ bool TextBox::on_key(KeyCode key) {
         if (changed && m_on_change) m_on_change(m_text_buffer);
         return true;
     }
-    
-    // Ctrl+V - Paste
+
     if (ctrl && keyVal == 'v') {
         if (!s_clipboard.empty()) {
             if (has_selection) {
@@ -267,6 +291,11 @@ bool TextBox::on_key(KeyCode key) {
             m_text_buffer.erase(m_sel_end, count);
             changed = true;
         }
+    } else if (key == KeyCode::Enter) {
+        if (m_on_submit) {
+            m_on_submit(m_text_buffer);
+        }
+        return true;
     } else if (key == KeyCode::Home) {
         m_sel_end = 0;
         if (!shift) m_sel_start = m_sel_end;
@@ -305,7 +334,7 @@ bool TextBox::on_key(KeyCode key) {
         m_sel_start = m_sel_end;
         changed = true;
     }
-    
+
     if (changed) {
         ensure_cursor_visible();
         if (m_on_change) {
@@ -320,4 +349,4 @@ void TextBox::measure(int parent_w, int parent_h) {
     m_measured_size = {0, 0, 200, mh};
 }
 
-} // namespace Izo
+}

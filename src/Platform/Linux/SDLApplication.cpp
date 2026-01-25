@@ -1,4 +1,4 @@
-// Mozilla Public License version 2.0. (c) theonlyasdk 2026
+
 
 #include "Platform/Linux/SDLApplication.hpp"
 #include <SDL.h>
@@ -14,7 +14,7 @@ SDLApplication::SDLApplication(std::string caption, int width, int height)
         std::cerr << "Izotrox: SDL_Init failed: " << SDL_GetError() << std::endl;
         return;
     }
-    
+
     SDL_StartTextInput();
 
     m_window = SDL_CreateWindow(caption.c_str(),
@@ -70,13 +70,13 @@ bool SDLApplication::pump_events() {
 
                 m_width = w;
                 m_height = h;
-                
+
                 if (m_texture) SDL_DestroyTexture(m_texture);
                 m_texture = SDL_CreateTexture(m_renderer,
                                              SDL_PIXELFORMAT_ARGB8888, 
                                              SDL_TEXTUREACCESS_STREAMING,
                                              m_width, m_height);
-                
+
                 if (m_on_resize) m_on_resize(m_width, m_height);
             }
         } else if (e.type == SDL_MOUSEWHEEL) {
@@ -98,7 +98,7 @@ bool SDLApplication::pump_events() {
              } else if (e.key.keysym.sym == SDLK_LCTRL || e.key.keysym.sym == SDLK_RCTRL) {
                  Izo::Input::the().set_ctrl(down);
              }
-             
+
              if (down) {
                  if (e.key.keysym.sym == SDLK_BACKSPACE) {
                      Izo::Input::the().set_key(Izo::KeyCode::Backspace); 
@@ -137,13 +137,17 @@ void SDLApplication::present(const uint32_t* pixels, int width, int height) {
     if (!m_texture || !m_renderer || !pixels) return;
 
     if (width != (int)m_width || height != (int)m_height) {
-        // Mismatch between canvas and window size, skip this frame to prevent crash
+
         return;
     }
 
     SDL_UpdateTexture(m_texture, NULL, pixels, width * sizeof(uint32_t));
-    
+
     SDL_RenderClear(m_renderer);
     SDL_RenderCopy(m_renderer, m_texture, NULL, NULL);
     SDL_RenderPresent(m_renderer);
+}
+
+void SDLApplication::quit() {
+    m_running = false;
 }

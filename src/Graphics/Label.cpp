@@ -1,18 +1,20 @@
-// Mozilla Public License version 2.0. (c) theonlyasdk 2026
+
 
 #include "Label.hpp"
 #include "Core/ThemeDB.hpp"
 
 namespace Izo {
 
-Label::Label(const std::string& text, Font* font, Color color) 
-    : m_text_str(text), m_font(font), m_color(color) {}
+Label::Label(const std::string& text, Font* font) 
+    : m_text_str(text), m_font(font) {}
 
 void Label::draw_content(Painter& painter) {
+    Color color = ThemeDB::the().variant_color(m_color_variant);
+
     if (m_font) {
-        IntRect b = bounds();
+        IntRect b = screen_bounds();
         int maxW = m_wrap ? b.w : -1;
-        m_font->draw_text_multiline(painter, {b.x, b.y}, m_text_str, m_color, maxW);
+        m_font->draw_text_multiline(painter, {b.x, b.y}, m_text_str, color, maxW);
     }
 }
 
@@ -21,19 +23,14 @@ void Label::measure(int parent_w, int parent_h) {
     if (m_font) {
         int maxW = -1;
         if (m_wrap) {
-            // If wrapping, we need a width limit.
-            // If our policy is MatchParent, use parent_w.
-            // If Fixed, use m_width (if we had it stored, but we only have policy).
-            // Actually Layout passes `parent_w` as the available space.
-            // If we are in a LinearLayout, parent_w might be the container width.
+
             maxW = parent_w; 
-            
-            // Adjust for padding if we had it.
+
         }
-        
+
         m_font->measure_multiline(m_text_str, mw, mh, maxW);
     }
     m_measured_size = {0, 0, mw, mh};
 }
 
-} // namespace Izo
+} 

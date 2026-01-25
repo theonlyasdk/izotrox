@@ -1,4 +1,4 @@
-// Mozilla Public License version 2.0. (c) theonlyasdk 2026
+
 
 #include "Container.hpp"
 #include "Input/Input.hpp"
@@ -11,7 +11,7 @@ void Container::add_child(std::shared_ptr<Widget> child) {
 }
 
 void Container::draw_content(Painter& painter) {
-    painter.push_clip(bounds());
+    painter.push_clip(screen_bounds());
     for (auto& child : m_children) {
         if (child->visible())
             child->draw(painter);
@@ -27,54 +27,51 @@ bool Container::on_touch(IntPoint point, bool down, bool captured) {
         }
         return true;
     } 
-    
+
     std::shared_ptr<Widget> target = nullptr;
     bool handled = false;
 
-    // Pass 1: Find target
     for (auto it = m_children.rbegin(); it != m_children.rend(); ++it) {
         auto& child = *it;
         if (!child->visible()) continue;
-        
-        bool inside = child->bounds().contains(point);
+
+        bool inside = child->screen_bounds().contains(point);
         if (inside) {
-            // Tentatively try to handle
+
             if (child->on_touch(point, down, false)) {
                 target = child;
                 handled = true;
                 if (down) m_captured_child = child;
-                break; // Found our target (top-most)
+                break; 
             }
         }
     }
 
-    // Pass 2: Focus Management
     if (handled && down) {
         for (auto& child : m_children) {
             if (child != target && child->visible()) {
-                // Send inside=false by passing coordinates far away
+
                 child->on_touch(point, down, false); 
             }
         }
     }
-    
+
     return handled;
 }
 
 bool Container::on_scroll(int y) {
-    // Dispatch to children first (top-most first)
+
     IntPoint mouse = Input::the().touch_point();
-    
+
     for (auto it = m_children.rbegin(); it != m_children.rend(); ++it) {
         auto& child = *it;
         if (!child->visible()) continue;
-        
-        // Only dispatch scroll if mouse is over the child
-        if (child->bounds().contains(mouse)) {
+
+        if (child->screen_bounds().contains(mouse)) {
             if (child->on_scroll(y)) return true;
         }
     }
-    
+
     return false;
 }
 
@@ -99,7 +96,7 @@ void Container::collect_focusable_widgets(std::vector<std::shared_ptr<Widget>>& 
     for (auto& child : m_children) {
         if (!child->visible()) continue;
         if (child->focusable()) out_list.push_back(child);
-        
+
         Container* container = dynamic_cast<Container*>(child.get());
         if (container) {
             container->collect_focusable_widgets(out_list);
@@ -118,4 +115,4 @@ void Container::draw_focus(Painter& painter) {
     Widget::draw_focus(painter);
 }
 
-} // namespace Izo
+} 

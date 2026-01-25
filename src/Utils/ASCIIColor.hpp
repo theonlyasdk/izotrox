@@ -1,7 +1,4 @@
 #pragma once
-/**
- * ASCII Color Codes used for colorful logger output
- */
 
 namespace Izo {
 namespace ASCIIColor {

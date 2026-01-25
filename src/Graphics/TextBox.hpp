@@ -1,4 +1,4 @@
-// Mozilla Public License version 2.0. (c) theonlyasdk 2026
+
 
 #pragma once
 #include "Widget.hpp"
@@ -18,6 +18,7 @@ public:
     const std::string& text() const;
     void set_placeholder(const std::string& placeholder);
     void set_on_change(std::function<void(const std::string&)> callback) { m_on_change = callback; }
+    void set_on_submit(std::function<void(const std::string&)> callback) { m_on_submit = callback; }
 
     void draw_content(Painter& painter) override;
     void update() override;
@@ -34,9 +35,9 @@ private:
     std::string m_text_buffer;
     std::string m_placeholder;
     Font* m_font;
-    
+
     Animator<Color> m_border_anim;
-    
+
     int m_scroll_x = 0;
     int m_sel_start = 0;
     int m_sel_end = 0;
@@ -44,8 +45,9 @@ private:
     float m_cursor_timer = 0.0f;
     bool m_cursor_visible = true;
     std::function<void(const std::string&)> m_on_change;
-    
+    std::function<void(const std::string&)> m_on_submit;
+
     static std::string s_clipboard;
 };
 
-} // namespace Izo
+} 

@@ -50,14 +50,14 @@ uint32_t Canvas::pixel(IntPoint point) const {
 void Canvas::resize(int width, int height) {
     if (width <= 0 || height <= 0) return;
     if (m_width == width && m_height == height) return;
-    
+
     if (m_owns_memory) {
         delete[] m_pixels;
         m_pixels = new uint32_t[width * height];
     }
-    
+
     m_width = width;
     m_height = height;
 }
 
-} // namespace Izo
+} 

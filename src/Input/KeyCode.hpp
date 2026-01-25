@@ -8,8 +8,6 @@ enum class KeyCode : int {
     Tab = 9,
     Enter = 13,
     Space = 32,
-    
-    // Printable ASCII range 32-126 are implicitly supported via casting
 
     Left = 200,
     Right = 201,
@@ -20,4 +18,4 @@ enum class KeyCode : int {
     Delete = 206
 };
 
-} // namespace Izo
+} 

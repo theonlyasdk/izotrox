@@ -11,7 +11,7 @@ namespace Izo {
 void AndroidDevice::set_brightness(uint8_t value) {
     Logger::the().info(std::format("Setting brightness to {}", value));
 #ifdef __ANDROID__
-    // Some common brightness paths
+
     const char* paths[] = {
         "/sys/class/backlight/panel0-backlight/brightness",
         "/sys/class/leds/lcd-backlight/brightness",
@@ -48,4 +48,4 @@ void AndroidDevice::set_back_flash(bool enable) {
 #endif
 }
 
-} // namespace Izo
+} 

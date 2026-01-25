@@ -1,4 +1,4 @@
-// Mozilla Public License version 2.0. (c) theonlyasdk 2026
+
 
 #pragma once
 #include "Widget.hpp"
@@ -21,4 +21,4 @@ private:
     float m_value;
 };
 
-} // namespace Izo
+} 

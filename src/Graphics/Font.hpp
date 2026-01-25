@@ -26,7 +26,6 @@ public:
     void draw_text(Painter& painter, IntPoint pos, const std::string& text, Color color);
     int width(const std::string& text);
 
-    // Multiline / Wrapping support
     void draw_text_multiline(Painter& painter, IntPoint pos, const std::string& text, Color color, int max_width = -1);
     void measure_multiline(const std::string& text, int& out_w, int& out_h, int max_width = -1);
 
@@ -35,12 +34,12 @@ private:
     float sizeVal;
     bool validState;
     std::vector<unsigned char> data;
-    
+
     std::unique_ptr<stbtt_fontinfo> info;
-    
+
     float scale;
     int ascent, descent, lineGap, baseline;
-    
+
     struct Atlas {
         int width, height;
         std::vector<unsigned char> pixels;
@@ -51,4 +50,4 @@ private:
     void load();
 };
 
-} // namespace Izo
+} 

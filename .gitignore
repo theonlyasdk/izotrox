@@ -35,3 +35,5 @@ build
 compile_commands.json
 /.cache
 /ankrypton_for_reference
+logs
+*.log

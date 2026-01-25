@@ -1,4 +1,4 @@
-// Mozilla Public License version 2.0. (c) theonlyasdk 2026
+
 
 #include <iostream>
 #include <fstream>
@@ -24,9 +24,10 @@
 #include "Graphics/Button.hpp"
 #include "Graphics/ProgressBar.hpp"
 #include "Graphics/TextBox.hpp"
+#include "Graphics/Toast.hpp"
 #include "Graphics/Slider.hpp"
 #include "Graphics/Image.hpp"
-#include "Graphics/ResourceManager.hpp"
+#include "Core/ResourceManager.hpp"
 #include "Views/SplashScreen.hpp"
 #include "Graphics/View.hpp"
 #include "Graphics/ListView.hpp"
@@ -34,6 +35,7 @@
 #include "Core/Application.hpp"
 #include "Core/ThemeDB.hpp"
 #include "Core/ViewManager.hpp"
+#include "Core/IzoShell.hpp"
 #include "Platform/Android/AndroidDevice.hpp"
 #include "Core/SystemStats.hpp"
 #include "Views/SecondView.hpp"
@@ -59,15 +61,16 @@ void draw_debug_panel(Painter& painter, Font& font, float fps) {
         cached_h = font.height() + 10;
         timer = 0;
     }
-    
+
     painter.fill_rect({10, 10, cached_w, cached_h}, Color(0, 0, 0, 128)); 
     font.draw_text(painter, {20, 15}, cached_text, Color::White);
 }
 
 int main(int argc, char* argv[]) {
     Logger::the().info("Izotrox Booting...");
+    Logger::the().enable_logging_to_file();
 
-    ThemeDB::the().load("res/theme/light.ini");
+    ThemeDB::the().load("res/theme/ios-dark.ini");
 
     int width = 800;
     int height = 600;
@@ -77,7 +80,7 @@ int main(int argc, char* argv[]) {
         Logger::the().error("Failed to initialize application!");
         return 1;
     }
-    
+
     width = app.width();
     height = app.height();
 
@@ -101,7 +104,7 @@ int main(int argc, char* argv[]) {
     SplashScreen splash(app, *painter, *canvas, *systemFont);
 
     splash.set_total_steps(5); 
-    
+
     splash.next_step("Initializing Input...");
     Input::the().init();
 
@@ -111,7 +114,6 @@ int main(int argc, char* argv[]) {
     Image* sliderHandleFocus = manager.load("slider-handle-focus", "res/icons/slider-handle-focus.png");
 
     splash.next_step("Loading Fonts...");
-    // load extra fonts here...
 
     splash.next_step("Building UI...");
 
@@ -122,7 +124,7 @@ int main(int argc, char* argv[]) {
 
     bool running = true;
 
-    auto lbl_title = std::make_shared<Label>("Izotrox UI Demo", systemFont, ThemeDB::the().color("Label.Text"));
+    auto lbl_title = std::make_shared<Label>("Izotrox UI Demo", systemFont);
     lbl_title->set_width(WidgetSizePolicy::MatchParent);
     root->add_child(lbl_title);
 
@@ -153,7 +155,7 @@ int main(int argc, char* argv[]) {
 
     auto pb_demo = std::make_shared<ProgressBar>(0.0f);
     root->add_child(pb_demo);
-    
+
     auto slider_demo = std::make_shared<Slider>(sliderHandle, sliderHandleFocus, 0.5f);
     slider_demo->set_width(WidgetSizePolicy::MatchParent);
     slider_demo->set_on_change([&](float v) {
@@ -162,49 +164,53 @@ int main(int argc, char* argv[]) {
     });
     root->add_child(slider_demo);
 
-    auto tb_demo = std::make_shared<TextBox>("Enter something...", systemFont);
+    auto tb_demo = std::make_shared<TextBox>("Shell> ", systemFont);
     tb_demo->set_focusable(true);
     tb_demo->set_width(WidgetSizePolicy::MatchParent);
-    tb_demo->set_on_change([&](const std::string& text) {
-        Logger::the().info("Text changed: " + text);
+    tb_demo->set_on_submit([&](const std::string& text) {
+        if (!text.empty()) {
+            Logger::the().info("Shell> " + text);
+            IzoShell::the().execute(text);
+            tb_demo->set_text("");
+        }
     });
     root->add_child(tb_demo);
-    
-    // Demo Multiline
-    auto lbl_multiline_demo = std::make_shared<Label>("Multi-line\nLabel Test", systemFont, ThemeDB::the().color("Label.Text"));
+
+    auto lbl_multiline_demo = std::make_shared<Label>("Multi-line\nLabel Test", systemFont);
     root->add_child(lbl_multiline_demo);
-    
-    // Demo Wrap
-    auto lbl_wrap_demo = std::make_shared<Label>("This is a very long text that should automatically wrap to the next line if the container width is not enough to hold it in a single line.", systemFont, ThemeDB::the().color("Label.Text"));
+
+    auto lbl_wrap_demo = std::make_shared<Label>("This is a very long text that should automatically wrap to the next line if the container width is not enough to hold it in a single line.", systemFont);
     lbl_wrap_demo->set_width(WidgetSizePolicy::MatchParent);
     lbl_wrap_demo->set_wrap(true);
     root->add_child(lbl_wrap_demo);
 
-    // ListView Demo
     auto listview = std::make_shared<ListView>();
     listview->set_height(400);
     listview->set_width(WidgetSizePolicy::MatchParent);
 
     for (int i = 0; i < 30; ++i) {
         auto item = std::make_shared<ListItem>(Orientation::Vertical);
-        // item->set_height(60); 
+
         item->set_padding(10, 10, 5, 5);
 
-        auto label = std::make_shared<Label>("Item #" + std::to_string(i), systemFont, ThemeDB::the().color("ListView.Text"));
+        auto label = std::make_shared<Label>("Item #" + std::to_string(i), systemFont);
         label->set_focusable(false);
-        auto subLabel = std::make_shared<Label>("Details for " + std::to_string(i), systemFont, Color(150, 150, 150));
+        auto subLabel = std::make_shared<Label>("Details for " + std::to_string(i), systemFont);
+        subLabel->set_color_variant(ColorVariant::Secondary);
         subLabel->set_focusable(false);
-        
+
         item->add_child(label);
         item->add_child(subLabel);
 
         listview->add_item(item);
     }
     root->add_child(listview);
-    
+
     auto mainView = std::make_shared<View>(root);
     ViewManager::the().push(mainView, ViewTransition::None);
     ViewManager::the().resize(width, height);
+    
+    ToastManager::the().set_font(systemFont);
 
     splash.next_step("Ready!");
 
@@ -246,11 +252,13 @@ int main(int argc, char* argv[]) {
 
         KeyCode key = Input::the().key();
         if (key != KeyCode::None) ViewManager::the().on_key(key); 
-        
+
         ViewManager::the().update();
+        ToastManager::the().update(dt);
 
         canvas->clear(ThemeDB::the().color("Window.Background"));
         ViewManager::the().draw(*painter);
+        ToastManager::the().draw(*painter, width, height);
 
         draw_debug_panel(*painter, *inconsolata, current_fps);
 

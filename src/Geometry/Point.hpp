@@ -28,4 +28,4 @@ using IntPoint = Point<int>;
 using FloatPoint = Point<float>;
 using DoublePoint = Point<double>;
 
-} // namespace Izo
+} 

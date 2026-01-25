@@ -13,9 +13,6 @@ namespace Izo {
 
 Application* Application::_instance = nullptr;
 
-/**
- * Application platform implementation
- */
 struct Application::Impl {
     int width, height;
     std::function<void(int, int)> on_resize;
@@ -69,8 +66,7 @@ bool Application::init() {
 
 bool Application::pump_events() {
     IF_ANDROID(
-        // On Android, we just keep running until external kill or back button logic
-        // For now always true
+
         return true;
     )
     IF_DESKTOP(
@@ -100,4 +96,12 @@ void Application::on_resize(std::function<void(int, int)> callback) {
     impl->on_resize = callback;
 }
 
-} // namespace Izo
+void Application::quit() {
+    IF_DESKTOP(
+        if (impl->sdl_app) {
+            impl->sdl_app->quit();
+        }
+    )
+}
+
+} 

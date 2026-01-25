@@ -1,4 +1,4 @@
-// Mozilla Public License version 2.0. (c) theonlyasdk 2026
+
 
 #pragma once
 
@@ -28,4 +28,4 @@ public:
 using IntRect = Rect<int>;
 using FloatRect = Rect<float>;
 
-} // namespace Izo
+} 

@@ -13,4 +13,4 @@ public:
     static std::shared_ptr<View> create(Font* font);
 };
 
-} // namespace Izo
+} 

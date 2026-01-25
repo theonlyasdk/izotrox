@@ -1,4 +1,4 @@
-// Mozilla Public License version 2.0. (c) theonlyasdk 2026
+
 
 #include "ProgressBar.hpp"
 #include "Core/ThemeDB.hpp"
@@ -20,7 +20,7 @@ void ProgressBar::set_progress(float v) {
 float ProgressBar::progress() const { return m_value; }
 
 void ProgressBar::draw_content(Painter& painter) {
-    IntRect b = bounds();
+    IntRect b = screen_bounds();
     painter.fill_rect(b, ThemeDB::the().color("ProgressBar.Background"));
     painter.draw_rect(b, Color::White); 
 
@@ -38,4 +38,4 @@ bool ProgressBar::on_touch_event(IntPoint point, bool down) {
      return false; 
 }
 
-} // namespace Izo
+} 

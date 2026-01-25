@@ -19,7 +19,7 @@ Framebuffer::~Framebuffer() {
 
 bool Framebuffer::init(const std::string& device) {
     Logger::the().info("Initializing Framebuffer on " + device);
-    
+
     m_fd = open(device.c_str(), O_RDWR);
     if (m_fd == -1) {
         if (device == "/dev/graphics/fb0") {
@@ -58,7 +58,6 @@ bool Framebuffer::init(const std::string& device) {
     m_bpp = m_vinfo.bits_per_pixel;
     m_line_length = m_finfo.line_length;
 
-    // Try to enable double buffering
     m_vinfo.yres_virtual = m_vinfo.yres * 2;
     if (ioctl(m_fd, FBIOPUT_VSCREENINFO, &m_vinfo) == 0) {
         ioctl(m_fd, FBIOGET_VSCREENINFO, &m_vinfo);
@@ -95,23 +94,15 @@ void Framebuffer::swap_buffers(Canvas& src) {
 
     int buf_idx = m_double_buffered ? (1 - m_current_buffer_idx) : 0;
     int y_offset = buf_idx * m_height;
-    
-    // Copy src canvas to FB
-    // Handle BPP conversions if necessary. Assuming 32bpp for now (standard Android/Linux modern FB)
+
     if (m_bpp == 32) {
         uint8_t* dst_base = m_fbp + (y_offset * m_line_length);
         const uint32_t* src_pixels = src.pixels();
-        
+
         for (int y = 0; y < m_height; ++y) {
             uint32_t* dst_row = (uint32_t*)(dst_base + y * m_line_length);
-            const uint32_t* src_row = src_pixels + y * m_width; // Canvas width matches fb width hopefully
-            
-            // memcpy is fastest if formats match
-            // Android often uses BGRA or RGBA. Our Color is RGBA (in memory).
-            // If colors are wrong (blue/red swapped), we need a swizzle loop.
-            // For now, let's assume they match or we accept the swap for this port.
-            // Actually, we can check vinfo red offset.
-            
+            const uint32_t* src_row = src_pixels + y * m_width; 
+
             std::memcpy(dst_row, src_row, m_width * 4);
         }
     }
@@ -119,12 +110,12 @@ void Framebuffer::swap_buffers(Canvas& src) {
     if (m_double_buffered) {
         m_vinfo.yoffset = y_offset;
         ioctl(m_fd, FBIOPAN_DISPLAY, &m_vinfo);
-        
+
         int arg = 0;
         ioctl(m_fd, FBIO_WAITFORVSYNC, &arg);
-        
+
         m_current_buffer_idx = buf_idx;
     }
 }
 
-} // namespace Izo
+} 

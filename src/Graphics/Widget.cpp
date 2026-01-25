@@ -1,4 +1,4 @@
-// Mozilla Public License version 2.0. (c) theonlyasdk 2026
+
 
 #include "Widget.hpp"
 #include "Core/Application.hpp"
@@ -29,41 +29,38 @@ void Widget::measure(int parent_w, int parent_h) {
     int w = 0, h = 0;
     if (m_width == (int)WidgetSizePolicy::MatchParent) w = parent_w;
     else if (m_width > 0) w = m_width;
-    
+
     if (m_height == (int)WidgetSizePolicy::MatchParent) h = parent_h;
     else if (m_height > 0) h = m_height;
-    
+
     m_measured_size = {0, 0, w, h};
 }
 
 void Widget::handle_focus_logic(bool inside, bool down) {
     bool old_focused = m_focused;
 
-    // On initial press
     if (down && !m_prev_touch_down) {
         m_touch_started_inside = inside;
         m_gesture_cancelled = false;
-        // Lose focus if clicking outside
+
         if (!inside) {
             m_focused = false;
         }
     }
 
-    // On release - only focus if gesture wasn't cancelled and started inside
     if (!down && m_prev_touch_down && !m_gesture_cancelled) {
         if (inside && m_touch_started_inside && m_focusable) {
             m_focused = true;
         }
     }
-    
-    // Reset on release
+
     if (!down) {
         m_touch_started_inside = false;
         m_gesture_cancelled = false;
     }
-    
+
     m_prev_touch_down = down;
-    
+
     if (old_focused != m_focused) {
         int anim_duration = ThemeDB::the().int_value("Widget.FocusAnimDuration", 6);
         m_focus_anim.set_target(m_focused ? 1.0f : 0.0f, anim_duration, Easing::EaseOutCubic);
@@ -72,15 +69,15 @@ void Widget::handle_focus_logic(bool inside, bool down) {
 
 bool Widget::on_touch(IntPoint point, bool down, bool captured) {
     if (!m_visible) return false;
-    
-    IntRect b = bounds();
+
+    IntRect b = screen_bounds();
     bool inside = b.contains(point);
     handle_focus_logic(inside, down);
-    
+
     if (!inside && !captured) return false;
 
     IntPoint local_point = { point.x - b.x, point.y - b.y };
-    
+
     return on_touch_event(local_point, down);
 }
 
@@ -93,7 +90,7 @@ void Widget::draw_focus_outline(Painter& painter) {
         Color theme_focus = ThemeDB::the().color("Widget.Focus");
         Color color(theme_focus.r, theme_focus.g, theme_focus.b, alpha);
 
-        IntRect b = bounds();
+        IntRect b = screen_bounds();
         for (int i = 0; i < max_thickness; i++) {
             float new_exp = expansion * (max_thickness - i)/max_thickness;
             painter.draw_rect({ (int)(b.x - new_exp), (int)(b.y - new_exp), (int)(b.w + new_exp*2), (int)(b.h + new_exp*2) }, color);
@@ -108,13 +105,13 @@ void Widget::set_focused(bool focused) {
 }
 
 bool Widget::hovering() const {
-    return bounds().contains(Input::the().touch_point());
+    return screen_bounds().contains(Input::the().touch_point());
 }
 
 void Widget::show() { if (!m_visible) { m_visible = true; } }
 void Widget::hide() { if (m_visible) { m_visible = false; } }
 
-IntRect Widget::bounds() const {
+IntRect Widget::screen_bounds() const {
     IntRect r = m_bounds;
     const Widget* p = m_parent;
     while (p) {
@@ -126,4 +123,4 @@ IntRect Widget::bounds() const {
     return r;
 }
 
-} // namespace Izo
+} 

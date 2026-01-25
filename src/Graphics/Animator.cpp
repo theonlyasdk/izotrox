@@ -47,8 +47,6 @@ template <typename T> bool Animator<T>::update(float dtMs) {
   return true;
 }
 
-// Simple bounce‑out curve (mirrors the classic “easeOutBounce”)
-// – not a true physics bounce, just a convenient overshoot shape.
 static float bounce_out(float p) {
     if (p < 1.0f / 2.75f) {
         return 7.5625f * p * p;
@@ -64,17 +62,14 @@ static float bounce_out(float p) {
     }
 }
 
-/* Spring easing with overshoot */
 static float spring(float p, bool in, bool bounce) {
-    const float tension   = 0.4f;   // controls how “tight” the spring feels
-    const float friction  = 0.6f;   // damping factor
+    const float tension   = 0.4f;   
+    const float friction  = 0.6f;   
     const float overshoot = bounce ? 0.1f : 0.0f;
 
-    // Normalized time with optional ease‑in/out shaping
     float t = in ? (1.0f - std::cos(p * M_PI * 0.5f))
                  : (std::sin(p * M_PI * 0.5f));
 
-    // Damped sinusoid – classic spring formula
     float value = 1.0f - std::exp(-t * tension) *
                         std::cos(t * (M_PI / (2.0f - friction)));
 
@@ -87,7 +82,7 @@ static float spring(float p, bool in, bool bounce) {
 
 template <typename T>
 float Animator<T>::apply_easing(float t) const {
-    // Clamp to [0,1] for safety – most easing functions assume this range
+
     t = std::clamp(t, 0.0f, 1.0f);
 
     switch (easing) {
@@ -142,7 +137,6 @@ float Animator<T>::apply_easing(float t) const {
     }
 }
 
-
 template <typename T>
 inline T Animator<T>::interpolate(const T& a, const T &b, float t) {
   return a + (b - a) * t;
@@ -155,7 +149,7 @@ inline Color Animator<Color>::interpolate(Color const &a, Color const &b, float 
       (uint8_t)(a.b + (b.b - a.b) * t), (uint8_t)(a.a + (b.a - a.a) * t)
   );
 }
-} // namespace Izo
+} 
 
 template class Izo::Animator<float>;
 template class Izo::Animator<int>;

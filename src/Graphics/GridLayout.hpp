@@ -1,4 +1,4 @@
-// Mozilla Public License version 2.0. (c) theonlyasdk 2026
+
 
 #pragma once
 #include "Layout.hpp"
@@ -13,4 +13,4 @@ private:
     int m_cols;
 };
 
-} // namespace Izo
+} 

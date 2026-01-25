@@ -13,12 +13,16 @@ ThemeDB& ThemeDB::the() {
     return m_instance;
 }
 
-void ThemeDB::load(const std::string& path) {
+bool ThemeDB::load(const std::string& path) {
     std::string content = File::read_all_text(path);
     if (content.empty()) {
         Logger::the().error(std::format("Failed to load theme from '{}'!", path));
-        return;
+        return false;
     }
+
+    colors.clear();
+    values.clear();
+    strings.clear();
 
     std::stringstream ss(content);
     std::string line;
@@ -26,7 +30,7 @@ void ThemeDB::load(const std::string& path) {
 
     while (std::getline(ss, line)) {
         if (line.empty() || line[0] == '#' || line[0] == ';') continue;
-        
+
         if (line[0] == '[') {
             size_t end = line.find(']');
             if (end != std::string::npos) {
@@ -41,9 +45,11 @@ void ThemeDB::load(const std::string& path) {
         if (eq != std::string::npos) {
             std::string key = trim(line.substr(0, eq));
             std::string val = trim(line.substr(eq + 1));
-            
+
             if (section == "Colors") {
                 colors[key] = parse_color(val);
+            } else if (section == "ColorVariants") {
+                colors["Variant." + key] = parse_color(val);
             } else if (section == "Values") {
                 try {
                     values[key] = std::stoi(val);
@@ -54,13 +60,44 @@ void ThemeDB::load(const std::string& path) {
         }
     }
 
+    current_path = path;
     Logger::the().info(std::format("Theme from '{}' has been loaded!", path));
+    return true;
+}
+
+bool ThemeDB::reload() {
+    if (current_path.empty()) return false;
+    return load(current_path);
+}
+
+std::vector<std::string> ThemeDB::list_tags() const {
+    std::vector<std::string> tags;
+    for (const auto& pair : colors) {
+        tags.push_back(pair.first);
+    }
+    return tags;
 }
 
 Color ThemeDB::color(const std::string& name) {
     auto it = colors.find(name);
     if (it != colors.end()) return it->second;
     return Color(128, 128, 128); 
+}
+
+Color ThemeDB::variant_color(ColorVariant variant) {
+    std::string key = "Variant.";
+    switch (variant) {
+        case ColorVariant::Default: key += "Default"; break;
+        case ColorVariant::Primary: key += "Primary"; break;
+        case ColorVariant::Secondary: key += "Secondary"; break;
+        case ColorVariant::Tertiary: key += "Tertiary"; break;
+        case ColorVariant::Success: key += "Success"; break;
+        case ColorVariant::Warning: key += "Warning"; break;
+        case ColorVariant::Error: key += "Error"; break;
+        case ColorVariant::Info: key += "Info"; break;
+        case ColorVariant::Muted: key += "Muted"; break;
+    }
+    return color(key);
 }
 
 int ThemeDB::int_value(const std::string& name, int defaultVal) {
@@ -94,4 +131,4 @@ Color ThemeDB::parse_color(const std::string& s) {
     return Color(0, 0, 0);
 }
 
-} // namespace Izo
+} 

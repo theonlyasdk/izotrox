@@ -4,38 +4,29 @@
 
 namespace Izo {
 
-// ------------------------------------------------------------
-//  Easing enum – add the new variants
-// ------------------------------------------------------------
 enum class Easing {
     Linear,
 
-    // Quadratic
     EaseInQuad,
     EaseOutQuad,
     EaseInOutQuad,
 
-    // Cubic
     EaseInCubic,
     EaseOutCubic,
     EaseInOutCubic,
 
-    // Quartic
     EaseInQuart,
     EaseOutQuart,
     EaseInOutQuart,
 
-    // Quintic
     EaseInQuint,
     EaseOutQuint,
     EaseInOutQuint,
 
-    // Bounce
     BounceIn,
     BounceOut,
     BounceInOut,
 
-    // iOS‑style spring easing
     SpringEaseIn,
     SpringEaseOut,
     SpringEaseBounce
@@ -67,4 +58,4 @@ private:
     bool running = false;
 };
 
-} // namespace Izo
+} 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Graphics/Color.hpp"
+#include "Graphics/ColorVariant.hpp"
 #include <map>
 #include <string>
 #include <vector>
@@ -11,14 +12,18 @@ class ThemeDB {
 public:
     static ThemeDB& the();
 
-    void load(const std::string& path);
+    bool load(const std::string& path);
+    bool reload();
+    std::vector<std::string> list_tags() const;
 
     Color color(const std::string& name);
+    Color variant_color(ColorVariant variant);
 
     int int_value(const std::string& name, int defaultVal = 0);
     std::string string_value(const std::string& name, const std::string& defaultVal = "");
 
 private:
+    std::string current_path;
     std::map<std::string, Color> colors;
     std::map<std::string, int> values;
     std::map<std::string, std::string> strings;
@@ -27,4 +32,4 @@ private:
     Color parse_color(const std::string& s);
 };
 
-} // namespace Izo
+} 

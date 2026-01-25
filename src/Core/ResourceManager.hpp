@@ -16,10 +16,10 @@ public:
     template <typename... Args>
     T* load(const std::string& name, Args&&... args) {
         auto res = std::make_shared<T>(std::forward<Args>(args)...);
-        
+
         if (!res->valid()) {
             Logger::the().error(std::format("ResourceManager: Failed to load {0}", name));
-            std::exit(1); // Halt the application on failure of loading resource
+            std::exit(1); 
         }
 
         resources[name] = res;
@@ -46,4 +46,4 @@ private:
     std::map<std::string, std::shared_ptr<T>> resources;
 };
 
-} // namespace Izo
+} 

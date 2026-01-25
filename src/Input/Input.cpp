@@ -1,11 +1,9 @@
-// Mozilla Public License version 2.0. (c) theonlyasdk 2026
+
 
 #include "Input.hpp"
 #include <Debug/Logger.hpp>
 #include <fcntl.h>
 #include <unistd.h>
-
-// #define __ANDROID__
 
 #ifdef __ANDROID__
 #include <cstring>
@@ -15,9 +13,6 @@
 #include <sys/ioctl.h>
 #endif
 
-/**
- * In the Input system, touch and mouse is considered similarly.
- */
 namespace Izo {
 
 Input& Input::the() {
@@ -120,7 +115,7 @@ static KeyCode linux_code_to_ascii(int code, bool shift) {
 void Input::run_thread() {
 #ifdef __ANDROID__
     Logger::the().info("Starting Android Input Thread");
-    
+
     struct pollfd fds[16];
     int count = 0;
 
@@ -134,8 +129,7 @@ void Input::run_thread() {
             ioctl(fd, EVIOCGBIT(0, sizeof(evtype_b)), evtype_b);
 
             bool keep = false;
-            
-            // Check for Touch (ABS_MT_POSITION_X)
+
             if ((evtype_b[EV_ABS/8] & (1<<(EV_ABS%8)))) {
                 unsigned char abs_b[ABS_MAX/8 + 1];
                 ioctl(fd, EVIOCGBIT(EV_ABS, sizeof(abs_b)), abs_b);
@@ -144,8 +138,7 @@ void Input::run_thread() {
                     Logger::the().info(std::format("Input '{}' is a Touchscreen", path));
                 }
             }
-            
-            // Check for Keyboard (KEY_ENTER)
+
             if (!keep && (evtype_b[EV_KEY/8] & (1<<(EV_KEY%8)))) {
                  unsigned char key_b[KEY_MAX/8 + 1];
                  ioctl(fd, EVIOCGBIT(EV_KEY, sizeof(key_b)), key_b);
@@ -213,12 +206,12 @@ void Input::run_thread() {
                 }
             }
         }
-        
+
         if (touch_updated) {
             set_touch(IntPoint(lx, ly), ldown);
         }
     }
-    
+
     for (int i = 0; i < count; i++) {
         close(fds[i].fd);
     }
@@ -238,4 +231,4 @@ void Input::init() {
 void Input::update() {
 }
 
-} // namespace Izo
+} 

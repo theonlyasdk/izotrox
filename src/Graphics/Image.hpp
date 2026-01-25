@@ -14,20 +14,19 @@ public:
     bool valid() const { return data != nullptr; }
     int width() const { return w; }
     int height() const { return h; }
-    
+
     enum class Anchor {
         TopLeft,
         TopRight,
         BottomLeft,
         BottomRight,
         Center,
-        CenterStartHoriz, // Top Center
-        CenterStartVert,  // Left Center
-        CenterEndHoriz,   // Bottom Center
-        CenterEndVert     // Right Center
+        CenterStartHoriz, 
+        CenterStartVert,  
+        CenterEndHoriz,   
+        CenterEndVert     
     };
-    
-    // Draw this image onto a canvas at (x,y)
+
     void draw(Painter& painter, IntPoint pos);
     void draw_scaled(Painter& painter, const IntRect& rect, Anchor anchor = Anchor::TopLeft);
 
@@ -36,4 +35,4 @@ private:
     unsigned char* data = nullptr;
 };
 
-} // namespace Izo
+} 
