@@ -147,7 +147,7 @@ int main(int argc, char* argv[]) {
     btn_second_view->set_width(WidgetSizePolicy::MatchParent);
     btn_second_view->set_on_click([systemFont]() {
         auto secondView = SecondView::create(systemFont);
-        ViewManager::the().push(secondView, ViewTransition::SlideLeft);
+        ViewManager::the().push(secondView, ViewTransition::SlideRight);
     });
     root->add_child(btn_second_view);
 
@@ -243,7 +243,7 @@ int main(int argc, char* argv[]) {
         IntPoint tp = Input::the().touch_point();
         bool down = Input::the().touch_down();
         ViewManager::the().on_touch(tp, down);
-        
+
         KeyCode key = Input::the().key();
         if (key != KeyCode::None) ViewManager::the().on_key(key); 
         

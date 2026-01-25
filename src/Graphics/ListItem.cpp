@@ -15,7 +15,7 @@ ListItem::ListItem(Orientation orientation) : LinearLayout(orientation) {
 
 void ListItem::draw_content(Painter& painter) {
     if (m_selected) {
-        painter.fill_rect(m_bounds, ThemeDB::the().color("ListItem.Focus"));
+        painter.fill_rect(bounds(), ThemeDB::the().color("ListItem.Focus"));
     }
     Container::draw_content(painter);
 }
@@ -28,7 +28,7 @@ bool ListItem::on_touch(IntPoint point, bool down, bool captured) {
     bool handled = Container::on_touch(point, down, captured);
     
     if (!handled && m_visible) {
-         bool inside = m_bounds.contains(point);
+         bool inside = bounds().contains(point);
          
          // On release inside, notify parent ListView to select this item
          if (!down && inside && m_touch_started_inside) {

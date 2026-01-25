@@ -11,7 +11,7 @@ void Container::add_child(std::shared_ptr<Widget> child) {
 }
 
 void Container::draw_content(Painter& painter) {
-    painter.push_clip(m_bounds);
+    painter.push_clip(bounds());
     for (auto& child : m_children) {
         if (child->visible())
             child->draw(painter);
@@ -59,6 +59,23 @@ bool Container::on_touch(IntPoint point, bool down, bool captured) {
     }
     
     return handled;
+}
+
+bool Container::on_scroll(int y) {
+    // Dispatch to children first (top-most first)
+    IntPoint mouse = Input::the().touch_point();
+    
+    for (auto it = m_children.rbegin(); it != m_children.rend(); ++it) {
+        auto& child = *it;
+        if (!child->visible()) continue;
+        
+        // Only dispatch scroll if mouse is over the child
+        if (child->bounds().contains(mouse)) {
+            if (child->on_scroll(y)) return true;
+        }
+    }
+    
+    return false;
 }
 
 bool Container::on_key(KeyCode key) {

@@ -20,12 +20,13 @@ void ProgressBar::set_progress(float v) {
 float ProgressBar::progress() const { return m_value; }
 
 void ProgressBar::draw_content(Painter& painter) {
-    painter.fill_rect(m_bounds, ThemeDB::the().color("ProgressBar.Background"));
-    painter.draw_rect(m_bounds, Color::White); 
+    IntRect b = bounds();
+    painter.fill_rect(b, ThemeDB::the().color("ProgressBar.Background"));
+    painter.draw_rect(b, Color::White); 
 
     if (m_value > 0.0f) {
-        int fill_w = static_cast<int>(m_bounds.w * m_value);
-        painter.fill_rect({m_bounds.x, m_bounds.y, fill_w, m_bounds.h}, ThemeDB::the().color("ProgressBar.Fill"));
+        int fill_w = static_cast<int>(b.w * m_value);
+        painter.fill_rect({b.x, b.y, fill_w, b.h}, ThemeDB::the().color("ProgressBar.Fill"));
     }
 }
 

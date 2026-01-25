@@ -73,12 +73,13 @@ void Widget::handle_focus_logic(bool inside, bool down) {
 bool Widget::on_touch(IntPoint point, bool down, bool captured) {
     if (!m_visible) return false;
     
-    bool inside = m_bounds.contains(point);
+    IntRect b = bounds();
+    bool inside = b.contains(point);
     handle_focus_logic(inside, down);
     
     if (!inside && !captured) return false;
 
-    IntPoint local_point = { point.x - m_bounds.x, point.y - m_bounds.y };
+    IntPoint local_point = { point.x - b.x, point.y - b.y };
     
     return on_touch_event(local_point, down);
 }
@@ -92,9 +93,10 @@ void Widget::draw_focus_outline(Painter& painter) {
         Color theme_focus = ThemeDB::the().color("Widget.Focus");
         Color color(theme_focus.r, theme_focus.g, theme_focus.b, alpha);
 
+        IntRect b = bounds();
         for (int i = 0; i < max_thickness; i++) {
             float new_exp = expansion * (max_thickness - i)/max_thickness;
-            painter.draw_rect({ (int)(m_bounds.x - new_exp), (int)(m_bounds.y - new_exp), (int)(m_bounds.w + new_exp*2), (int)(m_bounds.h + new_exp*2) }, color);
+            painter.draw_rect({ (int)(b.x - new_exp), (int)(b.y - new_exp), (int)(b.w + new_exp*2), (int)(b.h + new_exp*2) }, color);
         }
     }
 }
@@ -106,10 +108,22 @@ void Widget::set_focused(bool focused) {
 }
 
 bool Widget::hovering() const {
-    return m_bounds.contains(Input::the().touch_point());
+    return bounds().contains(Input::the().touch_point());
 }
 
 void Widget::show() { if (!m_visible) { m_visible = true; } }
 void Widget::hide() { if (m_visible) { m_visible = false; } }
+
+IntRect Widget::bounds() const {
+    IntRect r = m_bounds;
+    const Widget* p = m_parent;
+    while (p) {
+        IntPoint offset = p->content_scroll_offset();
+        r.x += offset.x; 
+        r.y += offset.y;
+        p = p->parent();
+    }
+    return r;
+}
 
 } // namespace Izo

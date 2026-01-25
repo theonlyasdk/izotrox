@@ -25,30 +25,42 @@ void Slider::set_value(float v) {
 float Slider::value() const { return m_val; }
 
 void Slider::draw_content(Painter& painter) {
+    IntRect b = bounds();
     int trackH = 4;
-    int ty = m_bounds.y + (m_bounds.h - trackH) / 2;
+    int ty = b.y + (b.h - trackH) / 2;
     
-    painter.fill_rounded_rect({m_bounds.x, ty, m_bounds.w, trackH}, 2, ThemeDB::the().color("Slider.Track"));
-    
-    if (m_val > 0.0f) {
-        int fillW = (int)(m_bounds.w * m_val);
-        painter.fill_rounded_rect({m_bounds.x, ty, fillW, trackH}, 2, ThemeDB::the().color("Slider.Active"));
-    }
-    
+    // Use handle width to inset
+    int hw = 16;
     Image* imgToDraw = m_handle;
-    if ((m_pressed || m_focused) && m_handle_focus && m_handle_focus->valid()) {
+    if (m_pressed && m_handle_focus && m_handle_focus->valid()) {
         imgToDraw = m_handle_focus;
     }
-
     if (imgToDraw && imgToDraw->valid()) {
-        int hw = imgToDraw->width();
+        hw = imgToDraw->width();
+    }
+    
+    int available_travel = b.w - hw;
+    int h_offset = hw / 2 + (int)(available_travel * m_val);
+
+    // Track
+    // Track should span full width or just between handle centers? Usually full width.
+    painter.fill_rounded_rect({b.x, ty, b.w, trackH}, 2, ThemeDB::the().color("Slider.Track"));
+    
+    if (m_val > 0.0f) {
+        // Active part: from start to handle center? 
+        // Let's go from start to handle center.
+        int fillW = h_offset;
+        painter.fill_rounded_rect({b.x, ty, fillW, trackH}, 2, ThemeDB::the().color("Slider.Active"));
+    }
+    
+    if (imgToDraw && imgToDraw->valid()) {
         int hh = imgToDraw->height();
-        int hx = m_bounds.x + (int)(m_bounds.w * m_val) - hw / 2;
-        int hy = m_bounds.y + (m_bounds.h - hh) / 2;
+        int hx = b.x + h_offset - hw / 2;
+        int hy = b.y + (b.h - hh) / 2;
         imgToDraw->draw(painter, {hx, hy});
     } else {
-        int hx = m_bounds.x + (int)(m_bounds.w * m_val);
-        int hy = m_bounds.y + m_bounds.h / 2;
+        int hx = b.x + h_offset;
+        int hy = b.y + b.h / 2;
         painter.fill_rounded_rect({hx - 8, hy - 8, 16, 16}, 8, Color::White);
     }
 }
@@ -58,20 +70,25 @@ void Slider::measure(int parent_w, int parent_h) {
 }
 
 bool Slider::on_touch_event(IntPoint point, bool down) {
-    // point is relative to m_bounds.
-    
+    // If not pressed, we must be inside. If pressed, we capture everything.
+    if (!m_pressed && !content_box().contains(point)) return false;
+
     int hw = 16, hh = 16;
     
     Image* img = m_handle;
     if ((m_pressed || m_focused) && m_handle_focus && m_handle_focus->valid()) img = m_handle_focus;
-    
+
     if (img && img->valid()) {
         hw = img->width();
         hh = img->height();
     }
     
     // Handle pos relative to local 0,0
-    int hx = (int)(m_bounds.w * m_val) - hw / 2;
+    // Handle pos relative to local 0,0
+    int available_travel = m_bounds.w - hw;
+    int h_offset = hw / 2 + (int)(available_travel * m_val);
+    
+    int hx = h_offset - hw / 2;
     int hy = (m_bounds.h - hh) / 2;
     
     bool overHandle = (point.x >= hx && point.x < hx + hw && point.y >= hy && point.y < hy + hh);
@@ -87,8 +104,19 @@ bool Slider::on_touch_event(IntPoint point, bool down) {
     // If pressed, we can drag anywhere
     if (m_pressed) {
         float relativeX = (float)point.x;
-        float v = relativeX / (float)m_bounds.w;
-        set_value(v);
+        // Adjust for inset
+        // center = hw/2 + val * (w - hw)
+        // val * (w - hw) = center - hw/2
+        // val = (center - hw/2) / (w - hw)
+        // Here relativeX is 'center' (mouse pos relative to widget)
+        
+        float available = (float)(m_bounds.w - hw);
+        if (available > 0) {
+            float v = (relativeX - hw/2.0f) / available;
+            set_value(v);
+        } else {
+            set_value(0);
+        }
         return true; 
     }
     

@@ -17,7 +17,9 @@ public:
     void draw(Painter& painter);
     
     // Event injection
+    // Event injection
     void on_touch(IntPoint point, bool down);
+    void on_scroll(int y);
     void on_key(KeyCode key);
 
 private:

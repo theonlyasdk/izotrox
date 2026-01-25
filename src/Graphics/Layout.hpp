@@ -16,7 +16,9 @@ public:
     void draw_focus(Painter& painter) override;
     bool on_touch(IntPoint point, bool down, bool captured = false) override;
     bool on_touch_event(IntPoint point, bool down) override;
+    bool on_scroll(int y) override;
     bool is_scrollable() const override { return true; }
+    IntPoint content_scroll_offset() const override { return {0, (int)m_scroll_y}; }
 
 protected:
     virtual int content_height() const = 0;

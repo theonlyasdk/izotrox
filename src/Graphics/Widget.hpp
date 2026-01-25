@@ -34,12 +34,15 @@ public:
     // Input
     virtual bool on_touch(IntPoint point, bool down, bool captured = false); // Template method
     virtual bool on_touch_event(IntPoint point, bool down) { return false; } // For subclass handling
+    virtual bool on_scroll(int y) { return false; }
     virtual bool on_key(KeyCode key) { return false; }
     virtual bool is_scrollable() const { return false; }
 
+    virtual IntPoint content_scroll_offset() const { return {0, 0}; }
+
     // Properties
     void set_bounds(const IntRect& bounds) { m_bounds = bounds; }
-    const IntRect& bounds() const { return m_bounds; }
+    IntRect bounds() const;
     
     void set_width(int w) { m_width = w; }
     void set_width(WidgetSizePolicy p) { m_width = (int)p; }

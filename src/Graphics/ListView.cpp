@@ -32,17 +32,18 @@ void ListView::select(int index) {
     }
     
     // Ensure selected item is visible
+    // Ensure selected item is visible
     if (m_selected_index >= 0) {
         auto& child = m_children[m_selected_index];
         int item_top = child->bounds().y;
         int item_bottom = item_top + child->bounds().h;
-        int view_top = m_bounds.y - (int)m_scroll_y;
-        int view_bottom = view_top + m_bounds.h;
+        int view_top = bounds().y;
+        int view_bottom = view_top + bounds().h;
         
         if (item_top < view_top) {
-            m_scroll_y = -(item_top - m_bounds.y);
+            m_scroll_y += (view_top - item_top);
         } else if (item_bottom > view_bottom) {
-            m_scroll_y = -(item_bottom - m_bounds.y - m_bounds.h);
+            m_scroll_y += (view_bottom - item_bottom);
         }
     }
 }
@@ -108,38 +109,40 @@ int ListView::content_height() const {
 void ListView::draw_content(Painter& painter) {
     Color bg = ThemeDB::the().color("ListView.Background");
     if (bg.a == 0) bg = ThemeDB::the().color("Window.Background");
-    painter.fill_rect(m_bounds.x, m_bounds.y, m_bounds.w, m_bounds.h, bg);
+    
+    IntRect b = bounds();
+    painter.fill_rect(b, bg);
 
     Layout::draw_content(painter);
     
     // Optional: Draw dividers
     Color divColor = ThemeDB::the().color("ListView.Divider");
-    int cur_y = m_bounds.y + (int)m_scroll_y;
-    int visible_top = m_bounds.y - (int)m_scroll_y;
-    int visible_bottom = visible_top + m_bounds.h;
+    // Visible Y range in SCREEN COORDS
+    int visible_top = b.y;
+    int visible_bottom = b.y + b.h;
 
     // Use push clip for dividers as well!
-    painter.push_clip(m_bounds.x, m_bounds.y, m_bounds.w, m_bounds.h);
-    painter.push_translate(0, (int)m_scroll_y);
+    painter.push_clip(b);
+    // painter.push_translate({0, (int)m_scroll_y}); // Removed
 
     for (auto& child : m_children) {
         if (!child->visible()) continue;
-        int ch = child->measured_height();
-        int item_y = child->bounds().y;
+        IntRect cb = child->bounds();
+        int item_y = cb.y;
         
         // Cull dividers
-        if (item_y + ch >= visible_top && item_y <= visible_bottom) {
-             // Draw relative to child
-             int line_y = item_y + ch - 1; 
-             painter.fill_rect(child->bounds().x, line_y, m_bounds.w, 1, divColor);
+        if (item_y + cb.h >= visible_top && item_y <= visible_bottom) {
+             // Draw relative to child (which is absolute now)
+             int line_y = item_y + cb.h - 1; 
+             painter.fill_rect({cb.x, line_y, b.w, 1}, divColor);
         }
     }
     
-    painter.pop_translate();
+    // painter.pop_translate();
     painter.pop_clip();
 
     // Draw border
-    painter.draw_rect(m_bounds.x, m_bounds.y, m_bounds.w, m_bounds.h, ThemeDB::the().color("ListView.Border"));
+    painter.draw_rect(b, ThemeDB::the().color("ListView.Border"));
 }
 
 } // namespace Izo

@@ -93,17 +93,18 @@ void TextBox::ensure_cursor_visible() {
 }
 
 void TextBox::draw_content(Painter& painter) {
-    painter.fill_rect(m_bounds, ThemeDB::the().color("TextBox.Background"));
+    IntRect b = bounds();
+    painter.fill_rect(b, ThemeDB::the().color("TextBox.Background"));
 
     Color border = m_border_anim.value();
-    painter.draw_rect(m_bounds, border);
+    painter.draw_rect(b, border);
 
     if (m_font) {
         int padding = 5;
-        painter.push_clip({m_bounds.x + padding, m_bounds.y + padding, m_bounds.w - 2 * padding, m_bounds.h - 2 * padding});
+        painter.push_clip({b.x + padding, b.y + padding, b.w - 2 * padding, b.h - 2 * padding});
         
-        int draw_x = m_bounds.x + padding - m_scroll_x;
-        int draw_y = m_bounds.y + padding;
+        int draw_x = b.x + padding - m_scroll_x;
+        int draw_y = b.y + padding;
         
         if (m_sel_start != m_sel_end) {
             int s = std::min(m_sel_start, m_sel_end);
@@ -152,7 +153,7 @@ void TextBox::update() {
 }
 
 bool TextBox::on_touch_event(IntPoint point, bool down) {
-    bool inside = m_bounds.contains(point);
+    bool inside = content_box().contains(point);
     
     if (down) {
         if (inside) {

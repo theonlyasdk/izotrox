@@ -37,6 +37,10 @@ void View::on_touch(IntPoint point, bool down) {
     if (m_root) m_root->on_touch(point, down);
 }
 
+void View::on_scroll(int y) {
+    if (m_root) m_root->on_scroll(y);
+}
+
 void View::on_key(KeyCode key) {
     if (key == KeyCode::Tab) { // Tab
         std::vector<std::shared_ptr<Widget>> focusables;

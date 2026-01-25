@@ -1,5 +1,6 @@
 #include "ViewManager.hpp"
 #include "Application.hpp"
+#include "Input/Input.hpp"
 
 namespace Izo {
 
@@ -61,6 +62,10 @@ void ViewManager::update() {
     }
     
     if (!m_stack.empty()) {
+        int scroll = Input::the().scroll_y();
+        if (scroll != 0) {
+            m_stack.back()->on_scroll(scroll);
+        }
         m_stack.back()->update();
     }
 }
