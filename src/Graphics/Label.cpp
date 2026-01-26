@@ -12,7 +12,7 @@ void Label::draw_content(Painter& painter) {
     Color color = ThemeDB::the().variant_color(m_color_variant);
 
     if (m_font) {
-        IntRect b = screen_bounds();
+        IntRect b = global_bounds();
         int maxW = m_wrap ? b.w : -1;
         m_font->draw_text_multiline(painter, {b.x, b.y}, m_text_str, color, maxW);
     }

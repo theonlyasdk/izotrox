@@ -27,7 +27,7 @@ void Layout::smooth_scroll_to(int target_y) {
     m_auto_scroll_target = (float)target_y;
 
     int total_content_height = content_height();
-    int max_scroll = (total_content_height > layout_bounds().h) ? -(total_content_height - layout_bounds().h) : 0;
+    int max_scroll = (total_content_height > local_bounds().h) ? -(total_content_height - local_bounds().h) : 0;
 
     if (m_auto_scroll_target > 0) m_auto_scroll_target = 0;
     if (m_auto_scroll_target < max_scroll) m_auto_scroll_target = max_scroll;
@@ -35,7 +35,7 @@ void Layout::smooth_scroll_to(int target_y) {
 
 void Layout::update() {
     int total_content_height = content_height();
-    int max_scroll = (total_content_height > layout_bounds().h) ? -(total_content_height - layout_bounds().h) : 0;
+    int max_scroll = (total_content_height > local_bounds().h) ? -(total_content_height - local_bounds().h) : 0;
 
     if (m_auto_scrolling) {
         float diff = m_auto_scroll_target - m_scroll_y;
@@ -91,10 +91,10 @@ bool Layout::on_scroll(int y) {
     if (Container::on_scroll(y)) return true;
 
     int total_content_height = content_height();
-    if (total_content_height <= layout_bounds().h) return false;
+    if (total_content_height <= local_bounds().h) return false;
 
     IntPoint mouse = Input::the().touch_point();
-    if (screen_bounds().contains(mouse)) {
+    if (global_bounds().contains(mouse)) {
         if (y != 0) {
             m_velocity_y += (float)y * 12.0f;
             m_scrollbar_alpha = 255;
@@ -106,7 +106,7 @@ bool Layout::on_scroll(int y) {
 }
 
 void Layout::draw_content(Painter& painter) {
-    IntRect b = screen_bounds();
+    IntRect b = global_bounds();
     painter.push_clip(b);
 
     int margin = 20;
@@ -116,7 +116,7 @@ void Layout::draw_content(Painter& painter) {
     for (auto& child : m_children) {
         if (!child->visible()) continue;
 
-        IntRect cb = child->screen_bounds();
+        IntRect cb = child->global_bounds();
         int child_y = cb.y;
         int child_h = cb.h;
 
@@ -127,25 +127,25 @@ void Layout::draw_content(Painter& painter) {
 
     if (m_scrollbar_alpha > 0) {
         int total_content_height = content_height();
-        if (total_content_height > layout_bounds().h) {
-            float view_ratio = (float)layout_bounds().h / total_content_height;
-            int max_scroll = -(total_content_height - layout_bounds().h);
+        if (total_content_height > local_bounds().h) {
+            float view_ratio = (float)local_bounds().h / total_content_height;
+            int max_scroll = -(total_content_height - local_bounds().h);
 
-            float bar_h = (float)layout_bounds().h * view_ratio;
+            float bar_h = (float)local_bounds().h * view_ratio;
             float bar_y;
 
             if (m_scroll_y > 0) {
                 float overscroll = m_scroll_y;
-                float size_factor = 1.0f - (overscroll / (float)layout_bounds().h);
+                float size_factor = 1.0f - (overscroll / (float)local_bounds().h);
                 if (size_factor < 0.2f) size_factor = 0.2f;
                 bar_h *= size_factor;
                 bar_y = (float)b.y;
             } else if (m_scroll_y < max_scroll) {
                 float overscroll = max_scroll - m_scroll_y;
-                float size_factor = 1.0f - (overscroll / (float)layout_bounds().h);
+                float size_factor = 1.0f - (overscroll / (float)local_bounds().h);
                 if (size_factor < 0.2f) size_factor = 0.2f;
                 bar_h *= size_factor;
-                bar_y = (float)b.y + (float)layout_bounds().h - bar_h;
+                bar_y = (float)b.y + (float)local_bounds().h - bar_h;
             } else {
                 bar_y = (float)b.y + (-m_scroll_y * view_ratio);
             }
@@ -159,7 +159,7 @@ void Layout::draw_content(Painter& painter) {
 }
 
 void Layout::draw_focus(Painter& painter) {
-    painter.push_clip(screen_bounds());
+    painter.push_clip(global_bounds());
 
     for (auto& child : m_children) {
         if (child->visible())
@@ -179,14 +179,14 @@ bool Layout::on_touch(IntPoint point, bool down, bool captured) {
     if (down && !m_prev_touch_down) {
         m_initial_touch_x = point.x;
         m_initial_touch_y = point.y;
-        m_potential_swipe = screen_bounds().contains(point);
+        m_potential_swipe = global_bounds().contains(point);
         m_has_intercepted = false;
         m_is_dragging = false;
         m_last_touch_y = point.y;
     }
 
     if (m_has_intercepted) {
-        bool res = on_touch_event({point.x - screen_bounds().x, point.y - screen_bounds().y}, down);
+        bool res = on_touch_event({point.x - global_bounds().x, point.y - global_bounds().y}, down);
         if (!down) {
             m_has_intercepted = false;
             m_potential_swipe = false;
@@ -222,18 +222,18 @@ bool Layout::on_touch(IntPoint point, bool down, bool captured) {
         }
     }
 
-    if (!result && down && screen_bounds().contains(point)) {
-        result = on_touch_event({point.x - screen_bounds().x, point.y - screen_bounds().y}, down);
+    if (!result && down && global_bounds().contains(point)) {
+        result = on_touch_event({point.x - global_bounds().x, point.y - global_bounds().y}, down);
     }
 
     if (!down) {
         if (m_is_dragging) {
-            on_touch_event({point.x - screen_bounds().x, point.y - screen_bounds().y}, down);
+            on_touch_event({point.x - global_bounds().x, point.y - global_bounds().y}, down);
         }
         m_potential_swipe = false;
     }
 
-    handle_focus_logic(screen_bounds().contains(point), down);
+    handle_focus_logic(global_bounds().contains(point), down);
 
     m_prev_touch_down = down;
     return result || m_has_intercepted;
@@ -241,10 +241,10 @@ bool Layout::on_touch(IntPoint point, bool down, bool captured) {
 
 bool Layout::on_touch_event(IntPoint point, bool down) {
 
-    int ty = screen_bounds().y + point.y; 
+    int ty = global_bounds().y + point.y; 
 
     int total_content_height = content_height();
-    int max_scroll = (total_content_height > layout_bounds().h) ? -(total_content_height - layout_bounds().h) : 0;
+    int max_scroll = (total_content_height > local_bounds().h) ? -(total_content_height - local_bounds().h) : 0;
 
     if (down) {
         m_scrollbar_alpha = 255;

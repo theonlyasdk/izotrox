@@ -25,7 +25,7 @@ void Slider::set_value(float v) {
 float Slider::value() const { return m_val; }
 
 void Slider::draw_content(Painter& painter) {
-    IntRect b = screen_bounds();
+    IntRect b = global_bounds();
     int trackH = 4;
     int ty = b.y + (b.h - trackH) / 2;
 

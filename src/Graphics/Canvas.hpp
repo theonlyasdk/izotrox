@@ -1,6 +1,6 @@
 #pragma once
 #include "Color.hpp"
-#include "Geometry/Point.hpp"
+#include "Geometry/Primitives.hpp"
 #include <vector>
 #include <memory>
 #include <span>

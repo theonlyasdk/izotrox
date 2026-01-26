@@ -91,7 +91,7 @@ void TextBox::ensure_cursor_visible() {
 }
 
 void TextBox::draw_content(Painter& painter) {
-    IntRect b = screen_bounds();
+    IntRect b = global_bounds();
     int roundness = ThemeDB::the().int_value("Widget.Roundness", 6);
     painter.fill_rounded_rect(b, roundness, ThemeDB::the().color("TextBox.Background"));
 
@@ -165,7 +165,7 @@ void TextBox::update() {
 
         if (m_is_dragging) {
             IntPoint mouse = Input::the().touch_point();
-            IntRect b = screen_bounds();
+            IntRect b = global_bounds();
             int padding = 5;
             if (mouse.x < b.x + padding) {
                 m_scroll_x -= 5;

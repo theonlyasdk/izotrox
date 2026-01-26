@@ -1,8 +1,6 @@
-
-
 #include <algorithm>
 
-#include "Rect.hpp"
+#include "Primitives.hpp"
 
 namespace Izo {
 
@@ -60,7 +58,7 @@ template <typename T> void Rect<T>::contract(T amount) {
   h -= amount * 2;
 }
 
-} 
+}
 
 template class Izo::Rect<int>;
 template class Izo::Rect<float>;

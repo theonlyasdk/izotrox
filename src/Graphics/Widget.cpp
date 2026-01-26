@@ -65,7 +65,7 @@ void Widget::handle_focus_logic(bool inside, bool down) {
 bool Widget::on_touch(IntPoint point, bool down, bool captured) {
     if (!m_visible) return false;
 
-    IntRect b = screen_bounds();
+    IntRect b = global_bounds();
     bool inside = b.contains(point);
     handle_focus_logic(inside, down);
 
@@ -85,7 +85,7 @@ void Widget::draw_focus_outline(Painter& painter) {
         Color theme_focus = ThemeDB::the().color("Widget.Focus");
         Color color(theme_focus.r, theme_focus.g, theme_focus.b, alpha);
 
-        IntRect b = screen_bounds();
+        IntRect b = global_bounds();
 
         int draw_thickness = (int)(max_thickness * (1.0f - t)) + 1;
         if (draw_thickness < 1) draw_thickness = 1;
@@ -109,22 +109,30 @@ void Widget::set_focused(bool focused) {
 }
 
 bool Widget::hovering() const {
-    return screen_bounds().contains(Input::the().touch_point());
+    return global_bounds().contains(Input::the().touch_point());
 }
+
+void Widget::set_padding(int left,int top, int right, int bottom)
+ { 
+        m_padding_left = left; 
+        m_padding_top = top; 
+        m_padding_right = right; 
+        m_padding_bottom = bottom; 
+    }
 
 void Widget::show() { if (!m_visible) { m_visible = true; } }
 void Widget::hide() { if (m_visible) { m_visible = false; } }
 
-IntRect Widget::screen_bounds() const {
-    IntRect r = m_bounds;
-    const Widget* p = m_parent;
-    while (p) {
-        IntPoint offset = p->content_scroll_offset();
-        r.x += offset.x; 
-        r.y += offset.y;
-        p = p->parent();
+const IntRect Widget::global_bounds() const {
+    IntRect bounds = m_bounds;
+    const Widget* current_parent = m_parent;
+    while (current_parent) {
+        IntPoint offset = current_parent->content_scroll_offset();
+        bounds.x += offset.x;
+        bounds.y += offset.y;
+        current_parent = current_parent->parent();
     }
-    return r;
+    return bounds;
 }
 
 } 

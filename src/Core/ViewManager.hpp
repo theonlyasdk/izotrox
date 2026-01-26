@@ -1,7 +1,7 @@
 #pragma once
 #include "Graphics/View.hpp"
 #include "Graphics/Animator.hpp"
-#include "Geometry/Point.hpp"
+#include "Geometry/Primitives.hpp"
 #include <vector>
 #include <memory>
 #include <functional>
@@ -10,21 +10,21 @@ namespace Izo {
 
 enum class ViewTransition {
     None,
-    ThemeTransition,
-    SlideLeft,  // Standard slide used currently
-    SlideRight, // Standard slide used currently
-    PushLeft,   // iOS style Left
-    PushRight,  // iOS style Right
-    PushBottom, // iOS style Bottom
-    MaterialUFade // Android 12 scale+fade
+    ThemeDefault,
+    SlideLeft,  
+    SlideRight, 
+    PushLeft,   
+    PushRight,  
+    PushBottom, 
+    MaterialUFade
 };
 
 class ViewManager {
 public:
     static ViewManager& the();
 
-    void push(std::shared_ptr<View> view, ViewTransition transition = ViewTransition::ThemeTransition);
-    void pop(ViewTransition transition = ViewTransition::ThemeTransition);
+    void push(std::shared_ptr<View> view, ViewTransition transition = ViewTransition::ThemeDefault);
+    void pop(ViewTransition transition = ViewTransition::ThemeDefault);
 
     void show_dialog(std::shared_ptr<Widget> dialog);
     void dismiss_dialog();

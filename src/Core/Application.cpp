@@ -3,7 +3,7 @@
 #include <cstdint>
 
 #ifdef __ANDROID__
-    #include "Device/Framebuffer.hpp"
+    #include "HAL/Framebuffer.hpp"
     #include "Platform/Android/AndroidDevice.hpp"
 #else
     #include "Platform/Linux/SDLApplication.hpp"
@@ -101,6 +101,11 @@ void Application::quit() {
         if (impl->sdl_app) {
             impl->sdl_app->quit();
         }
+    )
+    IF_ANDROID(
+        AndroidDevice::set_brightness(0);
+        system("start");
+        exit(0);
     )
 }
 

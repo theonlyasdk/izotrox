@@ -1,5 +1,5 @@
 #include <Debug/Logger.hpp>
-#include <Utils/ASCIIColor.hpp>
+#include <Debug/ConsoleColor.hpp>
 
 #include <chrono>
 #include <iomanip>
@@ -12,7 +12,7 @@
 namespace Izo {
 
 static const char *color_for_level(Level lvl) {
-  using namespace ASCIIColor;
+  using namespace ConsoleColor;
   switch (lvl) {
   case Level::Trace:
     return BrightBlack;
@@ -96,10 +96,10 @@ void Logger::fatal(const std::string &msg) { log(Level::Fatal, msg); }
 
 std::string Logger::format(Level lvl, const std::string &msg) {
   std::ostringstream oss;
-  oss << ASCIIColor::BrightCyan << "Izotrox> " << ASCIIColor::Reset << "["
+  oss << ConsoleColor::BrightCyan << "Izotrox> " << ConsoleColor::Reset << "["
       << timestamp() << "]"
       << "(" << level_to_string(lvl) << ") " << color_for_level(lvl) << msg
-      << ASCIIColor::Reset;
+      << ConsoleColor::Reset;
   return oss.str();
 }
 

@@ -41,13 +41,13 @@ void View::on_touch(IntPoint point, bool down) {
             std::vector<std::shared_ptr<Widget>> focusables;
             rootContainer->collect_focusable_widgets(focusables);
             for (auto& w : focusables) {
-                if (!w->screen_bounds().contains(point)) {
+                if (!w->global_bounds().contains(point)) {
                     w->set_focused(false);
                 }
             }
         } else {
              // If root is not container but is widget
-             if (!m_root->screen_bounds().contains(point)) {
+             if (!m_root->global_bounds().contains(point)) {
                  m_root->set_focused(false);
              }
         }

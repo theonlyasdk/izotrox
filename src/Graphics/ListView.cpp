@@ -15,23 +15,22 @@ void ListView::add_item(std::shared_ptr<Widget> item) {
 
 void ListView::smooth_scroll_to_index(int index) {
     if (index < 0 || index >= (int)m_children.size()) return;
-    auto child = m_children[index];
+    auto listitem = m_children[index];
 
-    // IMPORTANT: Use layout_bounds() directly (untranslated layout bounds). 
-    // DO NOT change this to screen_bounds() here.
-    float item_offset = child->layout_bounds().y - layout_bounds().y;
-    float item_h = child->layout_bounds().h;
-    float view_h = layout_bounds().h;
-    float current_y = m_scroll_y;
-    float target_y = current_y;
+    // IMPORTANT: Use local_bounds() directly (untranslated layout bounds). 
+    // DO NOT change this to global_bounds() here.
+    float listitem_offset = listitem->local_bounds().y - local_bounds().y;
+    float listitem_h = listitem->local_bounds().h;
+    float listview_h = local_bounds().h;
+    float target_y_pos = m_scroll_y;
 
-    if (item_offset < -current_y) {
-        target_y = -item_offset;
-    } else if (item_offset + item_h > -current_y + view_h) {
-        target_y = view_h - item_h - item_offset;
+    if (listitem_offset < -m_scroll_y) {
+        target_y_pos = -listitem_offset;
+    } else if (listitem_offset + listitem_h > -m_scroll_y + listview_h) {
+        target_y_pos = listview_h - listitem_h - listitem_offset;
     }
 
-    smooth_scroll_to(target_y);
+    smooth_scroll_to(target_y_pos);
 }
 
 void ListView::select(int index) {
@@ -99,8 +98,8 @@ bool ListView::on_key(KeyCode key) {
             for(int i=0; i<(int)m_children.size(); ++i) {
                 auto& c = m_children[i];
                 if (!c->visible()) continue;
-                int item_offset = c->layout_bounds().y - m_bounds.y;
-                if (item_offset + c->layout_bounds().h > -m_scroll_y) {
+                int item_offset = c->local_bounds().y - m_bounds.y;
+                if (item_offset + c->local_bounds().h > -m_scroll_y) {
                     select(i);
                     return true;
                 }
@@ -123,8 +122,8 @@ bool ListView::on_key(KeyCode key) {
              for(int i=0; i<(int)m_children.size(); ++i) {
                 auto& c = m_children[i];
                 if (!c->visible()) continue;
-                int item_offset = c->layout_bounds().y - m_bounds.y;
-                if (item_offset + c->layout_bounds().h > -m_scroll_y) {
+                int item_offset = c->local_bounds().y - m_bounds.y;
+                if (item_offset + c->local_bounds().h > -m_scroll_y) {
                     select(i);
                     return true;
                 }
@@ -145,7 +144,7 @@ bool ListView::on_scroll(int y) {
     if (!m_visible) return false;
     
     IntPoint mouse = Input::the().touch_point();
-    if (screen_bounds().contains(mouse)) {
+    if (global_bounds().contains(mouse)) {
         int total_content_height = content_height();
         if (total_content_height > m_bounds.h) {
             if (y != 0) {
@@ -163,7 +162,7 @@ void ListView::draw_content(Painter& painter) {
     Color bg = ThemeDB::the().color("ListView.Background");
     if (bg.a == 0) bg = ThemeDB::the().color("Window.Background");
     
-    IntRect b = screen_bounds();
+    IntRect b = global_bounds();
     int roundness = ThemeDB::the().int_value("Widget.Roundness", 6);
     painter.fill_rounded_rect(b, roundness, bg);
 
@@ -183,7 +182,7 @@ void ListView::draw_content(Painter& painter) {
         // Draw selection
         auto item = std::dynamic_pointer_cast<ListItem>(child);
         if (item && item->is_selected()) {
-             IntRect cb = child->screen_bounds();
+             IntRect cb = child->global_bounds();
              int corners = 0;
              if (i == 0) corners |= Painter::TopLeft | Painter::TopRight;
              if (i == m_children.size() - 1) corners |= Painter::BottomLeft | Painter::BottomRight;
@@ -192,7 +191,7 @@ void ListView::draw_content(Painter& painter) {
              painter.fill_rounded_rect(cb, bgRoundness, ThemeDB::the().color("ListItem.Focus"), corners);
         }
 
-        IntRect cb = child->screen_bounds();
+        IntRect cb = child->global_bounds();
         int item_y = cb.y;
         
         if (item_y + cb.h >= visible_top && item_y <= visible_bottom) {

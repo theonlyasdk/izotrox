@@ -3,4 +3,4 @@
 3. when mouse down, check for scrolling of layouts first
 4. Minimum font size for all standard widgets is 18.0 pts, store this in res/theme/default.ini under [System] as FontSize and use it in main.cpp where the font is loaded.
 5. Also do the same for font family , under [System] have a FontFamily key and set its value to a path such as res/fonts/Roboto-Regular.ttf. Implement a string_value() function if needed in ThemeDB
-6. Widgets should unfocus after clicking outside or on another widgets
+6. DONE Widgets should unfocus after clicking outside or on another widgets

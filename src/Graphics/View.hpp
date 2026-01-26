@@ -2,7 +2,7 @@
 
 #pragma once
 #include "Widget.hpp"
-#include "Geometry/Point.hpp"
+#include "Geometry/Primitives.hpp"
 #include <memory>
 #include "Input/KeyCode.hpp"
 

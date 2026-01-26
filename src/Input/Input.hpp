@@ -5,7 +5,7 @@
 #include <atomic>
 #include <mutex>
 #include <thread>
-#include "Geometry/Point.hpp"
+#include "Geometry/Primitives.hpp"
 #include "KeyCode.hpp"
 
 namespace Izo {

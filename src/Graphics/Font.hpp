@@ -2,7 +2,7 @@
 #include <string>
 #include <vector>
 #include <memory>
-#include "Geometry/Point.hpp"
+#include "Geometry/Primitives.hpp"
 #include "Painter.hpp"
 
 typedef struct stbtt_fontinfo stbtt_fontinfo;

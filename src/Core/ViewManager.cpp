@@ -20,7 +20,7 @@ void ViewManager::setup_transition(ViewTransition transition, bool is_pop) {
 }
 
 void ViewManager::push(std::shared_ptr<View> view, ViewTransition transition) {
-    if (transition == ViewTransition::ThemeTransition) {
+    if (transition == ViewTransition::ThemeDefault) {
         transition = ThemeDB::the().enum_value<ViewTransition>("ViewTransition", ViewTransition::PushLeft);
     }
 
@@ -38,7 +38,7 @@ void ViewManager::push(std::shared_ptr<View> view, ViewTransition transition) {
 void ViewManager::pop(ViewTransition transition) {
     if (m_animating || m_stack.size() <= 1) return;
 
-    if (transition == ViewTransition::ThemeTransition) {
+    if (transition == ViewTransition::ThemeDefault) {
         transition = ThemeDB::the().enum_value<ViewTransition>("ViewTransition", ViewTransition::PushLeft);
     }
 

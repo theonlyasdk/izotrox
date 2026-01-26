@@ -22,7 +22,7 @@ void ListItem::update() {
 }
 
 bool ListItem::on_touch(IntPoint point, bool down, bool captured) {
-    bool inside = screen_bounds().contains(point);
+    bool inside = global_bounds().contains(point);
 
     if (down && !m_prev_down && inside) {
         m_touch_started_inside_local = true;

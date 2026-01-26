@@ -17,7 +17,7 @@ public:
     bool reload();
     std::vector<std::string> list_tags() const;
 
-    Color color(const std::string& name);
+    Color color(const std::string& name, Color defaultVal = Color(128, 128, 128));
     Color variant_color(ColorVariant variant);
 
     int int_value(const std::string& name, int defaultVal = 0);

@@ -20,7 +20,7 @@ void ProgressBar::set_progress(float v) {
 float ProgressBar::progress() const { return m_value; }
 
 void ProgressBar::draw_content(Painter& painter) {
-    IntRect b = screen_bounds();
+    IntRect b = global_bounds();
     int roundness = ThemeDB::the().int_value("Widget.Roundness", 6);
     
     painter.fill_rounded_rect(b, roundness, ThemeDB::the().color("ProgressBar.Background"));

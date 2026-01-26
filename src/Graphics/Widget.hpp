@@ -3,7 +3,7 @@
 #pragma once
 #include "Painter.hpp"
 #include "Animator.hpp"
-#include "Geometry/Rect.hpp"
+#include "Geometry/Primitives.hpp"
 #include "Input/KeyCode.hpp"
 
 namespace Izo {
@@ -19,7 +19,6 @@ public:
     Widget();
     virtual ~Widget() = default;
 
-    void draw(Painter& painter); 
     virtual void draw_content(Painter& painter) = 0;
     virtual void draw_focus(Painter& painter); 
 
@@ -27,48 +26,53 @@ public:
 
     virtual void layout() {};
     virtual void measure(int parent_w, int parent_h); 
+    // NOTE: Deprecated, use local_bounds() instead
     virtual IntRect content_box() const { return {0, 0, m_bounds.w, m_bounds.h}; } 
 
+    /* What's the difference between on_touch and on_touch_event?? */
     virtual bool on_touch(IntPoint point, bool down, bool captured = false); 
     virtual bool on_touch_event(IntPoint point, bool down) { return false; } 
     virtual bool on_scroll(int y) { return false; }
     virtual bool on_key(KeyCode key) { return false; }
+    /* This should probably be a public function */
     virtual bool is_scrollable() const { return false; }
 
     virtual IntPoint content_scroll_offset() const { return {0, 0}; }
 
-    void set_bounds(const IntRect& bounds) { m_bounds = bounds; }
-    IntRect screen_bounds() const;
-    const IntRect& layout_bounds() const { return m_bounds; }
+    /* Returns the widget bounds transformed with parent position and scroll position */
+    const IntRect global_bounds() const;
+    /* Returns the actual size and position of widget relative to it's parent */
+    const IntRect& local_bounds() const { return m_bounds; }
 
-    void set_width(int w) { m_width = w; }
-    void set_width(WidgetSizePolicy p) { m_width = (int)p; }
+    void draw(Painter& painter); 
+
     int width() const { return m_width; }
-
-    void set_height(int h) { m_height = h; }
-    void set_height(WidgetSizePolicy p) { m_height = (int)p; }
     int height() const { return m_height; }
 
+    /* TODO: Find out the difference between width() and measured_width(), same for height*/
     int measured_width() const { return m_measured_size.w; }
     int measured_height() const { return m_measured_size.h; }
 
     void show();
     void hide();
+
     bool visible() const { return m_visible; }
     bool hovering() const;
 
-    void set_focusable(bool focusable) { m_focusable = focusable; }
+    void set_height(int h) { m_height = h; }
+    void set_height(WidgetSizePolicy p) { m_height = (int)p; }
+
     bool focusable() const { return m_focusable; }
     bool focused() const { return m_focused; }
-    void set_focused(bool focused);
     void cancel_gesture() { m_gesture_cancelled = true; }
 
-    void set_padding(int l, int t, int r, int b) { 
-        m_padding_left = l; m_padding_top = t; m_padding_right = r; m_padding_bottom = b; 
-    }
-
+    void set_bounds(const IntRect& bounds) { m_bounds = bounds; }
+    void set_width(WidgetSizePolicy p) { m_width = (int)p; }
+    void set_width(int w) { m_width = w; }
+    void set_focused(bool focused);
+    void set_focusable(bool focusable) { m_focusable = focusable; }
+    void set_padding(int left, int top, int right, int bottom);
     void set_show_focus_indicator(bool show) { m_show_focus_indicator = show; }
-
     void set_parent(Widget* parent) { m_parent = parent; }
     Widget* parent() const { return m_parent; }
 

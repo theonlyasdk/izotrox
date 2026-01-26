@@ -10,7 +10,7 @@ Button::Button(const std::string& text, Font* font)
       m_bg_anim(ThemeDB::the().color("Button.Background")) {}
 
 void Button::draw_content(Painter& painter) {
-    IntRect b = screen_bounds();
+    IntRect b = global_bounds();
     Color c = m_bg_anim.value();
     int roundness = ThemeDB::the().int_value("Widget.Roundness", 6);
     painter.fill_rounded_rect(b, roundness, c); 
@@ -40,7 +40,7 @@ void Button::draw_content(Painter& painter) {
 
 void Button::update() {
     float dt = Application::the().delta();
-    m_is_hovered = screen_bounds().contains(Input::the().touch_point());
+    m_is_hovered = global_bounds().contains(Input::the().touch_point());
 
     if (m_is_hovered) {
         m_bg_anim.set_target(ThemeDB::the().color("Button.Hover"), 200, Easing::EaseOutQuad);

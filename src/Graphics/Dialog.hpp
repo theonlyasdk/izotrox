@@ -2,7 +2,7 @@
 #include "Widget.hpp"
 #include "Font.hpp"
 #include "Animator.hpp"
-#include "Geometry/Rect.hpp"
+#include "Geometry/Primitives.hpp"
 #include <functional>
 
 namespace Izo {

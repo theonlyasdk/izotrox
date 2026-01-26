@@ -3,8 +3,6 @@
 #include "File.hpp"
 #include "ViewManager.hpp"
 #include <sstream>
-#include <iostream>
-#include <algorithm>
 #include <format>
 
 namespace Izo {
@@ -17,7 +15,7 @@ ThemeDB& ThemeDB::the() {
 bool ThemeDB::load(const std::string& path) {
     std::string content = File::read_all_text(path);
     if (content.empty()) {
-        Logger::the().error(std::format("Failed to load theme from '{}'!", path));
+        Logger::the().error(std::format("Failed to load theme from '{}': Empty file!", path));
         return false;
     }
 
@@ -54,7 +52,9 @@ bool ThemeDB::load(const std::string& path) {
             } else if (section == "Values") {
                 try {
                     values[key] = std::stoi(val);
-                } catch (...) {} 
+                } catch (...) {
+                    Logger::the().warn(std::format("Theme value '{}' is not an integer!", key));
+                } 
             } else if (section == "System") {
                 strings[key] = val;
             }
@@ -79,10 +79,11 @@ std::vector<std::string> ThemeDB::list_tags() const {
     return tags;
 }
 
-Color ThemeDB::color(const std::string& name) {
+Color ThemeDB::color(const std::string& name, Color defaultVal) {
     auto it = colors.find(name);
     if (it != colors.end()) return it->second;
-    return Color(128, 128, 128); 
+    Logger::the().warn(std::format("Theme color '{}' not found!", name));
+    return defaultVal; 
 }
 
 Color ThemeDB::variant_color(ColorVariant variant) {
@@ -104,12 +105,14 @@ Color ThemeDB::variant_color(ColorVariant variant) {
 int ThemeDB::int_value(const std::string& name, int defaultVal) {
     auto it = values.find(name);
     if (it != values.end()) return it->second;
+    Logger::the().warn(std::format("Theme value '{}' not found!", name));
     return defaultVal;
 }
 
 std::string ThemeDB::string_value(const std::string& name, const std::string& defaultVal) {
     auto it = strings.find(name);
     if (it != strings.end()) return it->second;
+    Logger::the().warn(std::format("Theme value '{}' not found!", name));
     return defaultVal;
 }
 

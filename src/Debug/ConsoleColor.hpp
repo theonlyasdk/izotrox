@@ -1,7 +1,7 @@
 #pragma once
 
 namespace Izo {
-namespace ASCIIColor {
+namespace ConsoleColor {
     constexpr const char* Reset   = "\033[0m";
     constexpr const char* Black   = "\033[30m";
     constexpr const char* Red     = "\033[31m";

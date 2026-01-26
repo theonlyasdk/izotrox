@@ -9,7 +9,7 @@ void Container::add_child(std::shared_ptr<Widget> child) {
 }
 
 void Container::draw_content(Painter& painter) {
-    painter.push_clip(screen_bounds());
+    painter.push_clip(global_bounds());
     for (auto& child : m_children) {
         if (child->visible())
             child->draw(painter);
@@ -33,7 +33,7 @@ bool Container::on_touch(IntPoint point, bool down, bool captured) {
         auto& child = *it;
         if (!child->visible()) continue;
 
-        bool inside = child->screen_bounds().contains(point);
+        bool inside = child->global_bounds().contains(point);
         if (inside) {
             if (child->on_touch(point, down, false)) {
                 target = child;
@@ -62,7 +62,7 @@ bool Container::on_scroll(int y) {
         auto& child = *it;
         if (!child->visible()) continue;
 
-        if (child->screen_bounds().contains(mouse)) {
+        if (child->global_bounds().contains(mouse)) {
             if (child->on_scroll(y)) return true;
         }
     }
