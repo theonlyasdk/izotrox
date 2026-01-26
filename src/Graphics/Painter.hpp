@@ -11,6 +11,7 @@ namespace Izo
 
 class Painter
 {
+  public:
     enum Corner
     {
         TopLeft = 1 << 0,
@@ -20,7 +21,6 @@ class Painter
         AllCorners = TopLeft | TopRight | BottomRight | BottomLeft
     };
 
-  public:
     Painter(Canvas &canvas);
     void set_canvas(Canvas &canvas);
     void push_clip(const IntRect &rect);

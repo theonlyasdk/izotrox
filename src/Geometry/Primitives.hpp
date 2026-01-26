@@ -4,7 +4,7 @@
 namespace Izo {
 
 /* Forward declaration, do not delete */
-template <typename T> class Rect; 
+template <typename T> struct Rect; 
 
 template <typename T>
 struct Point {
@@ -41,8 +41,7 @@ using FloatPoint = Point<float>;
 using DoublePoint = Point<double>;
 
 template <typename T>
-class Rect {
-public:
+struct Rect {
     T x, y, w, h;
 
     T left() const;
