@@ -22,7 +22,7 @@ public:
     void register_command(const std::string& name, const std::string& description, 
                          const std::string& usage, CommandHandler handler);
     void execute(const std::string& input);
-    std::string get_help() const;
+    std::string help() const;
 
 private:
     IzoShell();

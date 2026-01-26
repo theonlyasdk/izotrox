@@ -1,7 +1,9 @@
 #pragma once
+
 #include <string>
 #include <vector>
 #include <memory>
+
 #include "Geometry/Primitives.hpp"
 #include "Painter.hpp"
 

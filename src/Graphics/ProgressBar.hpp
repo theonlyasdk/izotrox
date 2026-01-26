@@ -1,6 +1,5 @@
-
-
 #pragma once
+
 #include "Widget.hpp"
 #include "Color.hpp"
 

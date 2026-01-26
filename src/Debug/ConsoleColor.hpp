@@ -20,6 +20,6 @@ struct ConsoleColor {
     static constexpr const char* BrightMagenta  = "\033[95m";
     static constexpr const char* BrightCyan     = "\033[96m";
     static constexpr const char* BrightWhite    = "\033[97m";
-}
+};
 
 }

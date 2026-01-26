@@ -2,7 +2,6 @@
 
 #include "Graphics/Color.hpp"
 #include "Graphics/ColorVariant.hpp"
-#include "Graphics/Animator.hpp"
 #include <map>
 #include <string>
 #include <vector>

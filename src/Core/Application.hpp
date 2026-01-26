@@ -2,7 +2,7 @@
 
 #include <cstdint>
 #include <functional>
-#include <string>
+
 #include "Graphics/Canvas.hpp"
 
 namespace Izo {

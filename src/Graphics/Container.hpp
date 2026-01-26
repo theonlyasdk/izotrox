@@ -1,5 +1,7 @@
 #pragma once
+
 #include "Widget.hpp"
+
 #include <vector>
 #include <memory>
 

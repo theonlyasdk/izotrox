@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Platform/PlatformMacros.hpp"
+
 #include <cstdint>
 
 namespace Izo {

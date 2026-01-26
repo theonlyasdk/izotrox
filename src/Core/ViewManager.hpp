@@ -1,10 +1,11 @@
 #pragma once
+
 #include "Graphics/View.hpp"
 #include "Graphics/Animator.hpp"
 #include "Geometry/Primitives.hpp"
+
 #include <vector>
 #include <memory>
-#include <functional>
 
 namespace Izo {
 

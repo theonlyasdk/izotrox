@@ -1,4 +1,5 @@
 #pragma once
+
 #include "Graphics/Canvas.hpp"
 
 #include <string>

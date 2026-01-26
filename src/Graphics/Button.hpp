@@ -1,8 +1,10 @@
 #pragma once
+
 #include "Widget.hpp"
 #include "Font.hpp"
 #include "Color.hpp"
 #include "Animator.hpp"
+
 #include <string>
 #include <functional>
 

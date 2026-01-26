@@ -1,6 +1,5 @@
-
-
 #pragma once
+
 #include "LinearLayout.hpp"
 
 namespace Izo {

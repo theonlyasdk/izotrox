@@ -12,22 +12,14 @@
 namespace Izo {
 
 static const char *color_for_level(Level lvl) {
-  using namespace ConsoleColor;
   switch (lvl) {
-  case Level::Trace:
-    return BrightBlack;
-  case Level::Debug:
-    return BrightBlue;
-  case Level::Info:
-    return BrightGreen;
-  case Level::Warn:
-    return BrightYellow;
-  case Level::Error:
-    return BrightRed;
-  case Level::Fatal:
-    return BrightMagenta;
-  default:
-    return Reset;
+    case Level::Trace:  return ConsoleColor::BrightBlack;
+    case Level::Debug:  return ConsoleColor::BrightBlue;
+    case Level::Info:   return ConsoleColor::BrightGreen;
+    case Level::Warn:   return ConsoleColor::BrightYellow;
+    case Level::Error:  return ConsoleColor::BrightRed;
+    case Level::Fatal:  return ConsoleColor::BrightMagenta;
+    default:            return ConsoleColor::Reset;
   }
 }
 
@@ -51,9 +43,8 @@ void Logger::enable_logging_to_file() {
         std::lock_guard<std::mutex> lock(mutex_);
         if (m_log_file) return;
 
-        using namespace std::chrono;
-        auto now = system_clock::now();
-        auto itt = system_clock::to_time_t(now);
+        auto now = std::chrono::system_clock::now();
+        auto itt = std::chrono::system_clock::to_time_t(now);
         std::stringstream ss;
         ss << "izotrox-" << std::put_time(std::localtime(&itt), "%Y%m%d-%H%M%S") << ".log";
         std::string filename = ss.str();
@@ -72,7 +63,7 @@ void Logger::enable_logging_to_file() {
     }
 
     if (!filename_str.empty()) {
-        info("Enabled logging to " + filename_str);
+        info(std::format("Logging to file {}", filename_str));
     }
 }
 
@@ -124,20 +115,20 @@ std::string Logger::timestamp() {
 
 std::string Logger::level_to_string(Level lvl) {
   switch (lvl) {
-  case Level::Trace:
-    return "TRACE";
-  case Level::Debug:
-    return "DEBUG";
-  case Level::Info:
-    return "INFO";
-  case Level::Warn:
-    return "WARN";
-  case Level::Error:
-    return "ERROR";
-  case Level::Fatal:
-    return "FATAL";
-  default:
-    return "UNKNOWN";
+    case Level::Trace:
+      return "TRACE";
+    case Level::Debug:
+      return "DEBUG";
+    case Level::Info:
+      return "INFO";
+    case Level::Warn:
+      return "WARN";
+    case Level::Error:
+      return "ERROR";
+    case Level::Fatal:
+      return "FATAL";
+    default:
+      return "UNKNOWN";
   }
 }
 

@@ -1,9 +1,9 @@
-
-
 #pragma once
+
 #include "Widget.hpp"
 #include "Color.hpp"
 #include "Image.hpp"
+
 #include <functional>
 
 namespace Izo {

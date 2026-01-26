@@ -1,8 +1,10 @@
 #pragma once
+
 #include "Widget.hpp"
 #include "Font.hpp"
 #include "Animator.hpp"
 #include "Geometry/Primitives.hpp"
+
 #include <vector>
 #include <string>
 #include <functional>

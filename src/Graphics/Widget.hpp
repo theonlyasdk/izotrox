@@ -1,6 +1,5 @@
-
-
 #pragma once
+
 #include "Painter.hpp"
 #include "Animator.hpp"
 #include "Geometry/Primitives.hpp"

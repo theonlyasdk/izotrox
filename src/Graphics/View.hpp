@@ -1,10 +1,10 @@
-
-
 #pragma once
+
 #include "Widget.hpp"
 #include "Geometry/Primitives.hpp"
-#include <memory>
 #include "Input/KeyCode.hpp"
+
+#include <memory>
 
 namespace Izo {
 

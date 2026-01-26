@@ -1,8 +1,9 @@
-
 #pragma once
+
 #include "Canvas.hpp"
 #include "Color.hpp"
 #include "Geometry/Primitives.hpp"
+
 #include <algorithm>
 #include <vector>
 

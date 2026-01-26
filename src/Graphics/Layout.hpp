@@ -1,6 +1,5 @@
-
-
 #pragma once
+
 #include "Container.hpp"
 
 namespace Izo {

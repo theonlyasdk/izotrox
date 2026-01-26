@@ -1,8 +1,10 @@
 #pragma once
+
 #include <string>
 #include <memory>
 #include <queue>
 #include <functional>
+
 #include "Graphics/Widget.hpp"
 #include "Graphics/Font.hpp"
 #include "Graphics/Animator.hpp"

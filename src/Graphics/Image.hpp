@@ -1,7 +1,9 @@
 #pragma once
+
 #include "Canvas.hpp"
 #include "Painter.hpp"
 #include "Geometry/Primitives.hpp"
+
 #include <string>
 
 namespace Izo {

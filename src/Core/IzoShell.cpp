@@ -28,19 +28,19 @@ IzoShell::IzoShell() {
                     Logger::the().error("Unknown command: " + args[1]);
                 }
             } else {
-                Logger::the().info("\n" + get_help());
+                Logger::the().info("\n" + help());
             }
         });
 
     register_command("version", "Display Izotrox version", "version",
         [](const std::vector<std::string>&) {
-            Logger::the().info("Izotrox v0.1.0 - UI Framework");
+            Logger::the().info("Izotrox - Experimental GUI Framework for Android and Linux - (c) theonlyasdk 2026");
         });
 
-    register_command("theme", "Theme management", "theme <load|list> [name]",
+    register_command("theme", "Theme management", "theme <load|list|reload> [name]",
         [](const std::vector<std::string>& args) {
             if (args.size() < 2) {
-                Logger::the().error("Usage: theme <load|list> [name]");
+                Logger::the().error("Usage: theme <load|list|reload> [name]");
                 return;
             }
             
@@ -78,15 +78,16 @@ IzoShell::IzoShell() {
                 } catch (const std::exception& e) {
                     Logger::the().error("Error listing themes: " + std::string(e.what()));
                 }
+            } else if (subcmd == "reload") {
+                if (ThemeDB::the().reload()) {
+                    Logger::the().info("Theme reloaded successfully");
+                } else {
+                    Logger::the().error("Failed to reload theme");
+                }
             } else {
                 Logger::the().error("Unknown theme subcommand: " + subcmd);
                 Logger::the().info("Usage: theme <load|list> [name]");
             }
-        });
-
-    register_command("clear", "Clear the console", "clear",
-        [](const std::vector<std::string>&) {
-            Logger::the().info("\n\n\n\n\n\n\n\n\n\n");
         });
 
     register_command("fps", "Display current FPS", "fps",
@@ -119,15 +120,6 @@ IzoShell::IzoShell() {
         [](const std::vector<std::string>&) {
             Logger::the().info("Exiting application...");
             Application::the().quit();
-        });
-
-    register_command("reload", "Reload current theme", "reload",
-        [](const std::vector<std::string>&) {
-            if (ThemeDB::the().reload()) {
-                Logger::the().info("Theme reloaded successfully");
-            } else {
-                Logger::the().error("Failed to reload theme");
-            }
         });
 
     register_command("toast", "Show a toast message", "toast <message>",
@@ -174,7 +166,7 @@ void IzoShell::execute(const std::string& input) {
     }
 }
 
-std::string IzoShell::get_help() const {
+std::string IzoShell::help() const {
     std::stringstream ss;
     ss << "Available commands:\n";
     for (const auto& pair : m_commands) {
