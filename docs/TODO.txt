@@ -1,6 +1,12 @@
-1. the root view should not have a focus rectangle shown
-2. widgets should only register clicks on mouse up
-3. when mouse down, check for scrolling of layouts first
-4. Minimum font size for all standard widgets is 18.0 pts, store this in res/theme/default.ini under [System] as FontSize and use it in main.cpp where the font is loaded.
-5. Also do the same for font family , under [System] have a FontFamily key and set its value to a path such as res/fonts/Roboto-Regular.ttf. Implement a string_value() function if needed in ThemeDB
+1. DONE the root view should not have a focus rectangle shown
+2. DONE widgets should only register clicks on mouse up
+3. DONE when mouse down, check for scrolling of layouts first
+4. DONE Minimum font size for all standard widgets is 18.0 pts, store this in res/theme/default.ini under [System] as FontSize and use it in main.cpp where the font is loaded.
+5. DONE Also do the same for font family , under [System] have a FontFamily key and set its value to a path such as res/fonts/Roboto-Regular.ttf. Implement a string_value() function if needed in ThemeDB
 6. DONE Widgets should unfocus after clicking outside or on another widgets
+7. Theme Editor
+	Allow renaming of keys and sections
+	Allow moving of keys to different section
+
+8. Theme improvements
+	Allow reading values from different sections instead of reading it from values section by default

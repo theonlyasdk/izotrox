@@ -7,6 +7,7 @@ namespace Izo {
 
 std::shared_ptr<View> SecondView::create(Font* font) {
     auto root = std::make_shared<LinearLayout>(Orientation::Vertical);
+    root->set_focusable(false);
     root->set_width(WidgetSizePolicy::MatchParent);
     root->set_height(WidgetSizePolicy::MatchParent);
     root->set_padding(20, 20, 20, 20);
