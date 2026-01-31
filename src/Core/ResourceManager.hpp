@@ -21,7 +21,7 @@ public:
         auto res = std::make_shared<T>(std::forward<Args>(args)...);
 
         if (!res->valid()) {
-            Logger::the().error(std::format("ResourceManager: Failed to load {0}", name));
+            LogError("ResourceManager: Failed to load {0}", name);
             std::exit(1); 
         }
 

@@ -19,16 +19,16 @@ void Dialog::show_dialog() {
     if (m_dialog_visible) return;
     m_dialog_visible = true;
     
-    int duration = ThemeDB::the().int_value("Dialog.AnimationDuration", 300);
-    Easing easing = ThemeDB::the().enum_value<Easing>("Dialog.AnimationEasing", Easing::EaseOutQuart);
+    int duration = ThemeDB::the().get<int>("Feel", "Dialog.AnimationDuration", 300);
+    Easing easing = ThemeDB::the().get<Easing>("Feel", "Dialog.AnimationEasing", Easing::EaseOutQuart);
     m_dialog_anim.set_target(1.0f, duration, easing);
 }
 
 void Dialog::hide_dialog() {
     if (!m_dialog_visible) return;
     
-    int duration = ThemeDB::the().int_value("Dialog.AnimationDuration", 300);
-    Easing easing = ThemeDB::the().enum_value<Easing>("Dialog.AnimationEasing", Easing::EaseOutQuart);
+    int duration = ThemeDB::the().get<int>("Feel", "Dialog.AnimationDuration", 300);
+    Easing easing = ThemeDB::the().get<Easing>("Feel", "Dialog.AnimationEasing", Easing::EaseOutQuart);
     m_dialog_anim.set_target(0.0f, duration, easing);
 }
 

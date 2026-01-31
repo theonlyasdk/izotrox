@@ -41,15 +41,18 @@ void Slider::draw_content(Painter& painter) {
     int available_travel = b.w - hw;
     int h_offset = hw / 2 + (int)(available_travel * m_val);
 
-    int roundness = ThemeDB::the().int_value("Widget.Roundness", 6);
+    int roundness = ThemeDB::the().get<int>("Looks", "Widget.Roundness", 6);
+    Color color_slider_track = ThemeDB::the().get<Color>("Colors", "Slider.Track", Color(90));
+    Color color_slider_track_active = ThemeDB::the().get<Color>("Colors", "Slider.Active", Color(90));
+
     // Track height is small, so we clamp radius to half height automatically in logic, but standard is 4px.
     // If track is thin, it becomes a stadium shape.
     
-    painter.fill_rounded_rect({b.x, ty, b.w, trackH}, roundness, ThemeDB::the().color("Slider.Track"));
+    painter.fill_rounded_rect({b.x, ty, b.w, trackH}, roundness, color_slider_track);
 
     if (m_val > 0.0f) {
         int fillW = h_offset;
-        painter.fill_rounded_rect({b.x, ty, fillW, trackH}, roundness, ThemeDB::the().color("Slider.Active"));
+        painter.fill_rounded_rect({b.x, ty, fillW, trackH}, roundness, color_slider_track_active);
     }
 
     if (imgToDraw && imgToDraw->valid()) {

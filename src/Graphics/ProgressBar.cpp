@@ -21,16 +21,16 @@ float ProgressBar::progress() const { return m_value; }
 
 void ProgressBar::draw_content(Painter& painter) {
     IntRect b = global_bounds();
-    int roundness = ThemeDB::the().int_value("Widget.Roundness", 6);
+    int roundness = ThemeDB::the().get<int>("Looks", "Widget.Roundness", 6);
     
-    painter.fill_rounded_rect(b, roundness, ThemeDB::the().color("ProgressBar.Background"));
+    painter.fill_rounded_rect(b, roundness, ThemeDB::the().get<Color>("Colors", "ProgressBar.Background", Color(100)));
 
     if (m_value > 0.0f) {
         int fill_w = static_cast<int>(b.w * m_value);
         if (fill_w > 0) {
             // We use clipping to ensure the fill respects the rounded corners of the background
             painter.push_clip({b.x, b.y, fill_w, b.h});
-            painter.fill_rounded_rect(b, roundness, ThemeDB::the().color("ProgressBar.Fill"));
+            painter.fill_rounded_rect(b, roundness, ThemeDB::the().get<Color>("Colors", "ProgressBar.Fill", Color(0, 255, 100)));
             painter.pop_clip();
         }
     }

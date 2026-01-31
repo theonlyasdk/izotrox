@@ -159,20 +159,20 @@ bool ListView::on_scroll(int y) {
 }
 
 void ListView::draw_content(Painter& painter) {
-    Color bg = ThemeDB::the().color("ListView.Background");
-    if (bg.a == 0) bg = ThemeDB::the().color("Window.Background");
-    
+    Color color_bg = ThemeDB::the().get<Color>("Colors", "ListView.Background", Color(10));
+    Color color_divider = ThemeDB::the().get<Color>("Colors", "ListView.Divider", Color(200));
+    Color color_border = ThemeDB::the().get<Color>("Colors", "ListView.Border", Color(200));
+    Color color_listitem_focus = ThemeDB::the().get<Color>("Colors", "ListItem.Focus", Color(0, 0, 255));
+    int widget_roundness = ThemeDB::the().get<int>("Looks", "Widget.Roundness", 6);
+
     IntRect b = global_bounds();
-    int roundness = ThemeDB::the().int_value("Widget.Roundness", 6);
-    painter.fill_rounded_rect(b, roundness, bg);
+    painter.fill_rounded_rect(b, widget_roundness, color_bg);
 
     Layout::draw_content(painter);
     
-    Color divColor = ThemeDB::the().color("ListView.Divider");
     int visible_top = b.y;
     int visible_bottom = b.y + b.h;
-
-    painter.push_rounded_clip(b, roundness);
+    painter.push_rounded_clip(b, widget_roundness);
 
 // In ListView::draw_content
     for (size_t i = 0; i < m_children.size(); ++i) {
@@ -187,8 +187,7 @@ void ListView::draw_content(Painter& painter) {
              if (i == 0) corners |= Painter::TopLeft | Painter::TopRight;
              if (i == m_children.size() - 1) corners |= Painter::BottomLeft | Painter::BottomRight;
              if (m_children.size() == 1) corners = Painter::AllCorners;
-             int bgRoundness = ThemeDB::the().int_value("Widget.Roundness", 6);
-             painter.fill_rounded_rect(cb, bgRoundness, ThemeDB::the().color("ListItem.Focus"), corners);
+             painter.fill_rounded_rect(cb, widget_roundness, color_listitem_focus, corners);
         }
 
         IntRect cb = child->global_bounds();
@@ -198,13 +197,13 @@ void ListView::draw_content(Painter& painter) {
              // Divider
              if (i < m_children.size() - 1) { // Not last
                  int line_y = item_y + cb.h - 1; 
-                 painter.fill_rect({cb.x, line_y, b.w, 1}, divColor);
+                 painter.fill_rect({cb.x, line_y, b.w, 1}, color_divider);
              }
         }
     }
     
     painter.pop_clip();
-    painter.draw_rounded_rect(b, roundness, ThemeDB::the().color("ListView.Border"));
+    painter.draw_rounded_rect(b, widget_roundness, color_border);
 }
 
 }

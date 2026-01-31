@@ -91,25 +91,32 @@ void TextBox::ensure_cursor_visible() {
 }
 
 void TextBox::draw_content(Painter& painter) {
-    IntRect b = global_bounds();
-    int roundness = ThemeDB::the().int_value("Widget.Roundness", 6);
-    painter.fill_rounded_rect(b, roundness, ThemeDB::the().color("TextBox.Background"));
+    IntRect bounds = global_bounds();
 
-    Color border = m_border_anim.value();
-    painter.draw_rounded_rect(b, roundness, border);
+    int roundness = ThemeDB::the().get<int>("Looks", "Widget.Roundness", 6);
+
+    Color color_bg = ThemeDB::the().get<Color>("Colors", "TextBox.Background", Color(100));
+    Color color_selection = ThemeDB::the().get<Color>("Colors", "TextBox.Selection", Color(100));
+    Color color_placeholder = ThemeDB::the().get<Color>("Colors", "TextBox.Placeholder", Color(100));
+    Color color_text = ThemeDB::the().get<Color>("Colors", "TextBox.Text", Color(0));
+    Color color_cursor = ThemeDB::the().get<Color>("Colors", "TextBox.Cursor", Color(255));
+    Color color_border = m_border_anim.value();
+
+    painter.fill_rounded_rect(bounds, roundness, color_bg);
+    painter.draw_rounded_rect(bounds, roundness, color_border);
 
     if (m_font) {
         int padding = 5;
-        IntRect clip = {b.x + padding, b.y + padding, b.w - 2 * padding, b.h - 2 * padding};
+        IntRect clip = {bounds.x + padding, bounds.y + padding, bounds.w - 2 * padding, bounds.h - 2 * padding};
         painter.push_clip(clip);
 
-        int draw_x = b.x + padding - m_scroll_x;
-        int draw_y = b.y + padding;
+        int draw_x = bounds.x + padding - m_scroll_x;
+        int draw_y = bounds.y + padding;
 
         if (m_text_buffer.empty()) {
-            m_font->draw_text(painter, {draw_x, draw_y}, m_placeholder, ThemeDB::the().color("TextBox.Placeholder"));
+            m_font->draw_text(painter, {draw_x, draw_y}, m_placeholder, color_placeholder);
         } else {
-            int visible_w = b.w - 2 * padding;
+            int visible_w = bounds.w - 2 * padding;
             int start_idx = 0;
             int end_idx = (int)m_text_buffer.length();
 
@@ -133,18 +140,18 @@ void TextBox::draw_content(Painter& painter) {
                 int x1 = m_font->width(m_text_buffer.substr(0, s));
                 int sw = m_font->width(m_text_buffer.substr(s, e - s));
 
-                painter.fill_rect({draw_x + x1, draw_y, sw, m_font->height()}, ThemeDB::the().color("TextBox.Selection"));
+                painter.fill_rect({draw_x + x1, draw_y, sw, m_font->height()}, color_selection);
             }
 
             std::string visible_text = m_text_buffer.substr(start_idx, end_idx - start_idx);
             int offset_x = m_font->width(m_text_buffer.substr(0, start_idx));
-            m_font->draw_text(painter, {draw_x + offset_x, draw_y}, visible_text, ThemeDB::the().color("TextBox.Text"));
+            m_font->draw_text(painter, {draw_x + offset_x, draw_y}, visible_text, color_text);
         }
 
         if (m_focused && m_cursor_visible) {
              std::string pre_cursor = m_text_buffer.substr(0, m_sel_end);
              int cx = m_font->width(pre_cursor);
-             painter.fill_rect({draw_x + cx, draw_y, 2, m_font->height()}, ThemeDB::the().color("TextBox.Cursor"));
+             painter.fill_rect({draw_x + cx, draw_y, 2, m_font->height()}, color_cursor);
         }
 
         painter.pop_clip();
@@ -157,7 +164,7 @@ void TextBox::update() {
 
     if (m_focused) {
         m_cursor_timer += Application::the().delta();
-        int blink_speed = ThemeDB::the().int_value("TextBox.CursorBlinkSpeed", 500);
+        int blink_speed = ThemeDB::the().get<int>("System", "CursorBlinkSpeed", 500);
         if (m_cursor_timer >= (float)blink_speed) {
             m_cursor_visible = !m_cursor_visible;
             m_cursor_timer = 0.0f;

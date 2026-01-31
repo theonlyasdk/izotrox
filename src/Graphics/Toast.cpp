@@ -64,17 +64,19 @@ void Toast::draw(Painter& painter, int screen_width, int screen_height) {
     // Grows upwards means the y position depends on height.
     int y = screen_height - m_height - 100;
 
-    Color bg = ThemeDB::the().color("Toast.Background");
+    Color bg = ThemeDB::the().get<Color>("Colors", "Toast.Background", Color(100));
     bg.a = (uint8_t)(bg.a * m_alpha);
     
-    int roundness = ThemeDB::the().int_value("Toast.Roundness", 12);
+    int roundness = ThemeDB::the().get<int>("Looks", "Toast.Roundness", 12);
+    int border_thickness = ThemeDB::the().get<int>("Looks", "Toast.BorderThickness", 12);
+
     painter.fill_rounded_rect({x, y, m_width, m_height}, roundness, bg);
     
-    Color border = ThemeDB::the().color("Toast.Border");
+    Color border = ThemeDB::the().get<Color>("Colors", "Toast.Border", Color(50));
     border.a = (uint8_t)(border.a * m_alpha);
-    painter.draw_rounded_rect({x, y, m_width, m_height}, roundness, border, 2);
+    painter.draw_rounded_rect({x, y, m_width, m_height}, roundness, border, border_thickness);
     
-    Color text_c = ThemeDB::the().color("Toast.Text");
+    Color text_c = ThemeDB::the().get<Color>("Colors", "Toast.Text", Color(0));
     text_c.a = (uint8_t)(text_c.a * m_alpha);
     
     // Draw text centered in the toast

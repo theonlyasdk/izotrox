@@ -11,17 +11,20 @@ ViewManager& ViewManager::the() {
 }
 
 void ViewManager::setup_transition(ViewTransition transition, bool is_pop) {
+    int transition_duration = ThemeDB::the().get<int>("System", "ViewTransitionDuration", 500);
+    Easing transition_easing = ThemeDB::the().get<Easing>("System", "ViewTransitionEasing", Easing::EaseOutQuart);
+
     m_outgoing_view = m_stack.back();
     m_current_transition = transition;
     m_animating = true;
     m_is_pop = is_pop;
     m_transition_anim.snap_to(0.0f);
-    m_transition_anim.set_target(1.0f, ThemeDB::the().int_value("ViewTransitionDuration", 500), ThemeDB::the().enum_value<Easing>("ViewTransitionEasing", Easing::EaseOutQuart));
+    m_transition_anim.set_target(1.0f, transition_duration, transition_easing);
 }
 
 void ViewManager::push(std::shared_ptr<View> view, ViewTransition transition) {
     if (transition == ViewTransition::ThemeDefault) {
-        transition = ThemeDB::the().enum_value<ViewTransition>("ViewTransition", ViewTransition::PushLeft);
+        transition = ThemeDB::the().get<ViewTransition>("System", "ViewTransition", ViewTransition::PushLeft);
     }
 
     if (m_animating) return;
@@ -39,7 +42,7 @@ void ViewManager::pop(ViewTransition transition) {
     if (m_animating || m_stack.size() <= 1) return;
 
     if (transition == ViewTransition::ThemeDefault) {
-        transition = ThemeDB::the().enum_value<ViewTransition>("ViewTransition", ViewTransition::PushLeft);
+        transition = ThemeDB::the().get<ViewTransition>("System", "ViewTransition", ViewTransition::PushLeft);
     }
 
     if (transition != ViewTransition::None) {
@@ -98,6 +101,8 @@ void ViewManager::update() {
 void ViewManager::draw(Painter& painter) {
     if (m_stack.empty()) return;
 
+    Color color_win_bg = ThemeDB::the().get<Color>("Colors", "Window.Background", Color(0));
+
     if (m_animating && m_outgoing_view) {
         float t = m_transition_anim.value();
         float width = (float)m_width;
@@ -107,7 +112,7 @@ void ViewManager::draw(Painter& painter) {
             if (!v) return;
             painter.set_global_alpha(alpha);
             painter.push_translate({(int)tx, (int)ty});
-            if (bg) painter.fill_rect({0, 0, m_width, m_height}, ThemeDB::the().color("Window.Background"));
+            if (bg) painter.fill_rect({0, 0, m_width, m_height}, color_win_bg);
             v->draw(painter);
             painter.pop_translate();
             painter.set_global_alpha(1.0f);

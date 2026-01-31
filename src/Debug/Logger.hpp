@@ -47,4 +47,23 @@ private:
     std::unique_ptr<LogFile> m_log_file;
 };
 
+// Macro definitions for the different log levels
+#define LogTrace(fmt, ...) \
+    Logger::the().trace(std::format(fmt, ##__VA_ARGS__))
+
+#define LogDebug(fmt, ...) \
+    Logger::the().debug(std::format(fmt, ##__VA_ARGS__))
+
+#define LogInfo(fmt, ...) \
+    Logger::the().info(std::format(fmt, ##__VA_ARGS__))
+
+#define LogWarn(fmt, ...) \
+    Logger::the().warn(std::format(fmt, ##__VA_ARGS__))
+
+#define LogError(fmt, ...) \
+    Logger::the().error(std::format(fmt, ##__VA_ARGS__))
+
+#define LogFatal(fmt, ...) \
+    Logger::the().fatal(std::format(fmt, ##__VA_ARGS__))
+
 } 

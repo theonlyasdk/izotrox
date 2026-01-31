@@ -23,8 +23,8 @@ public:
         m_target = { (win_w - dw) / 2, (win_h - dh) / 2, dw, dh };
         set_bounds({0, 0, win_w, win_h});
 
-        int duration = ThemeDB::the().int_value("OptionBox.AnimationDuration", 300);
-        Easing easing = ThemeDB::the().enum_value<Easing>("OptionBox.AnimationEasing", Easing::EaseOutQuart);
+        int duration = ThemeDB::the().get<int>("Feel", "OptionBox.AnimationDuration", 300);
+        Easing easing = ThemeDB::the().get<Easing>("Feel", "OptionBox.AnimationEasing", Easing::EaseOutQuart);
         m_anim.set_target(1.0f, duration, easing);
     }
 
@@ -45,12 +45,14 @@ public:
         current.w = m_start.w + (int)((m_target.w - m_start.w) * t);
         current.h = m_start.h + (int)((m_target.h - m_start.h) * t);
 
-        int roundness = ThemeDB::the().int_value("Widget.Roundness", 12);
-        Color bg = ThemeDB::the().color("OptionBox.ExpandedBackground");
-        Color border = ThemeDB::the().color("OptionBox.Border");
+        int roundness = ThemeDB::the().get<int>("Looks", "Widget.Roundness", 12);
+        Color color_bg = ThemeDB::the().get<Color>("Colors", "OptionBox.ExpandedBackground", Color(100));
+        Color color_border = ThemeDB::the().get<Color>("Colors", "OptionBox.Border", Color(200));
+        Color color_highlight = ThemeDB::the().get<Color>("Colors", "OptionBox.Highlight", Color(200));
+        Color color_text = ThemeDB::the().get<Color>("Colors", "OptionBox.Text", Color(255));
         
-        painter.fill_rounded_rect(current, roundness, bg);
-        painter.draw_rounded_rect(current, roundness, border);
+        painter.fill_rounded_rect(current, roundness, color_bg);
+        painter.draw_rounded_rect(current, roundness, color_border);
 
         if (t > 0.5f && m_font) {
             float alpha = (t - 0.5f) * 2.0f;
@@ -62,14 +64,12 @@ public:
                 if (iy + item_h < current.y || iy > current.y + current.h) continue;
 
                 if (i == m_selected || i == m_hover) {
-                    Color highlight = ThemeDB::the().color("OptionBox.Highlight");
-                    highlight.a = (uint8_t)(highlight.a * alpha);
-                    painter.fill_rect({current.x + 5, iy, current.w - 10, item_h}, highlight);
+                    color_highlight.a = (uint8_t)(color_highlight.a * alpha);
+                    painter.fill_rect({current.x + 5, iy, current.w - 10, item_h}, color_highlight);
                 }
 
-                Color tc = ThemeDB::the().color("OptionBox.Text");
-                tc.a = (uint8_t)(255 * alpha);
-                m_font->draw_text(painter, {current.x + 20, iy + (item_h - m_font->height()) / 2}, m_options[i], tc);
+                color_text.a = (uint8_t)(255 * alpha);
+                m_font->draw_text(painter, {current.x + 20, iy + (item_h - m_font->height()) / 2}, m_options[i], color_text);
             }
             painter.pop_clip();
         }
@@ -110,8 +110,8 @@ public:
     void close() {
         if (m_closing) return;
         m_closing = true;
-        int duration = ThemeDB::the().int_value("OptionBox.AnimationDuration", 300);
-        Easing easing = ThemeDB::the().enum_value<Easing>("OptionBox.AnimationEasing", Easing::EaseOutQuart);
+        int duration = ThemeDB::the().get<int>("Feel", "OptionBox.AnimationDuration", 300);
+        Easing easing = ThemeDB::the().get<Easing>("Feel", "OptionBox.AnimationEasing", Easing::EaseOutQuart);
         m_anim.set_target(0.0f, duration, easing);
     }
 
@@ -128,7 +128,7 @@ private:
 
 OptionBox::OptionBox(Font* font)
     : m_font(font),
-      m_bg_anim(ThemeDB::the().color("OptionBox.Background")) {
+      m_bg_anim(ThemeDB::the().get<Color>("Colors", "OptionBox.Background", Color(200))) {
     m_focusable = true;
     set_padding(12, 8, 12, 8);
 }
@@ -173,31 +173,39 @@ void OptionBox::update() {
 }
 
 void OptionBox::draw_content(Painter& painter) {
+    int roundness = ThemeDB::the().get<int>("Looks", "Widget.Roundness", 12);
+    Color color_bg = ThemeDB::the().get<Color>("Colors", "OptionBox.Background", Color(100));
+    Color color_border = ThemeDB::the().get<Color>("Colors", "OptionBox.Border", Color(200));
+    Color color_highlight = ThemeDB::the().get<Color>("Colors", "OptionBox.Highlight", Color(200));
+    Color color_text = ThemeDB::the().get<Color>("Colors", "OptionBox.Text", Color(255));
+    Color color_arrow = ThemeDB::the().get<Color>("Colors", "OptionBox.Arrow", Color(200));
+   
     IntRect b = m_bounds;
-    int roundness = ThemeDB::the().int_value("Widget.Roundness", 6);
     painter.fill_rounded_rect(b, roundness, m_bg_anim.value());
-    painter.draw_rounded_rect(b, roundness, ThemeDB::the().color("OptionBox.Border"));
+    painter.draw_rounded_rect(b, roundness, color_border);
 
     if (m_font && m_selected_index >= 0 && m_selected_index < (int)m_options.size()) {
         int ty = b.y + (b.h - m_font->height()) / 2;
-        m_font->draw_text(painter, {b.x + m_padding_left, ty}, m_options[m_selected_index], ThemeDB::the().color("OptionBox.Text"));
+        m_font->draw_text(painter, {b.x + m_padding_left, ty}, m_options[m_selected_index], color_text);
     }
 
-    Color ac = ThemeDB::the().color("OptionBox.Arrow");
     int ax = b.x + b.w - 20;
     int ay = b.y + b.h / 2;
-    painter.draw_line({ax - 4, ay - 2}, {ax, ay + 2}, ac);
-    painter.draw_line({ax, ay + 2}, {ax + 4, ay - 2}, ac);
+    painter.draw_line({ax - 4, ay - 2}, {ax, ay + 2}, color_arrow);
+    painter.draw_line({ax, ay + 2}, {ax + 4, ay - 2}, color_arrow);
 }
 
 bool OptionBox::on_touch_event(IntPoint point, bool down) {
+    Color color_bg = ThemeDB::the().get<Color>("Colors", "OptionBox.Background", Color(100));
+    Color color_exp_bg = ThemeDB::the().get<Color>("Colors", "OptionBox.ExpandedBackground", Color(100));
+
     if (content_box().contains(point)) {
         if (down) {
             m_pressed = true;
-            m_bg_anim.set_target(ThemeDB::the().color("OptionBox.ExpandedBackground"), 100);
+            m_bg_anim.set_target(color_exp_bg, 100);
         } else if (m_pressed) {
             m_pressed = false;
-            m_bg_anim.set_target(ThemeDB::the().color("OptionBox.Background"), 200);
+            m_bg_anim.set_target(color_bg, 200);
             
             auto dialog = std::make_shared<OptionsDialog>(global_bounds(), m_options, m_font, m_selected_index, [this](int idx) {
                 m_selected_index = idx;
@@ -208,7 +216,7 @@ bool OptionBox::on_touch_event(IntPoint point, bool down) {
         return true;
     }
     m_pressed = false;
-    m_bg_anim.set_target(ThemeDB::the().color("OptionBox.Background"), 200);
+    m_bg_anim.set_target(color_bg, 200);
     return false;
 }
 

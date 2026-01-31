@@ -108,7 +108,7 @@ IzoShell::IzoShell() {
                 Logger::the().error("Usage: getcolor <tag>");
                 return;
             }
-            Color c = ThemeDB::the().color(args[1]);
+            Color c = ThemeDB::the().get<Color>("Colors", args[1], Color(255));
             Logger::the().info(args[1] + " = rgba(" + 
                 std::to_string(c.r) + ", " + 
                 std::to_string(c.g) + ", " + 

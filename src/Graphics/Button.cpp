@@ -7,14 +7,16 @@ namespace Izo {
 
 Button::Button(const std::string& text, Font* font) 
     : m_text_str(text), m_font(font), 
-      m_bg_anim(ThemeDB::the().color("Button.Background")) {}
+      m_bg_anim(ThemeDB::the().get<Color>("Colors", "Button.Background", Color(100))) {}
 
 void Button::draw_content(Painter& painter) {
+    int roundness           = ThemeDB::the().get<int>("Looks", "Widget.Roundness", 6);
+    Color color_btn_text    = ThemeDB::the().get<Color>("Colors", "Button.Text", Color(255));
     IntRect b = global_bounds();
     Color c = m_bg_anim.value();
-    int roundness = ThemeDB::the().int_value("Widget.Roundness", 6);
+
     painter.fill_rounded_rect(b, roundness, c); 
-    painter.draw_rounded_rect(b, roundness, ThemeDB::the().color("Button.Text"));
+    painter.draw_rounded_rect(b, roundness, color_btn_text);
 
     if (m_font) {
         int tw = m_font->width(m_text_str);
@@ -32,7 +34,7 @@ void Button::draw_content(Painter& painter) {
         int ty = b.y + (b.h - th) / 2;
         if (m_pressed) ty += 1;
 
-        m_font->draw_text(painter, {tx, ty}, m_text_str, ThemeDB::the().color("Button.Text"));
+        m_font->draw_text(painter, {tx, ty}, m_text_str, color_btn_text);
         
         painter.pop_clip();
     }
@@ -40,12 +42,16 @@ void Button::draw_content(Painter& painter) {
 
 void Button::update() {
     float dt = Application::the().delta();
+
+    Color color_btn_hover   = ThemeDB::the().get<Color>("Colors", "Button.Hover", Color(150));
+    Color color_btn_bg      = ThemeDB::the().get<Color>("Colors", "Button.Background", Color(100));
+
     m_is_hovered = global_bounds().contains(Input::the().touch_point());
 
     if (m_is_hovered) {
-        m_bg_anim.set_target(ThemeDB::the().color("Button.Hover"), 200, Easing::EaseOutQuad);
+        m_bg_anim.set_target(color_btn_hover, 200, Easing::EaseOutQuad);
     } else {
-        m_bg_anim.set_target(ThemeDB::the().color("Button.Background"), 200, Easing::EaseOutQuad);
+        m_bg_anim.set_target(color_btn_bg, 200, Easing::EaseOutQuad);
     }
 
     if (m_font) {
@@ -78,6 +84,10 @@ bool Button::on_touch_event(IntPoint point, bool down) {
     bool old_pressed = m_pressed;
     bool old_hovered = m_is_hovered;
 
+    Color color_btn_hover   = ThemeDB::the().get<Color>("Colors", "Button.Hover", Color(150));
+    Color color_btn_bg      = ThemeDB::the().get<Color>("Colors", "Button.Background", Color(100));
+    Color color_btn_pressed = ThemeDB::the().get<Color>("Colors", "Button.Pressed", Color(100));
+
     m_is_hovered = inside; 
 
     if (inside) {
@@ -91,9 +101,11 @@ bool Button::on_touch_event(IntPoint point, bool down) {
     }
 
     if (old_pressed != m_pressed || old_hovered != m_is_hovered) {
-        Color target = ThemeDB::the().color("Button.Background");
-        if (m_pressed) target = ThemeDB::the().color("Button.Pressed");
-        else if (m_is_hovered) target = ThemeDB::the().color("Button.Hover");
+        Color target = color_btn_bg;
+        if (m_pressed) 
+            target = color_btn_pressed;
+        else if (m_is_hovered) 
+            target = color_btn_hover;
 
         m_bg_anim.set_target(target, 200, Easing::EaseOutQuad);
     }
@@ -104,11 +116,14 @@ bool Button::on_touch_event(IntPoint point, bool down) {
 bool Button::on_key(KeyCode key) {
     if (!m_focused) return false;
 
+    Color color_btn_hover   = ThemeDB::the().get<Color>("Colors", "Button.Hover", Color(150));
+    Color color_btn_pressed = ThemeDB::the().get<Color>("Colors", "Button.Pressed", Color(100));
+
     if (key == KeyCode::Enter) {
         if (m_on_click) m_on_click();
         
-        m_bg_anim.snap_to(ThemeDB::the().color("Button.Pressed"));
-        m_bg_anim.set_target(ThemeDB::the().color("Button.Hover"), 300, Easing::EaseOutQuad);
+        m_bg_anim.snap_to(color_btn_pressed);
+        m_bg_anim.set_target(color_btn_hover, 300, Easing::EaseOutQuad);
         
         return true;
     }

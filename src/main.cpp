@@ -1,24 +1,16 @@
-
-
-#include <iostream>
-#include <fstream>
 #include <unistd.h>
-#include <vector>
 #include <chrono>
-#include <thread>
-#include <cmath>
 #include <memory>
 #include <string>
 #include <format>
-#include <sstream>
 
 #include "Debug/Logger.hpp"
+#include "Graphics/Color.hpp"
 #include "Input/Input.hpp"
 #include "Graphics/Canvas.hpp"
 #include "Graphics/Painter.hpp"
 #include "Graphics/Font.hpp"
 #include "Graphics/Widget.hpp"
-#include "Graphics/Container.hpp"
 #include "Graphics/LinearLayout.hpp"
 #include "Graphics/Label.hpp"
 #include "Graphics/Button.hpp"
@@ -104,8 +96,8 @@ int main(int argc, char* argv[]) {
     FontManager fonts;
     ImageManager manager;
 
-    std::string fontFamily = ThemeDB::the().string_value("FontFamily", "res/fonts/Inter-Bold.ttf");
-    float fontSize = std::stof(ThemeDB::the().string_value("FontSize", "64.0"));
+    std::string fontFamily = ThemeDB::the().get<std::string>("System", "FontFamily", "res/fonts/Inter-Bold.ttf");
+    float fontSize = ThemeDB::the().get<float>("System", "FontSize", 64.0);
     Font* systemFont = fonts.load("system-ui", fontFamily, fontSize);
     if (!systemFont) {
         Logger::the().error("Could not load system font!");
@@ -267,7 +259,7 @@ int main(int argc, char* argv[]) {
         ViewManager::the().update();
         ToastManager::the().update(dt);
 
-        canvas->clear(ThemeDB::the().color("Window.Background"));
+        canvas->clear(ThemeDB::the().get<Color>("Colors", "Window.Background", Color(255)));
         ViewManager::the().draw(*painter);
         ToastManager::the().draw(*painter, width, height);
 

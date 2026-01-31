@@ -36,10 +36,10 @@ void View::draw(Painter& painter) {
 void View::on_touch(IntPoint point, bool down) {
     if (down && m_root) {
         // Unfocus widgets if clicked outside their bounds
-        auto rootContainer = std::dynamic_pointer_cast<Container>(m_root);
-        if (rootContainer) {
+        auto root_container = std::dynamic_pointer_cast<Container>(m_root);
+        if (root_container) {
             std::vector<std::shared_ptr<Widget>> focusables;
-            rootContainer->collect_focusable_widgets(focusables);
+            root_container->collect_focusable_widgets(focusables);
             for (auto& w : focusables) {
                 if (!w->global_bounds().contains(point)) {
                     w->set_focused(false);
@@ -62,24 +62,24 @@ void View::on_scroll(int y) {
 void View::on_key(KeyCode key) {
     if (key == KeyCode::Tab) { 
         std::vector<std::shared_ptr<Widget>> focusables;
-        auto rootContainer = std::dynamic_pointer_cast<Container>(m_root);
-        if (rootContainer) {
-            rootContainer->collect_focusable_widgets(focusables);
+        auto root_container = std::dynamic_pointer_cast<Container>(m_root);
+        if (root_container) {
+            root_container->collect_focusable_widgets(focusables);
         }
 
         if (focusables.empty()) return;
 
-        int currentIdx = -1;
+        int current_idx = -1;
         for (int i = 0; i < (int)focusables.size(); ++i) {
             if (focusables[i]->focused()) {
-                currentIdx = i;
+                current_idx = i;
                 break;
             }
         }
 
         for (auto& w : focusables) w->set_focused(false);
 
-        int nextIdx = (currentIdx + 1) % focusables.size();
+        int nextIdx = (current_idx + 1) % focusables.size();
         focusables[nextIdx]->set_focused(true);
         return;
     }
