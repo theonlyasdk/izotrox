@@ -14,5 +14,15 @@
     - **[stb_image](https://github.com/nothings/stb/blob/master/stb_image.h)** - for reading and decoding image data.
     - **[stb_truetype](https://github.com/nothings/stb/blob/master/stb_truetype.h)** - for reading TrueType fonts.
 
+## Screenshots
+
+- ### Izotrox
+<img width="800" height="628" alt="izotrox01" src="https://github.com/user-attachments/assets/0c5a7247-93b3-4799-b17b-94e023ecb68d" />
+<img width="800" height="628" alt="izotrox02" src="https://github.com/user-attachments/assets/ca3c69a9-ab42-4573-a417-ec5f12c80a41" />
+
+- ### Theme Editor
+<img width="800" height="661" alt="themeeditor01" src="https://github.com/user-attachments/assets/458fdb9f-ba31-48a8-a512-0db23e500d08" />
+<img width="600" height="428" alt="themeeditor02" src="https://github.com/user-attachments/assets/e9e7ea15-56e0-4bd0-ad2b-aa9ad983b8f9" />
+
 ## License
 Licensed under [Mozilla Public License 2.0](https://www.mozilla.org/en-US/MPL/2.0/). See [LICENSE](LICENSE) for more information
