@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
 import os
+import json
 import tkinter as tk
 from tkinter import ttk, messagebox, simpledialog, filedialog, colorchooser
 from pathlib import Path
 
 from .core import ThemeEditor, get_theme_dir, load_enums
+from .schema_editor import open_schema_editor
+
 
 
 class ThemeEditorGUI:
@@ -72,26 +75,29 @@ class ThemeEditorGUI:
         file_menu.add_separator()
         file_menu.add_command(label="Save", command=self.save_theme)
         file_menu.add_separator()
+        file_menu.add_command(label="Preferences", command=self.show_preferences)
+        file_menu.add_separator()
         file_menu.add_command(label="Exit", command=self.on_closing)
         menubar.add_cascade(label="File", menu=file_menu)
 
-        
-        edit_menu = tk.Menu(menubar, tearoff=0)
-        edit_menu.add_command(label="Add Section", command=self.add_section)
-        edit_menu.add_command(label="Remove Section", command=self.remove_section)
-        edit_menu.add_command(label="Rename Section", command=self.rename_section)
-        edit_menu.add_separator()
-        edit_menu.add_command(label="Add Key", command=self.add_key)
-        edit_menu.add_command(label="Remove Key", command=self.remove_key)
-        edit_menu.add_command(label="Rename Key", command=self.rename_key)
-        edit_menu.add_separator()
-        edit_menu.add_command(label="Move Key to Section", command=self.move_key)
-        menubar.add_cascade(label="Edit", menu=edit_menu)
 
         
-        theme_menu = tk.Menu(menubar, tearoff=0)
-        theme_menu.add_command(label="Check Errors", command=self.check_errors)
-        menubar.add_cascade(label="Theme", menu=theme_menu)
+        self.edit_menu = tk.Menu(menubar, tearoff=0)
+        self.edit_menu.add_command(label="Add Section", command=self.add_section)
+        self.edit_menu.add_command(label="Remove Section", command=self.remove_section)
+        self.edit_menu.add_command(label="Rename Section", command=self.rename_section)
+        self.edit_menu.add_separator()
+        self.edit_menu.add_command(label="Add Key", command=self.add_key)
+        self.edit_menu.add_command(label="Remove Key", command=self.remove_key)
+        self.edit_menu.add_command(label="Rename Key", command=self.rename_key)
+        self.edit_menu.add_separator()
+        self.edit_menu.add_command(label="Move Key to Section", command=self.move_key)
+        menubar.add_cascade(label="Edit", menu=self.edit_menu)
+
+        
+        self.theme_menu = tk.Menu(menubar, tearoff=0)
+        self.theme_menu.add_command(label="Check Errors", command=self.check_errors)
+        menubar.add_cascade(label="Theme", menu=self.theme_menu)
         
         help_menu = tk.Menu(menubar, tearoff=0)
         help_menu.add_command(label="About", command=self.show_about)
@@ -99,6 +105,33 @@ class ThemeEditorGUI:
 
         
         self.root.config(menu=menubar)
+        
+        self.update_menu_state()
+
+    def update_menu_state(self):
+        if self.editor:
+            for i in range(self.edit_menu.index("end") + 1):
+                try:
+                    self.edit_menu.entryconfig(i, state=tk.NORMAL)
+                except tk.TclError:
+                    pass
+            for i in range(self.theme_menu.index("end") + 1):
+                try:
+                    self.theme_menu.entryconfig(i, state=tk.NORMAL)
+                except tk.TclError:
+                    pass
+        else:
+            for i in range(self.edit_menu.index("end") + 1):
+                try:
+                    self.edit_menu.entryconfig(i, state=tk.DISABLED)
+                except tk.TclError:
+                    pass
+            for i in range(self.theme_menu.index("end") + 1):
+                try:
+                    self.theme_menu.entryconfig(i, state=tk.DISABLED)
+                except tk.TclError:
+                    pass
+
 
     def create_widgets(self):
         self.main_container = ttk.Frame(self.root)
@@ -300,8 +333,10 @@ class ThemeEditorGUI:
         self.current_file = None
         self.modified = False
         self.show_welcome_screen()
+        self.update_menu_state()
         self.status_var.set("Ready")
         self.root.title("Izotrox Theme Editor")
+
 
     def new_theme_menu(self):
         if self.editor and self.modified:
@@ -321,6 +356,7 @@ class ThemeEditorGUI:
             self.modified = False
             self.refresh_tree()
             self.show_tree_view()
+            self.update_menu_state()
             self.status_var.set(f"Loaded: {filename}")
             self.root.title(f"Izotrox Theme Editor - {os.path.basename(filename)}")
         except Exception as e:
@@ -411,6 +447,12 @@ class ThemeEditorGUI:
         enum_dialog.wait_window()
         return result[0]
 
+    def get_key_type_from_schema(self, section, key):
+        schema = self.load_schema()
+        if section in schema and key in schema[section]:
+            return schema[section][key]
+        return "any"
+
     def ask_value(self, title, initial_value):
         dialog = tk.Toplevel(self.root)
         dialog.title(title)
@@ -482,6 +524,8 @@ class ThemeEditorGUI:
         section = self.tree.item(parent_id, "text")
         current_val = self.tree.item(item_id, "values")[0]
         
+        key_type = self.get_key_type_from_schema(section, key)
+        
         new_val = None
         if section in ["Colors", "ColorVariants"]:
             dialog = tk.Toplevel(self.root)
@@ -526,9 +570,9 @@ class ThemeEditorGUI:
                         pass
                     new_val = f"{r}, {g}, {b}{alpha}"
             elif choice == "text":
-                new_val = self.ask_value(f"Edit {key}", current_val)
+                new_val = self.ask_value(f"Edit '{key}' ({key_type})", current_val)
         else:
-            new_val = self.ask_value(f"Edit {key}", current_val)
+            new_val = self.ask_value(f"Edit '{key}' ({key_type})", current_val)
         
         if new_val is not None:
             self.editor.add_key(section, key, new_val)
@@ -984,11 +1028,60 @@ class ThemeEditorGUI:
                 return False
         return True
 
+    def validate_int_format(self, value):
+        try:
+            int(value)
+            return True
+        except ValueError:
+            return False
+
+    def validate_float_format(self, value):
+        try:
+            float(value)
+            return True
+        except ValueError:
+            return False
+
+    def validate_bool_format(self, value):
+        return value.lower() in ['true', 'false', '1', '0', 'yes', 'no']
+
+    def validate_string_format(self, value):
+        return True
+
+    def validate_path_format(self, value):
+        return len(value) > 0
+
+    def get_validator_for_type(self, type_name):
+        validators = {
+            "color": self.validate_color_format,
+            "int": self.validate_int_format,
+            "float": self.validate_float_format,
+            "bool": self.validate_bool_format,
+            "string": self.validate_string_format,
+            "path": self.validate_path_format
+        }
+        return validators.get(type_name, self.validate_string_format)
+
+    def load_schema(self):
+        schema_path = self.get_schema_path()
+        try:
+            if os.path.exists(schema_path):
+                with open(schema_path, 'r') as f:
+                    return json.load(f)
+        except Exception:
+            pass
+        return {}
+
     def get_validators_for_section(self, section_name):
+        schema = self.load_schema()
         validators = []
-        if section_name in ["Colors", "ColorVariants"]:
-            validators.append(("Color format", self.validate_color_format))
+        
+        if section_name in schema:
+            section_schema = schema[section_name]
+            validators.append(("schema-based", section_schema))
+        
         return validators
+
 
     def check_errors(self):
         if not self.editor:
@@ -1045,11 +1138,15 @@ class ThemeEditorGUI:
                         status_label.config(text=f"Checking [{section_name}] {key}...")
                         error_dialog.update()
 
-                        for validator_name, validator_func in validators:
-                            if not validator_func(value):
-                                error_msg = f"[{section_name}] {key} = {value}"
-                                error_detail = f"  Error: Invalid {validator_name}"
-                                errors.append((error_msg, error_detail))
+                        for validator_name, section_schema in validators:
+                            if validator_name == "schema-based":
+                                if key in section_schema:
+                                    expected_type = section_schema[key]
+                                    validator_func = self.get_validator_for_type(expected_type)
+                                    if not validator_func(value):
+                                        error_msg = f"[{section_name}] {key} = {value}"
+                                        error_detail = f"  Error: Invalid {expected_type} format"
+                                        errors.append((error_msg, error_detail))
 
                     current_progress += 1
                     progress['value'] = (current_progress / total_keys) * 100
@@ -1083,6 +1180,54 @@ class ThemeEditorGUI:
             messagebox.showinfo("Success", "Theme saved successfully!")
         except Exception as e:
             messagebox.showerror("Error", f"Failed to save: {e}")
+
+    def get_schema_path(self):
+        return Path(__file__).parent / "data" / "schema.json"
+
+    def show_preferences(self):
+        pref_dialog = tk.Toplevel(self.root)
+        pref_dialog.title("Preferences")
+        pref_dialog.geometry("650x450")
+        pref_dialog.minsize(650, 450)
+        pref_dialog.resizable(True, True)
+        pref_dialog.transient(self.root)
+        
+        notebook = ttk.Notebook(pref_dialog)
+        notebook.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        
+        general_tab = ttk.Frame(notebook)
+        notebook.add(general_tab, text="General")
+        
+        general_frame = ttk.Frame(general_tab)
+        general_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
+        
+        tk.Label(general_frame, text="General Settings", font=("TkDefaultFont", 12, "bold")).pack(anchor=tk.W, pady=(0, 10))
+        tk.Label(general_frame, text="General preferences and application settings.", 
+                wraplength=590, justify=tk.LEFT).pack(anchor=tk.W, pady=(0, 20))
+        
+        schema_tab = ttk.Frame(notebook)
+        notebook.add(schema_tab, text="Schema")
+        
+        schema_info_frame = ttk.Frame(schema_tab)
+        schema_info_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
+        
+        tk.Label(schema_info_frame, text="Schema Configuration", font=("TkDefaultFont", 12, "bold")).pack(anchor=tk.W, pady=(0, 10))
+        tk.Label(schema_info_frame, text="The schema defines the structure and data types for theme validation.", 
+                wraplength=590, justify=tk.LEFT).pack(anchor=tk.W, pady=(0, 20))
+        
+        schema_path = self.get_schema_path()
+        tk.Label(schema_info_frame, text=f"Schema File: {schema_path}", 
+                font=("TkDefaultFont", 9)).pack(anchor=tk.W, pady=(0, 20))
+        
+        def edit_schema():
+            open_schema_editor(pref_dialog, str(schema_path))
+        
+        tk.Button(schema_info_frame, text="Edit Default Schema", command=edit_schema, 
+                 width=20, height=2).pack(anchor=tk.W)
+        
+        btn_frame = tk.Frame(pref_dialog)
+        btn_frame.pack(pady=10)
+        tk.Button(btn_frame, text="Close", command=pref_dialog.destroy, width=10).pack()
 
     def show_about(self):
         about_dialog = tk.Toplevel(self.root)

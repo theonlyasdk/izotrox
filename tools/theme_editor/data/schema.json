@@ -1,0 +1,68 @@
+{
+  "ColorVariants": {
+    "Default": "color",
+    "Error": "color",
+    "Info": "color",
+    "Muted": "color",
+    "Primary": "color",
+    "Secondary": "color",
+    "Success": "color",
+    "Tertiary": "color",
+    "Warning": "color"
+  },
+  "Colors": {
+    "Button.Background": "color",
+    "Button.Hover": "color",
+    "Button.Pressed": "color",
+    "Button.Text": "color",
+    "Label.Text": "color",
+    "ListItem.Focus": "color",
+    "ListView.Background": "color",
+    "ListView.Border": "color",
+    "ListView.Divider": "color",
+    "ListView.Highlight": "color",
+    "ListView.Text": "color",
+    "OptionBox.Arrow": "color",
+    "OptionBox.Background": "color",
+    "OptionBox.Border": "color",
+    "OptionBox.ExpandedBackground": "color",
+    "OptionBox.Highlight": "color",
+    "OptionBox.Text": "color",
+    "ProgressBar.Background": "color",
+    "ProgressBar.Fill": "color",
+    "Slider.Active": "color",
+    "Slider.Track": "color",
+    "TextBox.Background": "color",
+    "TextBox.Border": "color",
+    "TextBox.Cursor": "color",
+    "TextBox.Placeholder": "color",
+    "TextBox.Selection": "color",
+    "TextBox.Text": "color",
+    "Toast.Background": "color",
+    "Toast.Border": "color",
+    "Toast.Text": "color",
+    "Widget.Focus": "color",
+    "Window.Background": "color"
+  },
+  "System": {
+    "CursorBlinkSpeed": "int",
+    "FontFamily": "path",
+    "FontSize": "float",
+    "ViewTransition": "string",
+    "ViewTransitionDuration": "int",
+    "ViewTransitionEasing": "string"
+  },
+  "Looks": {
+    "Widget.Roundness": "int",
+    "Widget.FocusThickness": "int",
+    "Toast.Roundness": "int",
+    "Toast.BorderThickness": "int"
+  },
+  "Feel": {
+    "Widget.FocusAnimDuration": "int",
+    "OptionBox.AnimationDuration": "int",
+    "OptionBox.AnimationEasing": "string",
+    "Dialog.AnimationDuration": "int",
+    "Dialog.AnimationEasing": "string"
+  }
+}

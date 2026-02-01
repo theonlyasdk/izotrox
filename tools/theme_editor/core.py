@@ -144,7 +144,7 @@ def get_theme_dir():
     return Path(__file__).parent.parent.parent / "res" / "theme"
 
 def load_enums():
-    enum_file = Path(__file__).parent / "enums.json"
+    enum_file = Path(__file__).parent / "data" / "enums.json"
     if enum_file.exists():
         with open(enum_file, 'r') as f:
             return json.load(f)
