@@ -66,6 +66,48 @@ class ThemeEditor:
             if '=' not in line or line.split('=')[0].strip() != key
         ]
     
+    def rename_section(self, old_name, new_name):
+        if old_name not in self.sections:
+            return False
+        if new_name in self.sections:
+            return False
+        self.sections[new_name] = self.sections.pop(old_name)
+        return True
+    
+    def rename_key(self, section_name, old_key, new_key):
+        if section_name not in self.sections:
+            return False
+        if not old_key or not new_key or '=' in new_key:
+            return False
+        
+        for i, line in enumerate(self.sections[section_name]):
+            if '=' in line:
+                current_key = line.split('=')[0].strip()
+                if current_key == old_key:
+                    value = line.split('=', 1)[1].strip()
+                    self.sections[section_name][i] = f"{new_key} = {value}"
+                    return True
+        return False
+    
+    def move_key(self, source_section, key, target_section):
+        if source_section not in self.sections or target_section not in self.sections:
+            return False
+        
+        key_value = None
+        for line in self.sections[source_section]:
+            if '=' in line:
+                current_key = line.split('=')[0].strip()
+                if current_key == key:
+                    key_value = line.split('=', 1)[1].strip()
+                    break
+        
+        if key_value is None:
+            return False
+        
+        self.remove_key(source_section, key)
+        self.add_key(target_section, key, key_value)
+        return True
+    
     def cleanup(self):
         for section in self.sections:
             self.sections[section] = sorted([line for line in self.sections[section] if line.strip()])

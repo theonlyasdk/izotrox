@@ -4,9 +4,29 @@
 4. DONE Minimum font size for all standard widgets is 18.0 pts, store this in res/theme/default.ini under [System] as FontSize and use it in main.cpp where the font is loaded.
 5. DONE Also do the same for font family , under [System] have a FontFamily key and set its value to a path such as res/fonts/Roboto-Regular.ttf. Implement a string_value() function if needed in ThemeDB
 6. DONE Widgets should unfocus after clicking outside or on another widgets
-7. Theme Editor
+7. DONE Theme Editor
 	Allow renaming of keys and sections
 	Allow moving of keys to different section
 
-8. Theme improvements
+8. DONE Theme improvements
 	Allow reading values from different sections instead of reading it from values section by default
+9. Add license header from main.cpp to all other cpp files
+10. Add schema support to theme  Editor
+A schema is a JSON file which describes the structure of a theme.
+For example, a schema could describe that a theme has a [Colors] section and a [Fonts] section.
+And it should also describe the type of values that can be stored in each section.
+We also integrate this schema into the theme validator section.
+Add File>Preferences and when clicked will open a preferences dialog with a usual tab-style layout.
+Under Schema tab, add a button "Edit Default Schema" when clicked will open a schema editor window.
+The schema editor should be a seperate file in source.
+The schema editor should have a tree view of the schema, and add common controls to add, edit, delete sections and keys, just like the main theme editor.
+Double clicking on a key should open a dialog to edit the key type from a list of types such as color, int, float, string, bool, etc.
+each type should have a validator in the theme validator of theme editor.
+the schema should be saved under theme_editor/data/schema.json (mkdir -p the directory)
+this is the default schema path and the schema editor will only open and save to this file.
+so no need to add an open file item for schema editor.
+the schema is just a suggestion of what are the officially supported keys by izotrox and their types for the type checker.
+
+Rules:
+- Do not add comments. Use code as documentation itself. 
+- Variable names should be descriptive
