@@ -52,6 +52,12 @@ void SplashScreen::render() {
     int fillW = (int)(width * completed_steps);
     painter.fill_rect({0, height - barh, fillW, barh}, Color(0, 120, 215));
 
+    // Show the window before presenting the first frame
+    if (!windowShown) {
+        app.show();
+        windowShown = true;
+    }
+
     app.present(canvas);
 }
 

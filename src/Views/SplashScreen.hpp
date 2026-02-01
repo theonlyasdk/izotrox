@@ -25,6 +25,7 @@ private:
     int totalSteps = 1;
     int currentStep = 0;
     std::string currentStatus;
+    bool windowShown = false;
 };
 
 } 

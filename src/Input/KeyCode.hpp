@@ -15,7 +15,8 @@ enum class KeyCode : int {
     Down = 203,
     Home = 204,
     End = 205,
-    Delete = 206
+    Delete = 206,
+    Escape = 207
 };
 
 } 

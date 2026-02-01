@@ -27,6 +27,7 @@ public:
     void set_delta(float dt) noexcept { _delta = dt; }
 
     void quit(int exit_code);
+    void show();
     void on_resize(std::function<void(int, int)> callback);
 private:
     float _delta{0.f};

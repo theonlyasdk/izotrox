@@ -109,4 +109,12 @@ void Application::quit(int exit_code) {
     )
 }
 
+void Application::show() {
+    IF_DESKTOP(
+        if (impl->sdl_app) {
+            impl->sdl_app->show();
+        }
+    )
+}
+
 }

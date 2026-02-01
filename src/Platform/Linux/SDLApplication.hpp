@@ -15,6 +15,7 @@ public:
     bool pump_events();
     void present(const uint32_t* pixels, int width, int height);
     void quit(int exit_code);
+    void show();
 
     uint32_t width() const { return m_width; }
     uint32_t height() const { return m_height; }

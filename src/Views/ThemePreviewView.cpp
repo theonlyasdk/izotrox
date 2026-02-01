@@ -9,7 +9,7 @@ std::shared_ptr<View> ThemePreviewView::create(Font* font, Image* sliderHandle, 
     root->set_focusable(false);
     root->set_width(WidgetSizePolicy::MatchParent);
     root->set_height(WidgetSizePolicy::MatchParent);
-    root->set_padding(20, 20, 20, 20);
+    root->set_padding(10, 10, 10, 10);
 
     auto title = std::make_shared<Label>("Theme Preview", font);
     title->set_width(WidgetSizePolicy::MatchParent);
@@ -36,11 +36,6 @@ std::shared_ptr<View> ThemePreviewView::create(Font* font, Image* sliderHandle, 
     textBox->set_width(WidgetSizePolicy::MatchParent);
     root->add_child(textBox);
 
-    auto filledTextBox = std::make_shared<TextBox>("Filled text box", font);
-    filledTextBox->set_width(WidgetSizePolicy::MatchParent);
-    filledTextBox->set_text("Filled text box");
-    root->add_child(filledTextBox);
-
     auto listLabel = std::make_shared<Label>("List View:", font);
     listLabel->set_width(WidgetSizePolicy::MatchParent);
     root->add_child(listLabel);
@@ -50,7 +45,7 @@ std::shared_ptr<View> ThemePreviewView::create(Font* font, Image* sliderHandle, 
     listView->set_height(200);
 
     for(int i=1; i<=5; i++) {
-        auto item = std::make_shared<ListItem>(Orientation::Horizontal);
+        auto item = std::make_shared<ListItem>(Orientation::Vertical);
         auto label = std::make_shared<Label>("List Item " + std::to_string(i), font);
         item->add_child(label);
         listView->add_item(item);
@@ -87,15 +82,13 @@ std::shared_ptr<View> ThemePreviewView::create(Font* font, Image* sliderHandle, 
     optionBox->set_selected_index(0);
     root->add_child(optionBox);
 
-    auto infoLabel = std::make_shared<Label>("Info: All widgets showcase", font);
-    infoLabel->set_width(WidgetSizePolicy::MatchParent);
-    root->add_child(infoLabel);
-
     auto successLabel = std::make_shared<Label>("Success: Theme loaded", font);
+    successLabel->set_color_variant(ColorVariant::Success);
     successLabel->set_width(WidgetSizePolicy::MatchParent);
     root->add_child(successLabel);
 
     auto errorLabel = std::make_shared<Label>("Error: Sample error", font);
+    errorLabel->set_color_variant(ColorVariant::Error);
     errorLabel->set_width(WidgetSizePolicy::MatchParent);
     root->add_child(errorLabel);
 

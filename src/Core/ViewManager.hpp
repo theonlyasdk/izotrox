@@ -43,6 +43,19 @@ public:
 private:
     ViewManager() = default;
     void setup_transition(ViewTransition transition, bool is_pop);
+    void process_pending_operations();
+    std::shared_ptr<View> get_active_input_view();
+
+    enum class OperationType {
+        Push,
+        Pop
+    };
+
+    struct PendingOperation {
+        OperationType type;
+        std::shared_ptr<View> view;  // Only used for Push
+        ViewTransition transition;
+    };
 
     std::vector<std::shared_ptr<View>> m_stack;
     std::shared_ptr<View> m_outgoing_view;
@@ -52,6 +65,10 @@ private:
     ViewTransition m_current_transition = ViewTransition::None;
     bool m_animating = false;
     bool m_is_pop = false;
+
+    // Parallel animation support
+    std::vector<PendingOperation> m_pending_ops;
+    bool m_processing_operation = false;
 
     int m_width = 0;
     int m_height = 0;

@@ -27,8 +27,13 @@ void ViewManager::push(std::shared_ptr<View> view, ViewTransition transition) {
         transition = ThemeDB::the().get<ViewTransition>("System", "ViewTransition", ViewTransition::PushLeft);
     }
 
-    if (m_animating) return;
+    // Queue the operation if we're currently processing one
+    if (m_processing_operation) {
+        m_pending_ops.push_back({OperationType::Push, view, transition});
+        return;
+    }
 
+    m_processing_operation = true;
     view->resize(m_width, m_height);
 
     if (!m_stack.empty() && transition != ViewTransition::None) {
@@ -36,20 +41,41 @@ void ViewManager::push(std::shared_ptr<View> view, ViewTransition transition) {
     }
 
     m_stack.push_back(view);
+    m_processing_operation = false;
 }
 
 void ViewManager::pop(ViewTransition transition) {
-    if (m_animating || m_stack.size() <= 1) return;
+    // Calculate effective stack size considering pending pops
+    size_t pending_pops = 0;
+    for (const auto& op : m_pending_ops) {
+        if (op.type == OperationType::Pop) pending_pops++;
+    }
+    
+    size_t effective_stack_size = m_stack.size() - pending_pops;
+    
+    // Prevent popping if it would leave the stack empty or invalid
+    if (effective_stack_size <= 1) {
+        return;
+    }
 
     if (transition == ViewTransition::ThemeDefault) {
         transition = ThemeDB::the().get<ViewTransition>("System", "ViewTransition", ViewTransition::PushLeft);
     }
+
+    // Queue the operation if we're currently processing one
+    if (m_processing_operation) {
+        m_pending_ops.push_back({OperationType::Pop, nullptr, transition});
+        return;
+    }
+
+    m_processing_operation = true;
 
     if (transition != ViewTransition::None) {
         setup_transition(transition, true);
     }
 
     m_stack.pop_back();
+    m_processing_operation = false;
 }
 
 void ViewManager::show_dialog(std::shared_ptr<Widget> dialog) {
@@ -58,6 +84,42 @@ void ViewManager::show_dialog(std::shared_ptr<Widget> dialog) {
 
 void ViewManager::dismiss_dialog() {
     m_dialog = nullptr;
+}
+
+void ViewManager::process_pending_operations() {
+    if (m_pending_ops.empty() || m_processing_operation) {
+        return;
+    }
+
+    // Process the first pending operation
+    PendingOperation op = m_pending_ops.front();
+    m_pending_ops.erase(m_pending_ops.begin());
+
+    if (op.type == OperationType::Push) {
+        push(op.view, op.transition);
+    } else if (op.type == OperationType::Pop) {
+        pop(op.transition);
+    }
+}
+
+std::shared_ptr<View> ViewManager::get_active_input_view() {
+    // During a pop animation, input should go to the view that will be active
+    // (the one below the currently animating outgoing view)
+    if (m_animating && m_is_pop && m_stack.size() >= 1) {
+        return m_stack.back();
+    }
+    
+    // During a push animation, input goes to the new view (already at the top of stack)
+    if (m_animating && !m_is_pop && m_stack.size() >= 1) {
+        return m_stack.back();
+    }
+    
+    // Not animating - return the current top view
+    if (!m_stack.empty()) {
+        return m_stack.back();
+    }
+    
+    return nullptr;
 }
 
 void ViewManager::resize(int w, int h) {
@@ -83,18 +145,26 @@ void ViewManager::update() {
     if (m_animating) {
         float dt = Application::the().delta();
         if (m_transition_anim.update(dt)) {
-            // Animating...
+            // Still animating...
         } else {
+            // Animation finished
             m_animating = false;
             m_outgoing_view = nullptr;
-            m_current_transition = ViewTransition::None; // Reset transition type
+            m_current_transition = ViewTransition::None;
+            
+            // Process any pending operations that were queued during the animation
+            process_pending_operations();
         }
-    } else if (!m_stack.empty()) { // Only update current view if not animating and no dialog
+    }
+    
+    // Update the active view (even during animations for parallel input)
+    auto active_view = get_active_input_view();
+    if (active_view) {
         int scroll = Input::the().scroll_y();
         if (scroll != 0) {
-            m_stack.back()->on_scroll(scroll);
+            active_view->on_scroll(scroll);
         }
-        m_stack.back()->update();
+        active_view->update();
     }
 }
 
@@ -207,9 +277,10 @@ void ViewManager::on_touch(IntPoint point, bool down) {
         return;
     }
 
-    if (m_animating) return;
-    if (!m_stack.empty()) {
-        m_stack.back()->on_touch(point, down);
+    // Route input to the active view (even during animations)
+    auto active_view = get_active_input_view();
+    if (active_view) {
+        active_view->on_touch(point, down);
     }
 }
 
@@ -218,10 +289,18 @@ void ViewManager::on_key(KeyCode key) {
         m_dialog->on_key(key);
         return;
     }
-
-    if (m_animating) return;
-    if (!m_stack.empty()) {
-        m_stack.back()->on_key(key);
+    
+    // Handle Escape key to pop the view stack
+    // This now works during animations too, queueing the operation
+    if (key == KeyCode::Escape) {
+        pop();  // Will queue if currently processing an operation
+        return;
+    }
+    
+    // Route other keys to the active view (even during animations)
+    auto active_view = get_active_input_view();
+    if (active_view) {
+        active_view->on_key(key);
     }
 }
 

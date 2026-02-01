@@ -1,9 +1,9 @@
-
-
 #include "Platform/Linux/SDLApplication.hpp"
 #include <SDL.h>
-#include <iostream>
+#include "Debug/Logger.hpp"
 #include "Input/Input.hpp"
+
+using namespace Izo;
 
 SDLApplication::SDLApplication(std::string caption, int width, int height)
     : m_width(static_cast<uint32_t>(width)),
@@ -11,7 +11,7 @@ SDLApplication::SDLApplication(std::string caption, int width, int height)
       m_running(false) {
 
     if (SDL_Init(SDL_INIT_VIDEO) != 0) {
-        std::cerr << "Izotrox: SDL_Init failed: " << SDL_GetError() << std::endl;
+        LogError("SDL_Init failed: {}", SDL_GetError());
         return;
     }
 
@@ -22,9 +22,9 @@ SDLApplication::SDLApplication(std::string caption, int width, int height)
                                SDL_WINDOWPOS_CENTERED,
                                static_cast<int>(m_width),
                                static_cast<int>(m_height),
-                               SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
+                               SDL_WINDOW_HIDDEN | SDL_WINDOW_RESIZABLE);
     if (!m_window) {
-        std::cerr << "SDL_CreateWindow failed: " << SDL_GetError() << std::endl;
+        LogError("SDL_CreateWindow failed: {}", SDL_GetError());
         SDL_Quit();
         return;
     }
@@ -33,10 +33,24 @@ SDLApplication::SDLApplication(std::string caption, int width, int height)
                                    SDL_RENDERER_ACCELERATED |
                                    SDL_RENDERER_PRESENTVSYNC);
     if (!m_renderer) {
-        std::cerr << "SDL_CreateRenderer failed: " << SDL_GetError() << std::endl;
+        LogError("SDL_CreateRenderer failed: {}", SDL_GetError());
         SDL_DestroyWindow(m_window);
         SDL_Quit();
         return;
+    }
+
+    // Log renderer information
+    SDL_RendererInfo info;
+    if (SDL_GetRendererInfo(m_renderer, &info) == 0) {
+        LogInfo("SDL Renderer initialized: {}", info.name);
+        if (info.flags & SDL_RENDERER_ACCELERATED) {
+            LogInfo("Hardware acceleration enabled");
+        } else {
+            LogWarn("Hardware acceleration not available, using software rendering");
+        }
+        if (info.flags & SDL_RENDERER_PRESENTVSYNC) {
+            LogInfo("VSync enabled");
+        }
     }
 
     m_texture = SDL_CreateTexture(m_renderer,
@@ -44,7 +58,7 @@ SDLApplication::SDLApplication(std::string caption, int width, int height)
                                  SDL_TEXTUREACCESS_STREAMING,
                                  m_width, m_height);
     if (!m_texture) {
-        std::cerr << "SDL_CreateTexture failed: " << SDL_GetError() << std::endl;
+        LogError("SDL_CreateTexture failed: {}", SDL_GetError());
     }
 
     m_running = true;
@@ -118,6 +132,8 @@ bool SDLApplication::pump_events() {
                      Izo::Input::the().set_key(Izo::KeyCode::Home);
                  } else if (e.key.keysym.sym == SDLK_END) {
                      Izo::Input::the().set_key(Izo::KeyCode::End);
+                 } else if (e.key.keysym.sym == SDLK_ESCAPE) {
+                     Izo::Input::the().set_key(Izo::KeyCode::Escape);
                  } else if (e.key.keysym.sym == SDLK_a && (e.key.keysym.mod & KMOD_CTRL)) {
                      Izo::Input::the().set_key((Izo::KeyCode)'a');
                  } else if (e.key.keysym.sym == SDLK_c && (e.key.keysym.mod & KMOD_CTRL)) {
@@ -137,7 +153,6 @@ void SDLApplication::present(const uint32_t* pixels, int width, int height) {
     if (!m_texture || !m_renderer || !pixels) return;
 
     if (width != (int)m_width || height != (int)m_height) {
-
         return;
     }
 
@@ -154,4 +169,10 @@ void SDLApplication::quit(int exit_code) {
         exit(exit_code);
 
     m_running = false;
+}
+
+void SDLApplication::show() {
+    if (m_window) {
+        SDL_ShowWindow(m_window);
+    }
 }
