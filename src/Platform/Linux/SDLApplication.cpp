@@ -40,7 +40,7 @@ SDLApplication::SDLApplication(std::string caption, int width, int height)
     }
 
     m_texture = SDL_CreateTexture(m_renderer,
-                                 SDL_PIXELFORMAT_ARGB8888, 
+                                 SDL_PIXELFORMAT_ARGB8888,
                                  SDL_TEXTUREACCESS_STREAMING,
                                  m_width, m_height);
     if (!m_texture) {
@@ -73,7 +73,7 @@ bool SDLApplication::pump_events() {
 
                 if (m_texture) SDL_DestroyTexture(m_texture);
                 m_texture = SDL_CreateTexture(m_renderer,
-                                             SDL_PIXELFORMAT_ARGB8888, 
+                                             SDL_PIXELFORMAT_ARGB8888,
                                              SDL_TEXTUREACCESS_STREAMING,
                                              m_width, m_height);
 
@@ -101,11 +101,11 @@ bool SDLApplication::pump_events() {
 
              if (down) {
                  if (e.key.keysym.sym == SDLK_BACKSPACE) {
-                     Izo::Input::the().set_key(Izo::KeyCode::Backspace); 
+                     Izo::Input::the().set_key(Izo::KeyCode::Backspace);
                  } else if (e.key.keysym.sym == SDLK_DELETE) {
-                     Izo::Input::the().set_key(Izo::KeyCode::Delete); 
+                     Izo::Input::the().set_key(Izo::KeyCode::Delete);
                  } else if (e.key.keysym.sym == SDLK_RETURN) {
-                     Izo::Input::the().set_key(Izo::KeyCode::Enter); 
+                     Izo::Input::the().set_key(Izo::KeyCode::Enter);
                  } else if (e.key.keysym.sym == SDLK_LEFT) {
                      Izo::Input::the().set_key(Izo::KeyCode::Left);
                  } else if (e.key.keysym.sym == SDLK_RIGHT) {
@@ -148,6 +148,10 @@ void SDLApplication::present(const uint32_t* pixels, int width, int height) {
     SDL_RenderPresent(m_renderer);
 }
 
-void SDLApplication::quit() {
+void SDLApplication::quit(int exit_code) {
+    // Exit immediately on failure
+    if (exit_code < 0)
+        exit(exit_code);
+
     m_running = false;
 }

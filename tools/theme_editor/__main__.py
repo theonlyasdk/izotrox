@@ -5,7 +5,7 @@ from .gui import run_gui
 
 def main():
     if len(sys.argv) < 2:
-        # Default to GUI if no args
+        # We run the GUI if we haven't got any args
         try:
             run_gui()
         except Exception as e:

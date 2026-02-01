@@ -43,10 +43,10 @@ IzoShell::IzoShell() {
                 Logger::the().error("Usage: theme <load|list|reload> [name]");
                 return;
             }
-            
+
             std::string subcmd = args[1];
             std::transform(subcmd.begin(), subcmd.end(), subcmd.begin(), ::tolower);
-            
+
             if (subcmd == "load") {
                 if (args.size() < 3) {
                     Logger::the().error("Usage: theme load <name>");
@@ -54,7 +54,7 @@ IzoShell::IzoShell() {
                 }
                 std::string theme_name = args[2];
                 std::string path = "res/theme/" + theme_name + ".ini";
-                
+
                 if (ThemeDB::the().load(path)) {
                     ToastManager::the().show("Theme loaded: " + theme_name + " (" + path + ")");
                 } else {
@@ -109,17 +109,17 @@ IzoShell::IzoShell() {
                 return;
             }
             Color c = ThemeDB::the().get<Color>("Colors", args[1], Color(255));
-            Logger::the().info(args[1] + " = rgba(" + 
-                std::to_string(c.r) + ", " + 
-                std::to_string(c.g) + ", " + 
-                std::to_string(c.b) + ", " + 
+            Logger::the().info(args[1] + " = rgba(" +
+                std::to_string(c.r) + ", " +
+                std::to_string(c.g) + ", " +
+                std::to_string(c.b) + ", " +
                 std::to_string(c.a) + ")");
         });
 
     register_command("exit", "Exit the application", "exit",
         [](const std::vector<std::string>&) {
             Logger::the().info("Exiting application...");
-            Application::the().quit();
+            Application::the().quit(0);
         });
 
     register_command("toast", "Show a toast message", "toast <message>",
@@ -128,7 +128,7 @@ IzoShell::IzoShell() {
                 Logger::the().error("Usage: toast <message>");
                 return;
             }
-            
+
             std::string message;
             for (size_t i = 1; i < args.size(); ++i) {
                 message += args[i];

@@ -19,6 +19,7 @@ public:
     void set_placeholder(const std::string& placeholder);
     void set_on_change(std::function<void(const std::string&)> callback) { m_on_change = callback; }
     void set_on_submit(std::function<void(const std::string&)> callback) { m_on_submit = callback; }
+    void clear();
 
     void draw_content(Painter& painter) override;
     void update() override;
@@ -50,4 +51,4 @@ private:
     static std::string s_clipboard;
 };
 
-} 
+}

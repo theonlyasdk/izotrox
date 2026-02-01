@@ -45,7 +45,7 @@ Application::~Application() {
 bool Application::init() {
     IF_ANDROID(
         system("stop");
-        if (!impl->fb.init()) 
+        if (!impl->fb.init())
             return false;
         impl->width = impl->fb.width();
         impl->height = impl->fb.height();
@@ -79,7 +79,7 @@ bool Application::pump_events() {
 
 void Application::present(Canvas& canvas) {
     IF_ANDROID(
-        if (impl->fb.valid()) 
+        if (impl->fb.valid())
             impl->fb.swap_buffers(canvas);
     )
     IF_DESKTOP(
@@ -96,17 +96,17 @@ void Application::on_resize(std::function<void(int, int)> callback) {
     impl->on_resize = callback;
 }
 
-void Application::quit() {
+void Application::quit(int exit_code) {
     IF_DESKTOP(
         if (impl->sdl_app) {
-            impl->sdl_app->quit();
+            impl->sdl_app->quit(exit_code);
         }
     )
     IF_ANDROID(
         AndroidDevice::set_brightness(0);
         system("start");
-        exit(0);
+        exit(exit_code);
     )
 }
 
-} 
+}

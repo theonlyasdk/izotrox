@@ -33,6 +33,7 @@ build_clean:
 	rm -rf build
 
 push:
+	@echo "Pushing source to the connected Android device..."
 	adb shell mkdir -p $(INSTALL_DIR)
 	adb push build/$(TARGET) $(INSTALL_DIR)
 	adb shell mkdir -p /data/adb/izotrox

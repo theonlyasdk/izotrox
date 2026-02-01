@@ -26,7 +26,7 @@ public:
     float delta() const noexcept { return _delta; }
     void set_delta(float dt) noexcept { _delta = dt; }
 
-    void quit();
+    void quit(int exit_code);
     void on_resize(std::function<void(int, int)> callback);
 private:
     float _delta{0.f};
@@ -36,4 +36,4 @@ private:
     static Application* _instance;
 };
 
-} 
+}

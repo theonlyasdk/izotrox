@@ -21,8 +21,8 @@ public:
         auto res = std::make_shared<T>(std::forward<Args>(args)...);
 
         if (!res->valid()) {
-            LogError("ResourceManager: Failed to load {0}", name);
-            std::exit(1); 
+            LogError("ResourceManager: Failed to load resource '{0}'", name);
+            std::exit(1);
         }
 
         resources[name] = res;
@@ -49,4 +49,4 @@ private:
     std::map<std::string, std::shared_ptr<T>> resources;
 };
 
-} 
+}

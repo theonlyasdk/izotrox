@@ -1,9 +1,17 @@
+/*
+ * (c) theonlyasdk 2026
+ *
+ * Licensed under the Mozilla Public License 2.0
+ * See the LICENSE file for more information
+ */
+
 #include <unistd.h>
 #include <chrono>
 #include <memory>
 #include <string>
 #include <format>
 
+#include "Core/Izotrox.hpp"
 #include "Debug/Logger.hpp"
 #include "Graphics/Color.hpp"
 #include "Input/Input.hpp"
@@ -54,15 +62,16 @@ void draw_debug_panel(Painter& painter, Font& font, float fps) {
         timer = 0;
     }
 
-    painter.fill_rect({10, 10, cached_w, cached_h}, Color(0, 0, 0, 128)); 
+    painter.fill_rect({10, 10, cached_w, cached_h}, Color(0, 0, 0, 128));
     font.draw_text(painter, {20, 15}, cached_text, Color::White);
 }
 
 int main(int argc, char* argv[]) {
-    Logger::the().info("Izotrox Booting...");
     Logger::the().enable_logging_to_file();
 
-    // Parse command line arguments
+    LogInfo("Izotrox v{}.{}.{} Booting... (compiled on {}, {})", IZO_VERSION_MAJOR, IZO_VERSION_MINOR, IZO_VERSION_REVISION, IZO_BUILD_DATE, IZO_BUILD_TIME);
+
+    /* TODO: Improve command line argument handling, possibly with a better library */
     std::string theme_name = "default";
     for (int i = 1; i < argc; i++) {
         std::string arg = argv[i];
@@ -70,11 +79,14 @@ int main(int argc, char* argv[]) {
             theme_name = argv[++i];
         }
     }
-    
+
     std::string theme_path = "res/theme/" + theme_name + ".ini";
     if (!ThemeDB::the().load(theme_path)) {
-        Logger::the().warn("Failed to load theme '" + theme_name + "', falling back to default");
-        ThemeDB::the().load("res/theme/default.ini");
+        LogWarn("Failed to load theme '{}', falling back to 'default.ini'", theme_path);
+
+        if (!ThemeDB::the().load("res/theme/default.ini")) {
+            LogError("Unable to load the default theme! Izotrox might behave unexpectedly, and some colors might be missing!");
+        }
     }
 
     int width = 800;
@@ -83,7 +95,7 @@ int main(int argc, char* argv[]) {
 
     Application app(width, height, "Izotrox");
     if (!app.init()) {
-        Logger::the().error("Failed to initialize application!");
+        LogFatal("Failed to initialize application!");
         return 1;
     }
 
@@ -100,13 +112,13 @@ int main(int argc, char* argv[]) {
     float fontSize = ThemeDB::the().get<float>("System", "FontSize", 64.0);
     Font* systemFont = fonts.load("system-ui", fontFamily, fontSize);
     if (!systemFont) {
-        Logger::the().error("Could not load system font!");
+        LogFatal("Could not load system font!");
         return 1;
     }
 
     SplashScreen splash(app, *painter, *canvas, *systemFont);
 
-    splash.set_total_steps(5); 
+    splash.set_total_steps(5);
 
     splash.next_step("Initializing Input...");
     Input::the().init();
@@ -137,17 +149,21 @@ int main(int argc, char* argv[]) {
     btn_start_engine->set_focusable(true);
     root->add_child(btn_start_engine);
 
-    auto btn2 = std::make_shared<Button>("Settings", systemFont);
-    btn2->set_focusable(true);
-    root->add_child(btn2);
+    auto btn_settings = std::make_shared<Button>("Settings", systemFont);
+    btn_settings->set_focusable(true);
+    root->add_child(btn_settings);
 
-    auto btn3 = std::make_shared<Button>("Exit", systemFont);
-    btn3->set_focusable(true);
-    btn3->set_on_click([&running]() {
-        Logger::the().info("Exit clicked");
-        running = false;
+    auto btn_crash_app = std::make_shared<Button>("Crash App", systemFont);
+    btn_crash_app->set_focusable(true);
+    btn_crash_app->set_on_click([&running]() {
+        /* LogFatal automatically calls the application destructor and
+        terminates the app (if LOG_FATAL_TERMINATE_APP is enabled)
+        with error code defined in LOG_FATAL_EXIT_CODE */
+        LogFatal("UwU app crashed");
+        /* For now, we manually call Application::quit(1) */
+        Application::the().quit(1);
     });
-    root->add_child(btn3);
+    root->add_child(btn_crash_app);
 
     auto btn_second_view = std::make_shared<Button>("Go to Second View", systemFont);
     btn_second_view->set_focusable(true);
@@ -176,7 +192,7 @@ int main(int argc, char* argv[]) {
         if (!text.empty()) {
             Logger::the().info("Shell> " + text);
             IzoShell::the().execute(text);
-            tb_demo->set_text("");
+            tb_demo->clear();
         }
     });
     root->add_child(tb_demo);
@@ -193,13 +209,15 @@ int main(int argc, char* argv[]) {
     listview->set_height(400);
     listview->set_width(WidgetSizePolicy::MatchParent);
 
-    for (int i = 0; i < 30; ++i) {
-        auto item = std::make_shared<ListItem>(Orientation::Vertical);
+    size_t MAX_LIST_ITEMS = 1000;
+    for (size_t i = 0; i < MAX_LIST_ITEMS; ++i) {
+        auto item = std::make_shared<ListItem>(Orientation::Horizontal);
 
-        item->set_padding(10, 10, 5, 5);
+        item->set_padding(10, 10, 10, 10);
 
-        auto label = std::make_shared<Label>("Item #" + std::to_string(i), systemFont);
+        auto label = std::make_shared<Label>("Item " + std::to_string(i), systemFont);
         label->set_focusable(false);
+
         auto subLabel = std::make_shared<Label>("Details for " + std::to_string(i), systemFont);
         subLabel->set_color_variant(ColorVariant::Secondary);
         subLabel->set_focusable(false);
@@ -254,7 +272,7 @@ int main(int argc, char* argv[]) {
         ViewManager::the().on_touch(tp, down);
 
         KeyCode key = Input::the().key();
-        if (key != KeyCode::None) ViewManager::the().on_key(key); 
+        if (key != KeyCode::None) ViewManager::the().on_key(key);
 
         ViewManager::the().update();
         ToastManager::the().update(dt);

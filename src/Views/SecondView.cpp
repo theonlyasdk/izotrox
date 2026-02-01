@@ -46,6 +46,14 @@ std::shared_ptr<View> SecondView::create(Font* font) {
         ViewManager::the().pop();
     });
     root->add_child(backBtn);
+    
+    auto btn_next_screen = std::make_shared<Button>("Go to next screen", font);
+    btn_next_screen->set_width(WidgetSizePolicy::MatchParent);
+    btn_next_screen->set_on_click([font]() {
+        auto view = SecondView::create(font);
+        ViewManager::the().push(view);
+    });
+    root->add_child(btn_next_screen);
 
     return std::make_shared<View>(root);
 }

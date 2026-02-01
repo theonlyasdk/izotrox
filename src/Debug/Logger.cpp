@@ -8,6 +8,7 @@
 #include <sstream>
 #include <fstream>
 #include <filesystem>
+#include "Core/Application.hpp"
 
 namespace Izo {
 
@@ -27,15 +28,13 @@ struct Logger::LogFile {
     std::ofstream stream;
 };
 
-Logger::Logger() : min_level_(Level::Info) {}
+Logger::Logger(){}
 Logger::~Logger() = default;
 
 Logger &Logger::the() {
   static Logger s_instance;
   return s_instance;
 }
-
-void Logger::set_level(Level lvl) { min_level_ = lvl; }
 
 void Logger::enable_logging_to_file() {
     std::string filename_str;
@@ -68,8 +67,6 @@ void Logger::enable_logging_to_file() {
 }
 
 void Logger::log(Level lvl, const std::string &msg) {
-  if (lvl < min_level_)
-    return;
   std::lock_guard<std::mutex> lock(mutex_);
   std::cout << format(lvl, msg) << std::endl;
 
@@ -83,7 +80,13 @@ void Logger::debug(const std::string &msg) { log(Level::Debug, msg); }
 void Logger::info(const std::string &msg) { log(Level::Info, msg); }
 void Logger::warn(const std::string &msg) { log(Level::Warn, msg); }
 void Logger::error(const std::string &msg) { log(Level::Error, msg); }
-void Logger::fatal(const std::string &msg) { log(Level::Fatal, msg); }
+void Logger::fatal(const std::string &msg) {
+    log(Level::Fatal, msg);
+
+#ifdef LOG_FATAL_TERMINATES_APP
+        Application::the().quit(LOG_FATAL_EXIT_CODE);
+#endif
+}
 
 std::string Logger::format(Level lvl, const std::string &msg) {
   std::ostringstream oss;
@@ -132,4 +135,4 @@ std::string Logger::level_to_string(Level lvl) {
   }
 }
 
-} 
+}

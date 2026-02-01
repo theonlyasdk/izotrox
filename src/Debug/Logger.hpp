@@ -3,6 +3,13 @@
 #include <mutex>
 #include <string>
 #include <memory>
+#include <Core/Izotrox.hpp>
+
+/* If LogFatal() should terminate the app with LOG_FATAL_EXIT_CODE */
+// #define LOG_FATAL_TERMINATES_APP
+#ifdef LOG_FATAL_TERMINATES_APP
+#define LOG_FATAL_EXIT_CODE 1
+#endif
 
 namespace Izo {
 
@@ -41,18 +48,21 @@ private:
     std::string timestamp();
     std::string level_to_string(Level lvl);
 
-    Level               min_level_;
     std::mutex          mutex_;
     struct LogFile;
     std::unique_ptr<LogFile> m_log_file;
 };
 
-// Macro definitions for the different log levels
+/* Macro definitions for different log levels */
 #define LogTrace(fmt, ...) \
     Logger::the().trace(std::format(fmt, ##__VA_ARGS__))
 
+#ifdef IZO_DEBUG
 #define LogDebug(fmt, ...) \
     Logger::the().debug(std::format(fmt, ##__VA_ARGS__))
+#else
+#define LogDebug(fmt, ...)
+#endif
 
 #define LogInfo(fmt, ...) \
     Logger::the().info(std::format(fmt, ##__VA_ARGS__))
@@ -63,7 +73,12 @@ private:
 #define LogError(fmt, ...) \
     Logger::the().error(std::format(fmt, ##__VA_ARGS__))
 
-#define LogFatal(fmt, ...) \
-    Logger::the().fatal(std::format(fmt, ##__VA_ARGS__))
+#define LogFatal(fmt, ...)                                     \
+    do {                                                       \
+        Logger::the().fatal(                                   \
+            std::format("At {}:{}: " fmt, __FILE__, __LINE__,  \
+                        ##__VA_ARGS__)                         \
+        );                                                     \
+    } while (0)
 
-} 
+}

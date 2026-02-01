@@ -10,10 +10,10 @@ namespace Izo {
 
 std::string TextBox::s_clipboard;
 
-TextBox::TextBox(const std::string& placeholder, Font* font) 
+TextBox::TextBox(const std::string& placeholder, Font* font)
     : m_text_buffer(""), m_placeholder(placeholder), m_font(font) {}
 
-void TextBox::set_text(const std::string& t) { 
+void TextBox::set_text(const std::string& t) {
     if (m_text_buffer != t) {
         m_text_buffer = t;
         m_sel_start = m_sel_end = (int)t.length();
@@ -26,8 +26,8 @@ void TextBox::set_text(const std::string& t) {
 
 const std::string& TextBox::text() const { return m_text_buffer; }
 
-void TextBox::set_placeholder(const std::string& placeholder) { 
-    m_placeholder = placeholder; 
+void TextBox::set_placeholder(const std::string& placeholder) {
+    m_placeholder = placeholder;
 }
 
 int TextBox::get_cursor_index(int lx) {
@@ -72,7 +72,7 @@ void TextBox::ensure_cursor_visible() {
 
     std::string pre_cursor = m_text_buffer.substr(0, m_sel_end);
     int cursor_x = m_font->width(pre_cursor);
-    int visible_w = m_bounds.w - 12; 
+    int visible_w = m_bounds.w - 12;
 
     if (cursor_x < m_scroll_x) {
         m_scroll_x = cursor_x;
@@ -160,7 +160,7 @@ void TextBox::draw_content(Painter& painter) {
 
 void TextBox::update() {
     m_border_anim.update(Application::the().delta());
-    Widget::update(); 
+    Widget::update();
 
     if (m_focused) {
         m_cursor_timer += Application::the().delta();
@@ -271,7 +271,7 @@ bool TextBox::on_key(KeyCode key) {
         return true;
     }
 
-    if (key == KeyCode::Backspace) { 
+    if (key == KeyCode::Backspace) {
         if (has_selection) {
             int s = std::min(m_sel_start, m_sel_end);
             int e = std::max(m_sel_start, m_sel_end);
@@ -355,6 +355,10 @@ bool TextBox::on_key(KeyCode key) {
 void TextBox::measure(int parent_w, int parent_h) {
     int mh = m_font ? m_font->height() + 10 : 30;
     m_measured_size = {0, 0, 200, mh};
+}
+
+void TextBox::clear() {
+    set_text("");
 }
 
 }
