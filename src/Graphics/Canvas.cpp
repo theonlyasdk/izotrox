@@ -1,6 +1,9 @@
 #include "Canvas.hpp"
 #include <cstring>
 
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "../Lib/stb_image_write.h"
+
 namespace Izo {
 
 Canvas::Canvas(int width, int height) 
@@ -60,4 +63,26 @@ void Canvas::resize(int width, int height) {
     m_height = height;
 }
 
-} 
+bool Canvas::save_to_file(const std::string& path) {
+    std::vector<uint32_t> rgba(m_width * m_height);
+    for (size_t i = 0; i < m_width * m_height; ++i) {
+        uint32_t p = m_pixels[i];
+        // ARGB -> RGBA
+        // A = (p >> 24) & 0xFF
+        // R = (p >> 16) & 0xFF
+        // G = (p >> 8) & 0xFF
+        // B = p & 0xFF
+        // RGBA (Little Endian): R G B A in memory -> 0xAABBGGRR in uint32
+        
+        uint8_t a = (p >> 24) & 0xFF;
+        uint8_t r = (p >> 16) & 0xFF;
+        uint8_t g = (p >> 8) & 0xFF;
+        uint8_t b = p & 0xFF;
+        
+        rgba[i] = (a << 24) | (b << 16) | (g << 8) | r;
+    }
+    
+    return stbi_write_png(path.c_str(), m_width, m_height, 4, rgba.data(), m_width * 4) != 0;
+}
+
+} // namespace Izo

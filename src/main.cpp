@@ -39,8 +39,10 @@
 #include "Platform/Android/AndroidDevice.hpp"
 #include "Core/SystemStats.hpp"
 #include "Views/SecondView.hpp"
+#include "Views/ThemePreviewView.hpp"
 
 using namespace Izo;
+
 
 using FontManager = ResourceManager<Font>;
 using ImageManager = ResourceManager<Image>;
@@ -73,24 +75,34 @@ int main(int argc, char* argv[]) {
 
     /* TODO: Improve command line argument handling, possibly with a better library */
     std::string theme_name = "default";
+    std::string preview_path;
+    
     for (int i = 1; i < argc; i++) {
         std::string arg = argv[i];
         if (arg == "--theme" && i + 1 < argc) {
             theme_name = argv[++i];
-        }
-    }
-
-    std::string theme_path = "res/theme/" + theme_name + ".ini";
-    if (!ThemeDB::the().load(theme_path)) {
-        LogWarn("Failed to load theme '{}', falling back to 'default.ini'", theme_path);
-
-        if (!ThemeDB::the().load("res/theme/default.ini")) {
-            LogError("Unable to load the default theme! Izotrox might behave unexpectedly, and some colors might be missing!");
+        } else if (arg == "--resource-root" && i + 1 < argc) {
+            std::string root = argv[++i];
+            ResourceManagerBase::set_resource_root(root);
+        } else if (arg == "--save-theme-preview" && i + 1 < argc) {
+            preview_path = argv[++i];
         }
     }
 
     int width = 800;
     int height = 600;
+
+    bool headless = !preview_path.empty();
+    std::string theme_path = "theme/" + theme_name + ".ini";
+
+    if (!ThemeDB::the().load(theme_path)) {
+        LogWarn("Failed to load theme '{}', falling back to 'default.ini'", theme_path);
+
+        if (!ThemeDB::the().load("theme/default.ini")) {
+            LogError("Unable to load the default theme! Izotrox might behave unexpectedly, and some colors might be missing!");
+        }
+    }
+
     bool running = true;
 
     Application app(width, height, "Izotrox");
@@ -108,12 +120,52 @@ int main(int argc, char* argv[]) {
     FontManager fonts;
     ImageManager manager;
 
-    std::string fontFamily = ThemeDB::the().get<std::string>("System", "FontFamily", "res/fonts/Inter-Bold.ttf");
+    std::string fontFamily = ThemeDB::the().get<std::string>("System", "FontFamily", "fonts/Inter-Bold.ttf");
     float fontSize = ThemeDB::the().get<float>("System", "FontSize", 64.0);
     Font* systemFont = fonts.load("system-ui", fontFamily, fontSize);
+
     if (!systemFont) {
         LogFatal("Could not load system font!");
         return 1;
+    }
+    
+    // Load earlier for preview
+    Image* sliderHandle = manager.load("slider-handle", "icons/slider-handle.png");
+    Image* sliderHandleFocus = manager.load("slider-handle-focus", "icons/slider-handle-focus.png");
+
+    if (!preview_path.empty()) {
+
+        // Setup minimal environment for preview
+        auto previewView = ThemePreviewView::create(systemFont, sliderHandle, sliderHandleFocus);
+        
+        // We need to simulate one frame
+        canvas->clear(ThemeDB::the().get<Color>("Colors", "Window.Background", Color(255)));
+        
+        // Layout the view
+        int w = width;
+        int h = height; // Fixed size for preview
+        
+        // Manually setup view for rendering
+        if (auto viewPtr = std::dynamic_pointer_cast<View>(previewView)) {
+             // We need to set resizing
+             // Since ViewManager manages resizing usually...
+             // Let's just create ViewManager but push previewView
+             ViewManager::the().resize(w, h);
+             ViewManager::the().push(previewView, ViewTransition::None);
+             
+             // Update once
+             ViewManager::the().update();
+             ViewManager::the().draw(*painter);
+        }
+        
+        // Save to file
+        if (canvas->save_to_file(preview_path)) {
+             LogInfo("Theme preview saved to {}", preview_path);
+             return 0;
+        } else {
+             LogError("Failed to save theme preview to {}", preview_path);
+             return 1;
+        }
     }
 
     SplashScreen splash(app, *painter, *canvas, *systemFont);
@@ -125,13 +177,11 @@ int main(int argc, char* argv[]) {
 
     splash.next_step("Loading Images...");
 
-    Image* sliderHandle = manager.load("slider-handle", "res/icons/slider-handle.png");
-    Image* sliderHandleFocus = manager.load("slider-handle-focus", "res/icons/slider-handle-focus.png");
-
     splash.next_step("Loading Fonts...");
 
     Font* toast_font = fonts.load("toast", fontFamily, fontSize/2);
-    Font* inconsolata = fonts.load("inconsolata", "res/fonts/Inconsolata-Regular.ttf", 18.0f);
+
+    Font* inconsolata = fonts.load("inconsolata", "fonts/Inconsolata-Regular.ttf", 18.0f);
     ToastManager::the().set_font(toast_font);
 
     splash.next_step("Building UI...");
@@ -291,4 +341,5 @@ int main(int argc, char* argv[]) {
     app.present(*canvas);
 
     return 0;
+
 }

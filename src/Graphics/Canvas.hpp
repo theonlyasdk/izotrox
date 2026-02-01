@@ -32,6 +32,9 @@ public:
 
     void resize(int width, int height);
 
+    bool save_to_file(const std::string& path);
+
+
 private:
     int m_width;
     int m_height;

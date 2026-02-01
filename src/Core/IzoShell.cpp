@@ -4,6 +4,8 @@
 #include "Debug/Logger.hpp"
 #include "File.hpp"
 #include "Graphics/Toast.hpp"
+#include "ResourceManager.hpp"
+
 #include <sstream>
 #include <algorithm>
 #include <filesystem>
@@ -53,7 +55,7 @@ IzoShell::IzoShell() {
                     return;
                 }
                 std::string theme_name = args[2];
-                std::string path = "res/theme/" + theme_name + ".ini";
+                std::string path = "theme/" + theme_name + ".ini";
 
                 if (ThemeDB::the().load(path)) {
                     ToastManager::the().show("Theme loaded: " + theme_name + " (" + path + ")");
@@ -61,7 +63,7 @@ IzoShell::IzoShell() {
                     ToastManager::the().show("Failed to load theme: " + path);
                 }
             } else if (subcmd == "list") {
-                std::string theme_dir = "res/theme";
+                std::string theme_dir = ResourceManagerBase::to_resource_path("theme");
                 try {
                     if (std::filesystem::exists(theme_dir) && std::filesystem::is_directory(theme_dir)) {
                         Logger::the().info("Available themes:");

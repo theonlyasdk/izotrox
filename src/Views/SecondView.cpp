@@ -3,6 +3,8 @@
 #include "Core/ThemeDB.hpp"
 #include "Graphics/OptionBox.hpp"
 
+#include "Core/ResourceManager.hpp"
+
 namespace Izo {
 
 std::shared_ptr<View> SecondView::create(Font* font) {
@@ -35,9 +37,9 @@ std::shared_ptr<View> SecondView::create(Font* font) {
     optionBox->add_option("tokyo-night");
     optionBox->set_selected_index(0);
     optionBox->set_on_change([](int index, const std::string& value) {
-        std::string theme_path = "res/theme/" + value + ".ini";
-        ThemeDB::the().load(theme_path);
+        ThemeDB::the().load(std::format("theme/{}.ini", value));
     });
+
     root->add_child(optionBox);
 
     auto backBtn = std::make_shared<Button>("Go Back", font);

@@ -5,6 +5,9 @@
 #include "ViewManager.hpp"
 #include <sstream>
 #include <format>
+#include <filesystem>
+#include "ResourceManager.hpp"
+
 
 namespace Izo {
 
@@ -31,11 +34,16 @@ static void list_theme_sections_and_values(ini::IniFile& ini_file) {
     }
 }
 
+
 bool ThemeDB::load(const std::string& path) {
-    std::string content = File::read_all_text(path);
+    std::filesystem::path root(ResourceManagerBase::resource_root());
+    std::filesystem::path relative(path);
+    std::string full_path = (root / relative).string();
+
+    std::string content = File::read_all_text(full_path);
 
     if (content.empty()) {
-        LogError("Failed to load theme from '{}': Empty file!", path);
+        LogError("Failed to load theme from '{}': Empty file!", full_path);
         return false;
     }
 
@@ -44,7 +52,7 @@ bool ThemeDB::load(const std::string& path) {
     list_theme_sections_and_values(ini_file);
 
     LogInfo("Successfully loaded theme from {}!", path);
-
+    current_path = path;
     return true;
 }
 

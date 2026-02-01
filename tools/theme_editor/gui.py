@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 import os
 import json
+import subprocess
+import tempfile
+import threading
 import tkinter as tk
 from tkinter import ttk, messagebox, simpledialog, filedialog, colorchooser
 from pathlib import Path
 
 from .core import ThemeEditor, get_theme_dir, load_enums
 from .schema_editor import open_schema_editor
-
-
 
 class ThemeEditorGUI:
     def __init__(self, root):
@@ -96,6 +97,7 @@ class ThemeEditorGUI:
 
         
         self.theme_menu = tk.Menu(menubar, tearoff=0)
+        self.theme_menu.add_command(label="Preview Theme", command=self.preview_theme)
         self.theme_menu.add_command(label="Check Errors", command=self.check_errors)
         menubar.add_cascade(label="Theme", menu=self.theme_menu)
         
@@ -1083,6 +1085,122 @@ class ThemeEditorGUI:
         return validators
 
 
+
+    def preview_theme(self):
+        if not self.editor:
+            messagebox.showinfo("Info", "No theme file is currently open")
+            return
+        
+        config = self.load_config()
+        binary_path = config.get("izotrox_binary_path", "")
+        
+        if not binary_path or not os.path.exists(binary_path):
+            messagebox.showerror("Error", "Izotrox binary path not set or invalid.\nPlease configure it in File > Preferences > General")
+            return
+        
+        if self.modified:
+            response = messagebox.askyesno("Unsaved Changes", "Save theme before previewing?")
+            if response:
+                self.save_theme()
+        
+        preview_dialog = tk.Toplevel(self.root)
+        preview_dialog.title("Theme Preview")
+        preview_dialog.geometry("850x650")
+        preview_dialog.minsize(850, 650)
+        preview_dialog.resizable(True, True)
+        preview_dialog.transient(self.root)
+        
+        # Center status label
+        status_label = tk.Label(preview_dialog, text="Loading preview...", font=("TkDefaultFont", 12))
+        status_label.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
+        
+        preview_frame = ttk.Frame(preview_dialog)
+        preview_frame.pack(fill=tk.BOTH, expand=True, padx=0, pady=0)
+        
+        def on_preview_complete(result, preview_path):
+            if not preview_dialog.winfo_exists():
+                return
+                
+            status_label.place_forget()
+            
+            # Clear previous content
+            for widget in preview_frame.winfo_children():
+                widget.destroy()
+            
+            if result.returncode == 0 and os.path.exists(preview_path):
+                try:
+                    from PIL import Image, ImageTk
+                    img = Image.open(preview_path)
+                    
+                    # Fit to window size if needed, but here we set max size
+                    max_width = 800
+                    max_height = 600
+                    img.thumbnail((max_width, max_height), Image.Resampling.LANCZOS)
+                    
+                    photo = ImageTk.PhotoImage(img)
+                    
+                    img_width, img_height = img.size
+                    preview_dialog.geometry(f"{img_width}x{img_height}")
+                    preview_dialog.minsize(img_width, img_height)
+                    
+                    img_label = tk.Label(preview_frame, image=photo, padx=0, pady=0, borderwidth=0)
+                    img_label.image = photo
+                    img_label.pack(fill=tk.BOTH, expand=True)
+                    
+                except ImportError:
+                    messagebox.showerror("Error", "PIL/Pillow not installed.\nInstall with: sudo pacman -Sy python-pillow")
+                    preview_dialog.destroy()
+                except Exception as e:
+                    error_text = tk.Text(preview_frame, wrap=tk.WORD, height=20)
+                    error_text.pack(fill=tk.BOTH, expand=True)
+                    error_text.insert("1.0", f"Error loading image:\n{str(e)}")
+                    error_text.config(state=tk.DISABLED)
+            else:
+                error_text = tk.Text(preview_frame, wrap=tk.WORD, height=20)
+                error_text.pack(fill=tk.BOTH, expand=True)
+                stdout_str = result.stdout if result.stdout else ""
+                stderr_str = result.stderr if result.stderr else ""
+                error_text.insert("1.0", f"Preview generation failed\n\nStdout:\n{stdout_str}\n\nStderr:\n{stderr_str}")
+                error_text.config(state=tk.DISABLED)
+            
+            try:
+                if os.path.exists(preview_path):
+                    os.unlink(preview_path)
+            except:
+                pass
+
+        def run_preview_bg():
+            with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as f:
+                preview_path = f.name
+            
+            try:
+                theme_name = os.path.splitext(os.path.basename(self.current_file))[0]
+                cmd = [binary_path, "--save-theme-preview", preview_path, "--theme", theme_name]
+                resource_root = config.get("resource_root", "")
+                if resource_root:
+                    cmd.extend(["--resource-root", resource_root])
+                
+                result = subprocess.run(
+                    cmd,
+                    cwd=os.path.dirname(self.current_file),
+                    capture_output=True,
+                    text=True,
+                    timeout=30
+                )
+                
+                self.root.after(0, lambda: on_preview_complete(result, preview_path))
+                    
+            except subprocess.TimeoutExpired:
+                # Mock result for timeout
+                mock_result = subprocess.CompletedProcess(args=cmd, returncode=1, stdout="", stderr="Preview generation timed out (30s limit)")
+                self.root.after(0, lambda: on_preview_complete(mock_result, preview_path))
+            except Exception as e:
+                 # Mock result for exception
+                mock_result = subprocess.CompletedProcess(args=[], returncode=1, stdout="", stderr=str(e))
+                self.root.after(0, lambda: on_preview_complete(mock_result, preview_path))
+
+        threading.Thread(target=run_preview_bg, daemon=True).start()
+
     def check_errors(self):
         if not self.editor:
             messagebox.showinfo("Info", "No theme file is currently open")
@@ -1177,12 +1295,34 @@ class ThemeEditorGUI:
         try:
             self.editor.save()
             self.set_modified(False)
-            messagebox.showinfo("Success", "Theme saved successfully!")
         except Exception as e:
             messagebox.showerror("Error", f"Failed to save: {e}")
 
     def get_schema_path(self):
         return Path(__file__).parent / "data" / "schema.json"
+
+    def get_config_path(self):
+        return Path(__file__).parent / "config" / "theme_editor_config.json"
+
+    def load_config(self):
+        config_path = self.get_config_path()
+        try:
+            if os.path.exists(config_path):
+                with open(config_path, 'r') as f:
+                    return json.load(f)
+        except Exception:
+            pass
+        return {"izotrox_binary_path": ""}
+
+    def save_config(self, config):
+        config_path = self.get_config_path()
+        try:
+            os.makedirs(os.path.dirname(config_path), exist_ok=True)
+            with open(config_path, 'w') as f:
+                json.dump(config, f, indent=2)
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to save config: {e}")
+
 
     def show_preferences(self):
         pref_dialog = tk.Toplevel(self.root)
@@ -1205,6 +1345,55 @@ class ThemeEditorGUI:
         tk.Label(general_frame, text="General preferences and application settings.", 
                 wraplength=590, justify=tk.LEFT).pack(anchor=tk.W, pady=(0, 20))
         
+        config = self.load_config()
+        
+        tk.Label(general_frame, text="Izotrox Binary Path:", font=("TkDefaultFont", 10, "bold")).pack(anchor=tk.W, pady=(0, 5))
+        
+        binary_frame = ttk.Frame(general_frame)
+        binary_frame.pack(fill=tk.X, pady=(0, 20))
+        
+        binary_path_var = tk.StringVar(value=config.get("izotrox_binary_path", ""))
+        binary_entry = tk.Entry(binary_frame, textvariable=binary_path_var)
+        binary_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 5))
+        
+        def choose_binary():
+            path = filedialog.askopenfilename(
+                title="Select Izotrox Binary",
+                filetypes=(("Executable", "izotrox*"), ("All files", "*.*")),
+                parent=pref_dialog
+            )
+            if path:
+                binary_path_var.set(path)
+        
+        tk.Button(binary_frame, text="Choose", command=choose_binary, width=10).pack(side=tk.LEFT)
+        
+        tk.Label(general_frame, text="Resource Root Path:", font=("TkDefaultFont", 10, "bold")).pack(anchor=tk.W, pady=(0, 5))
+        
+        root_frame = ttk.Frame(general_frame)
+        root_frame.pack(fill=tk.X, pady=(0, 20))
+        
+        resource_root_var = tk.StringVar(value=config.get("resource_root", "./res/"))
+        root_entry = tk.Entry(root_frame, textvariable=resource_root_var)
+        root_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 5))
+        
+        def choose_root():
+            path = filedialog.askdirectory(
+                title="Select Resource Root Directory",
+                parent=pref_dialog,
+                mustexist=True
+            )
+            if path:
+                resource_root_var.set(path)
+        
+        tk.Button(root_frame, text="Choose", command=choose_root, width=10).pack(side=tk.LEFT)
+        
+        def save_preferences():
+            config["izotrox_binary_path"] = binary_path_var.get()
+            config["resource_root"] = resource_root_var.get()
+            self.save_config(config)
+            pref_dialog.destroy()
+        
+
         schema_tab = ttk.Frame(notebook)
         notebook.add(schema_tab, text="Schema")
         
@@ -1227,7 +1416,7 @@ class ThemeEditorGUI:
         
         btn_frame = tk.Frame(pref_dialog)
         btn_frame.pack(pady=10)
-        tk.Button(btn_frame, text="Close", command=pref_dialog.destroy, width=10).pack()
+        tk.Button(btn_frame, text="Save", command=save_preferences, width=10).pack()
 
     def show_about(self):
         about_dialog = tk.Toplevel(self.root)
