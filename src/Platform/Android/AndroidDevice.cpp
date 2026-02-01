@@ -1,6 +1,7 @@
 #include "AndroidDevice.hpp"
 #include "Debug/Logger.hpp"
 #include <cstdint>
+#include <cstdlib>
 #include <format>
 #include <fstream>
 #include <string>
@@ -9,7 +10,6 @@
 namespace Izo {
 
 void AndroidDevice::set_brightness(uint8_t value) {
-    Logger::the().info(std::format("Setting brightness to {}", value));
 #ifdef __ANDROID__
 
     const char* paths[] = {
@@ -29,7 +29,7 @@ void AndroidDevice::set_brightness(uint8_t value) {
 }
 
 void AndroidDevice::set_front_flash(bool enable) {
-    Logger::the().info(std::format("Setting front flash to {}", enable));
+    LogInfo("Setting front flash to {}", enable);
 #ifdef __ANDROID__
     std::ofstream f("/sys/class/camera/flash/front_flash");
     if (f.is_open()) {
@@ -39,14 +39,61 @@ void AndroidDevice::set_front_flash(bool enable) {
 }
 
 void AndroidDevice::set_back_flash(bool enable) {
-    
-    Logger::the().info(std::format("Setting back flash to {}", enable));
+    LogInfo("Setting back flash to {}", enable);
 #ifdef __ANDROID__
     std::ofstream f("/sys/class/camera/flash/back_flash");
     if (f.is_open()) {
         f << (enable ? "1" : "0");
     }
 #endif
+}
+
+bool AndroidDevice::try_disable_hw_overlays() {
+    LogInfo("Attempting to disable HW overlays...");
+#ifdef __ANDROID__
+    int ret = std::system("service call SurfaceFlinger 1008 i32 1");
+    if (ret != 0) {
+        LogWarn("Service call failed (Android stopped?), trying manual wipe...");
+        return false;
+    }
+    return true;
+#else
+    return false;
+#endif
+}
+
+bool AndroidDevice::try_enable_otg() {
+    LogInfo("Attempting to enable OTG...");
+#ifdef __ANDROID__
+    bool success = false;
+
+    auto write_to_file = [&](const std::string& path, const std::string& value, const std::string& log_msg) {
+        std::ofstream f(path);
+        if (f.is_open()) {
+            f << value;
+            LogInfo("OTG: {}", log_msg);
+            success = true;
+        }
+    };
+
+    // Samsung specific
+    write_to_file("/sys/class/sec/switch/otg_cable_type", "on", "sec/switch enabled");
+
+    // MTK specific
+    write_to_file("/sys/devices/platform/mt_usb/musb-hdrc.0/mode", "b_host", "musb-hdrc b_host");
+
+    // For other/generic vendors
+    write_to_file("/sys/class/power_supply/usb/otg_switch", "1", "power_supply switch enabled");
+
+    return success;
+#else
+    return false;
+#endif
+}
+
+void AndroidDevice::set_screen_on(bool enable) {
+    LogInfo("Setting screen to {}", enable);
+    set_brightness(enable ? 255 : 0);
 }
 
 } 
