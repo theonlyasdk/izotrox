@@ -1,17 +1,25 @@
 # Izotrox
- Experimental GUI Engine for Android devices
+ An Experimental GUI Engine for Android and Linux devices.
 
+ On Android, it displays the graphics by writing to the device framebuffer, and all the rendering and rasterisation is done on the CPU itself. On Linux, it uses SDL2 (which probably uses hardware acceleration under the hood so it's slightly faster for operations like alpha blending) To check if your device can run Izotrox, see [Supported Android Devices](docs/supported_android_devices.md).
+ 
 ## Features
 - (TODO) *Scriptable using AngelScript*
 - INI-based theming engine
 - Works on Android and Desktop Linux
 - Basic but extensible widget collection
 
+## Limitations
+- Only works on Linux-based systems due to the usage of Linux-specific APIs. As a result, Izotrox is not supported on Windows or macOS.
+- No hardware acceleration on Android due to all rendering being done on the CPU itself.
+- Unoptimized rendering method might cause lag on complex layouts.
+
 ## Libraries Used
 - **[inifile-cpp](https://github.com/Rookfighter/inifile-cpp)** - for INI file parsing.
 - **[Magic Enum C++](https://github.com/Neargye/magic_enum/)** - for enum name resolution.
 - **[stb](https://github.com/nothings/stb)**
     - **[stb_image](https://github.com/nothings/stb/blob/master/stb_image.h)** - for reading and decoding image data.
+    - **[stb_image_write](https://github.com/nothings/stb/blob/master/stb_image_write.h)** - for encoding and writing image data.
     - **[stb_truetype](https://github.com/nothings/stb/blob/master/stb_truetype.h)** - for reading TrueType fonts.
 
 ## Screenshots
