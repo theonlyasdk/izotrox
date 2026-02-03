@@ -19,6 +19,6 @@ constexpr std::string_view type_name()
     auto end   = p.find(">(void)");
     return p.substr(start, end - start);
 #else
-    return "unknown";
+    return "unknown type";
 #endif
 }

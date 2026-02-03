@@ -1,19 +1,20 @@
-#include "ListView.hpp"
-#include "ListItem.hpp"
+#include "ListBox.hpp"
+#include "Widgets/Widget.hpp"
+#include "Widgets/ListItem.hpp"
 #include "Core/ThemeDB.hpp"
 #include "Input/Input.hpp"
 
 namespace Izo {
 
-ListView::ListView() {
+ListBox::ListBox() {
     set_focusable(true);
 }
 
-void ListView::add_item(std::shared_ptr<Widget> item) {
+void ListBox::add_item(std::shared_ptr<Widget> item) {
     add_child(item);
 }
 
-void ListView::smooth_scroll_to_index(int index) {
+void ListBox::smooth_scroll_to_index(int index) {
     if (index < 0 || index >= (int)m_children.size()) return;
     auto listitem = m_children[index];
 
@@ -33,7 +34,7 @@ void ListView::smooth_scroll_to_index(int index) {
     smooth_scroll_to(target_y_pos);
 }
 
-void ListView::select(int index) {
+void ListBox::select(int index) {
     if (index < 0 || index >= (int)m_children.size()) {
         m_selected_index = -1;
         return;
@@ -54,7 +55,7 @@ void ListView::select(int index) {
     smooth_scroll_to_index(m_selected_index);
 }
 
-void ListView::measure(int parent_w, int parent_h) {
+void ListBox::measure(int parent_w, int parent_h) {
     int w = parent_w;
     int h = parent_h;
     
@@ -77,7 +78,7 @@ void ListView::measure(int parent_w, int parent_h) {
     m_measured_size = {0, 0, w, h};
 }
 
-void ListView::layout_children() {
+void ListBox::layout_children() {
     int cur_y = m_bounds.y;
     int idx = 0;
     for (auto& child : m_children) {
@@ -90,7 +91,7 @@ void ListView::layout_children() {
     }
 }
 
-bool ListView::on_key(KeyCode key) {
+bool ListBox::on_key(KeyCode key) {
     if (!m_focused) return false;
     
     if (key == KeyCode::Down) {
@@ -136,11 +137,11 @@ bool ListView::on_key(KeyCode key) {
     return false;
 }
 
-int ListView::content_height() const {
+int ListBox::content_height() const {
     return m_total_content_height;
 }
 
-bool ListView::on_scroll(int y) {
+bool ListBox::on_scroll(int y) {
     if (!m_visible) return false;
     
     IntPoint mouse = Input::the().touch_point();
@@ -158,10 +159,10 @@ bool ListView::on_scroll(int y) {
     return false;
 }
 
-void ListView::draw_content(Painter& painter) {
-    Color color_bg = ThemeDB::the().get<Color>("Colors", "ListView.Background", Color(10));
-    Color color_divider = ThemeDB::the().get<Color>("Colors", "ListView.Divider", Color(200));
-    Color color_border = ThemeDB::the().get<Color>("Colors", "ListView.Border", Color(200));
+void ListBox::draw_content(Painter& painter) {
+    Color color_bg = ThemeDB::the().get<Color>("Colors", "ListBox.Background", Color(10));
+    Color color_divider = ThemeDB::the().get<Color>("Colors", "ListBox.Divider", Color(200));
+    Color color_border = ThemeDB::the().get<Color>("Colors", "ListBox.Border", Color(200));
     Color color_listitem_focus = ThemeDB::the().get<Color>("Colors", "ListItem.Focus", Color(0, 0, 255));
     int widget_roundness = ThemeDB::the().get<int>("Looks", "Widget.Roundness", 6);
 
@@ -174,7 +175,7 @@ void ListView::draw_content(Painter& painter) {
     int visible_bottom = b.y + b.h;
     painter.push_rounded_clip(b, widget_roundness);
 
-// In ListView::draw_content
+// In ListBox::draw_content
     for (size_t i = 0; i < m_children.size(); ++i) {
         auto& child = m_children[i];
         if (!child->visible()) continue;

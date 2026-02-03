@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.25)
 
+set(CMAKE_C_COMPILER clang)
+set(CMAKE_CXX_COMPILER clang++)
+
 project(Izotrox CXX)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -30,7 +33,7 @@ target_include_directories(izotrox PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_include_directories(izotrox PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 target_compile_definitions(izotrox PRIVATE LUA_USE_POSIX)
-target_compile_options(izotrox PRIVATE )
+target_compile_options(izotrox PRIVATE)
 
 target_link_libraries(izotrox PRIVATE m)
 

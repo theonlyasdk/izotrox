@@ -18,7 +18,7 @@ void SplashScreen::next_step(const std::string& status) {
     currentStatus = status;
     currentStep++;
     if (currentStep > totalSteps) currentStep = totalSteps;
-    Logger::the().info(std::format("SplashScreen::next_step(): {}", status));
+    LogInfo("SplashScreen::next_step(): {}", status);
     render();
 }
 

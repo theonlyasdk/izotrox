@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Widget.hpp"
+#include "Widgets/Widget.hpp"
 #include "Font.hpp"
 #include "Animator.hpp"
 #include "Geometry/Primitives.hpp"

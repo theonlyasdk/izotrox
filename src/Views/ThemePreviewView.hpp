@@ -1,10 +1,10 @@
 #pragma once
 #include "Graphics/View.hpp"
-#include "Graphics/LinearLayout.hpp"
+#include "Widgets/LinearLayout.hpp"
 #include "Graphics/Label.hpp"
 #include "Graphics/Button.hpp"
 #include "Graphics/TextBox.hpp"
-#include "Graphics/ListView.hpp"
+#include "Widgets/ListBox.hpp"
 #include "Graphics/ProgressBar.hpp"
 #include "Graphics/Slider.hpp"
 #include "Graphics/OptionBox.hpp"

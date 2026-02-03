@@ -1,10 +1,10 @@
 #include "IzoShell.hpp"
-#include "ThemeDB.hpp"
-#include "Application.hpp"
+#include "Core/ThemeDB.hpp"
+#include "Core/Application.hpp"
 #include "Debug/Logger.hpp"
-#include "File.hpp"
 #include "Graphics/Toast.hpp"
-#include "ResourceManager.hpp"
+#include "Core/ResourceManager.hpp"
+#include "Core/File.hpp"
 
 #include <sstream>
 #include <algorithm>
@@ -18,31 +18,35 @@ IzoShell& IzoShell::the() {
 }
 
 IzoShell::IzoShell() {
+    register_all_commands();
+}
+
+void IzoShell::register_all_commands() {
     register_command("help", "Display available commands", "help [command]",
         [this](const std::vector<std::string>& args) {
             if (args.size() > 1) {
                 auto it = m_commands.find(args[1]);
                 if (it != m_commands.end()) {
-                    Logger::the().info("Command: " + it->second.name);
-                    Logger::the().info("Description: " + it->second.description);
-                    Logger::the().info("Usage: " + it->second.usage);
+                    LogInfo("Command: {}", it->second.name);
+                    LogInfo("Description: {}", it->second.description);
+                    LogInfo("Usage: {}", it->second.usage);
                 } else {
-                    Logger::the().error("Unknown command: " + args[1]);
+                    LogError("Unknown command: {}", args[1]);
                 }
             } else {
-                Logger::the().info("\n" + help());
+                LogInfo("\n{}", help());
             }
         });
 
     register_command("version", "Display Izotrox version", "version",
         [](const std::vector<std::string>&) {
-            Logger::the().info("Izotrox - Experimental GUI Framework for Android and Linux - (c) theonlyasdk 2026");
+            LogInfo("Izotrox - Experimental GUI Framework for Android and Linux - (c) theonlyasdk 2026");
         });
 
     register_command("theme", "Theme management", "theme <load|list|reload> [name]",
         [](const std::vector<std::string>& args) {
             if (args.size() < 2) {
-                Logger::the().error("Usage: theme <load|list|reload> [name]");
+                LogError("Usage: theme <load|list|reload> [name]");
                 return;
             }
 
@@ -51,7 +55,7 @@ IzoShell::IzoShell() {
 
             if (subcmd == "load") {
                 if (args.size() < 3) {
-                    Logger::the().error("Usage: theme load <name>");
+                    LogError("Usage: theme load <name>");
                     return;
                 }
                 std::string theme_name = args[2];
@@ -65,69 +69,65 @@ IzoShell::IzoShell() {
             } else if (subcmd == "list") {
                 std::string theme_dir = ResourceManagerBase::to_resource_path("theme");
                 try {
-                    if (std::filesystem::exists(theme_dir) && std::filesystem::is_directory(theme_dir)) {
-                        Logger::the().info("Available themes:");
+                    if (File::exists(theme_dir) && File::is_directory(theme_dir)) {
+                        LogInfo("Available themes:");
                         for (const auto& entry : std::filesystem::directory_iterator(theme_dir)) {
                             if (entry.is_regular_file() && entry.path().extension() == ".ini") {
                                 std::string filename = entry.path().filename().string();
                                 std::string theme_name = filename.substr(0, filename.find_last_of('.'));
-                                Logger::the().info("  " + theme_name + " (" + entry.path().string() + ")");
+                                LogInfo("  {} ({})", theme_name, entry.path().string());
                             }
                         }
                     } else {
-                        Logger::the().error("Theme directory not found: " + theme_dir);
+                        LogError("Theme directory not found: {}", theme_dir);
                     }
                 } catch (const std::exception& e) {
-                    Logger::the().error("Error listing themes: " + std::string(e.what()));
+                    LogError("Error listing themes: {}", e.what());
                 }
             } else if (subcmd == "reload") {
                 if (ThemeDB::the().reload()) {
-                    Logger::the().info("Theme reloaded successfully");
+                    LogInfo("Theme reloaded successfully");
                 } else {
-                    Logger::the().error("Failed to reload theme");
+                    LogError("Failed to reload theme");
                 }
             } else {
-                Logger::the().error("Unknown theme subcommand: " + subcmd);
-                Logger::the().info("Usage: theme <load|list> [name]");
+                LogError("Unknown theme subcommand: {}", subcmd);
+                LogInfo("Usage: theme <load|list> [name]");
             }
         });
 
     register_command("fps", "Display current FPS", "fps",
         [](const std::vector<std::string>&) {
             float fps = 1000.0f / Application::the().delta();
-            Logger::the().info("Current FPS: " + std::to_string((int)fps));
+            LogInfo("Current FPS: {}", (int)fps);
         });
 
     register_command("delta", "Display frame delta time", "delta",
         [](const std::vector<std::string>&) {
             float delta = Application::the().delta();
-            Logger::the().info("Delta time: " + std::to_string(delta) + "ms");
+            LogInfo("Delta time: {} ms", delta);
         });
 
     register_command("getcolor", "Get color value for a tag", "getcolor <tag>",
         [](const std::vector<std::string>& args) {
             if (args.size() < 2) {
-                Logger::the().error("Usage: getcolor <tag>");
+                LogError("Usage: getcolor <tag>");
                 return;
             }
             Color c = ThemeDB::the().get<Color>("Colors", args[1], Color(255));
-            Logger::the().info(args[1] + " = rgba(" +
-                std::to_string(c.r) + ", " +
-                std::to_string(c.g) + ", " +
-                std::to_string(c.b) + ", " +
-                std::to_string(c.a) + ")");
+            LogInfo("{} = rgba({}, {}, {}, {})", args[1], c.r, c.g, c.b, c.a);
         });
 
     register_command("exit", "Exit the application", "exit",
         [](const std::vector<std::string>&) {
-            Logger::the().info("Exiting application...");
+            LogInfo("Exiting application...");
             Application::the().quit(0);
         });
 
     register_command("toast", "Show a toast message", "toast <message>",
         [](const std::vector<std::string>& args) {
             if (args.size() < 2) {
-                Logger::the().error("Usage: toast <message>");
+                LogError("Usage: toast <message>");
                 return;
             }
 
@@ -137,7 +137,7 @@ IzoShell::IzoShell() {
                 if (i < args.size() - 1) message += " ";
             }
 
-            Logger::the().info("Showing toast: " + message);
+            LogInfo("Showing toast: {}", message);
             ToastManager::the().show(message);
         });
 }
@@ -161,10 +161,10 @@ void IzoShell::execute(const std::string& input) {
         try {
             it->second.handler(args);
         } catch (const std::exception& e) {
-            Logger::the().error("Command execution failed: " + std::string(e.what()));
+            LogError("Command execution failed: {}", std::string(e.what()));
         }
     } else {
-        Logger::the().error("Unknown command: " + cmd + ". Type 'help' for available commands.");
+        LogError("Unknown command: {}", cmd);
     }
 }
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#define IZO_DEBUG
+#define IZO_DEBUG true
 #define IZO_BETA true
 #define IZO_LICENSE "Mozilla Public License v2.0"
 #define IZO_NAME "Izotrox"

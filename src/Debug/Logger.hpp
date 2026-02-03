@@ -3,7 +3,6 @@
 #include <mutex>
 #include <string>
 #include <memory>
-/* <format> include is needed for std::format() defined in the Log macros */
 #include <format>
 
 /* If LogFatal() should terminate the app with LOG_FATAL_EXIT_CODE */
@@ -16,7 +15,7 @@
 
 namespace Izo {
 
-enum class Level {
+enum class LogLevel {
     Trace = 0,
     Debug,
     Info,
@@ -29,16 +28,42 @@ class Logger {
 public:
     static Logger& the();
 
-    void set_level(Level lvl);
     void enable_logging_to_file();
-    void log(Level lvl, const std::string& msg);
+    void log(LogLevel lvl, const std::string& msg);
 
-    void trace(const std::string& msg);
-    void debug(const std::string& msg);
-    void info (const std::string& msg);
-    void warn (const std::string& msg);
-    void error(const std::string& msg);
-    void fatal(const std::string& msg);
+    // Template functions that handle std::format internally
+    template<typename... Args>
+    void trace(std::format_string<Args...> fmt, Args&&... args) {
+        log(LogLevel::Trace, std::format(fmt, std::forward<Args>(args)...));
+    }
+
+    template<typename... Args>
+    void debug(std::format_string<Args...> fmt, Args&&... args) {
+        log(LogLevel::Debug, std::format(fmt, std::forward<Args>(args)...));
+    }
+
+    template<typename... Args>
+    void info(std::format_string<Args...> fmt, Args&&... args) {
+        log(LogLevel::Info, std::format(fmt, std::forward<Args>(args)...));
+    }
+
+    template<typename... Args>
+    void warn(std::format_string<Args...> fmt, Args&&... args) {
+        log(LogLevel::Warn, std::format(fmt, std::forward<Args>(args)...));
+    }
+
+    template<typename... Args>
+    void error(std::format_string<Args...> fmt, Args&&... args) {
+        log(LogLevel::Error, std::format(fmt, std::forward<Args>(args)...));
+    }
+
+    template<typename... Args>
+    void fatal(std::format_string<Args...> fmt, Args&&... args) {
+        log(LogLevel::Fatal, std::format(fmt, std::forward<Args>(args)...));
+        #ifdef LOG_FATAL_TERMINATES_APP
+            std::exit(LOG_FATAL_EXIT_CODE);
+        #endif
+    }
 
 private:
     Logger();
@@ -46,42 +71,32 @@ private:
     Logger(const Logger&) = delete;
     Logger& operator=(const Logger&) = delete;
 
-    std::string format(Level lvl, const std::string& msg);
-    std::string format_plain(Level lvl, const std::string& msg);
-    std::string timestamp();
-    std::string level_to_string(Level lvl);
-
-    std::mutex          mutex_;
     struct LogFile;
+    std::mutex          m_log_mutex;
     std::unique_ptr<LogFile> m_log_file;
 };
 
 /* Macro definitions for different log levels */
 #define LogTrace(fmt, ...) \
-    Logger::the().trace(std::format(fmt, ##__VA_ARGS__))
+    Logger::the().trace(fmt, ##__VA_ARGS__)
 
 #ifdef LOG_DEBUG_OUTPUT
 #define LogDebug(fmt, ...) \
-    Logger::the().debug(std::format(fmt, ##__VA_ARGS__))
+    Logger::the().debug(fmt, ##__VA_ARGS__)
 #else
 #define LogDebug(fmt, ...)
 #endif
 
 #define LogInfo(fmt, ...) \
-    Logger::the().info(std::format(fmt, ##__VA_ARGS__))
+    Logger::the().info(fmt, ##__VA_ARGS__)
 
 #define LogWarn(fmt, ...) \
-    Logger::the().warn(std::format(fmt, ##__VA_ARGS__))
+    Logger::the().warn(fmt, ##__VA_ARGS__)
 
 #define LogError(fmt, ...) \
-    Logger::the().error(std::format(fmt, ##__VA_ARGS__))
+    Logger::the().error(fmt, ##__VA_ARGS__)
 
-#define LogFatal(fmt, ...)                                     \
-    do {                                                       \
-        Logger::the().fatal(                                   \
-            std::format("At {}:{}: " fmt, __FILE__, __LINE__,  \
-                        ##__VA_ARGS__)                         \
-        );                                                     \
-    } while (0)
+#define LogFatal(fmt, ...) \
+    Logger::the().fatal("At {}:{}: " fmt, __FILE__, __LINE__, ##__VA_ARGS__)
 
 }

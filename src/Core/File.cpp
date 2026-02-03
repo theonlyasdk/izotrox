@@ -25,4 +25,8 @@ bool File::exists(const std::string &path) {
     return found;
 }
 
+bool File::is_directory(const std::string& path) {
+    return std::filesystem::is_directory(path);
+}
+
 }

@@ -1,6 +1,6 @@
 #include "ThemePreviewView.hpp"
 #include "Graphics/Image.hpp"
-#include "Graphics/ListItem.hpp"
+#include "Widgets/ListItem.hpp"
 
 namespace Izo {
 
@@ -40,7 +40,7 @@ std::shared_ptr<View> ThemePreviewView::create(Font* font, Image* sliderHandle, 
     listLabel->set_width(WidgetSizePolicy::MatchParent);
     root->add_child(listLabel);
 
-    auto listView = std::make_shared<ListView>();
+    auto listView = std::make_shared<ListBox>();
     listView->set_width(WidgetSizePolicy::MatchParent);
     listView->set_height(200);
 

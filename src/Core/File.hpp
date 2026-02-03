@@ -24,7 +24,7 @@ public:
     static size_t get_size(const std::string& path);
 
     static bool create_directory(const std::string& path);
-    static bool directory_exists(const std::string& path);
+    static bool is_directory(const std::string& path);
     static bool remove_directory(const std::string& path);
     static std::vector<std::string> list_directory(const std::string& path);
 

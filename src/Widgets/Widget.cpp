@@ -1,9 +1,10 @@
 
 
-#include "Widget.hpp"
-#include "Core/Application.hpp"
+#include "Widgets/Widget.hpp"
 #include "Core/ThemeDB.hpp"
+#include "Graphics/Painter.hpp"
 #include "Input/Input.hpp"
+#include "Core/Application.hpp"
 
 namespace Izo {
 

@@ -5,7 +5,7 @@
 #include <queue>
 #include <functional>
 
-#include "Graphics/Widget.hpp"
+#include "Widgets/Widget.hpp"
 #include "Graphics/Font.hpp"
 #include "Graphics/Animator.hpp"
 

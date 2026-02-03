@@ -1,24 +1,72 @@
 #include <chrono>
+#include <iostream>
 #include <sstream>
 #include <fstream>
 #include <filesystem>
-#include <iostream>
+#include <mutex>
 
 #include <Debug/Logger.hpp>
 #include <Debug/ConsoleColor.hpp>
 
 namespace Izo {
 
-static const char *color_for_level(Level lvl) {
+static const char *color_for_level(LogLevel lvl) {
   switch (lvl) {
-    case Level::Trace:  return ConsoleColor::BrightBlack;
-    case Level::Debug:  return ConsoleColor::BrightBlue;
-    case Level::Info:   return ConsoleColor::BrightGreen;
-    case Level::Warn:   return ConsoleColor::BrightYellow;
-    case Level::Error:  return ConsoleColor::BrightRed;
-    case Level::Fatal:  return ConsoleColor::BrightMagenta;
+    case LogLevel::Trace:  return ConsoleColor::BrightBlack;
+    case LogLevel::Debug:  return ConsoleColor::BrightBlue;
+    case LogLevel::Info:   return ConsoleColor::BrightGreen;
+    case LogLevel::Warn:   return ConsoleColor::BrightYellow;
+    case LogLevel::Error:  return ConsoleColor::BrightRed;
+    case LogLevel::Fatal:  return ConsoleColor::BrightMagenta;
     default:            return ConsoleColor::Reset;
   }
+}
+
+static std::string timestamp() {
+  using namespace std::chrono;
+  auto now = system_clock::now();
+  auto itt = system_clock::to_time_t(now);
+  auto ms = duration_cast<milliseconds>(now.time_since_epoch()) % 1000;
+
+  std::ostringstream ss;
+  ss << std::put_time(std::localtime(&itt), "%Y-%m-%d %H:%M:%S") << '.'
+     << std::setfill('0') << std::setw(3) << ms.count();
+  return ss.str();
+}
+
+static std::string level_to_string(LogLevel lvl) {
+  switch (lvl) {
+    case LogLevel::Trace:
+      return "TRACE";
+    case LogLevel::Debug:
+      return "DEBUG";
+    case LogLevel::Info:
+      return "INFO";
+    case LogLevel::Warn:
+      return "WARN";
+    case LogLevel::Error:
+      return "ERROR";
+    case LogLevel::Fatal:
+      return "FATAL";
+    default:
+      return "UNKNOWN";
+  }
+}
+
+static std::string format_as_log(LogLevel lvl, const std::string &msg) {
+  std::ostringstream oss;
+  oss << ConsoleColor::BrightCyan << "Izotrox> " << ConsoleColor::Reset << "["
+      << timestamp() << "]"
+      << "(" << level_to_string(lvl) << ") " << color_for_level(lvl) << msg
+      << ConsoleColor::Reset;
+  return oss.str();
+}
+
+static std::string format_as_log_no_color(LogLevel lvl, const std::string &msg) {
+  std::ostringstream oss;
+  oss << "Izotrox> [" << timestamp() << "]"
+      << "(" << level_to_string(lvl) << ") " << msg;
+  return oss.str();
 }
 
 struct Logger::LogFile {
@@ -36,7 +84,7 @@ Logger &Logger::the() {
 void Logger::enable_logging_to_file() {
     std::string filename_str;
     {
-        std::lock_guard<std::mutex> lock(mutex_);
+        std::lock_guard<std::mutex> lock(m_log_mutex);
         if (m_log_file) return;
 
         auto now = std::chrono::system_clock::now();
@@ -59,76 +107,16 @@ void Logger::enable_logging_to_file() {
     }
 
     if (!filename_str.empty()) {
-        info(std::format("Logging to file {}", filename_str));
+        info("Logging to file {}", filename_str);
     }
 }
 
-void Logger::log(Level lvl, const std::string &msg) {
-  std::lock_guard<std::mutex> lock(mutex_);
-  std::cout << format(lvl, msg) << std::endl;
+void Logger::log(LogLevel lvl, const std::string &msg) {
+  std::lock_guard<std::mutex> lock(m_log_mutex);
+  std::cout << format_as_log(lvl, msg) << std::endl;
 
   if (m_log_file && m_log_file->stream.good()) {
-      m_log_file->stream << format_plain(lvl, msg) << std::endl;
-  }
-}
-
-void Logger::trace(const std::string &msg) { log(Level::Trace, msg); }
-void Logger::debug(const std::string &msg) { log(Level::Debug, msg); }
-void Logger::info(const std::string &msg) { log(Level::Info, msg); }
-void Logger::warn(const std::string &msg) { log(Level::Warn, msg); }
-void Logger::error(const std::string &msg) { log(Level::Error, msg); }
-void Logger::fatal(const std::string &msg) {
-    log(Level::Fatal, msg);
-
-#ifdef LOG_FATAL_TERMINATES_APP
-        Application::the().quit(LOG_FATAL_EXIT_CODE);
-#endif
-}
-
-std::string Logger::format(Level lvl, const std::string &msg) {
-  std::ostringstream oss;
-  oss << ConsoleColor::BrightCyan << "Izotrox> " << ConsoleColor::Reset << "["
-      << timestamp() << "]"
-      << "(" << level_to_string(lvl) << ") " << color_for_level(lvl) << msg
-      << ConsoleColor::Reset;
-  return oss.str();
-}
-
-std::string Logger::format_plain(Level lvl, const std::string &msg) {
-  std::ostringstream oss;
-  oss << "Izotrox> [" << timestamp() << "]"
-      << "(" << level_to_string(lvl) << ") " << msg;
-  return oss.str();
-}
-
-std::string Logger::timestamp() {
-  using namespace std::chrono;
-  auto now = system_clock::now();
-  auto itt = system_clock::to_time_t(now);
-  auto ms = duration_cast<milliseconds>(now.time_since_epoch()) % 1000;
-
-  std::ostringstream ss;
-  ss << std::put_time(std::localtime(&itt), "%Y-%m-%d %H:%M:%S") << '.'
-     << std::setfill('0') << std::setw(3) << ms.count();
-  return ss.str();
-}
-
-std::string Logger::level_to_string(Level lvl) {
-  switch (lvl) {
-    case Level::Trace:
-      return "TRACE";
-    case Level::Debug:
-      return "DEBUG";
-    case Level::Info:
-      return "INFO";
-    case Level::Warn:
-      return "WARN";
-    case Level::Error:
-      return "ERROR";
-    case Level::Fatal:
-      return "FATAL";
-    default:
-      return "UNKNOWN";
+      m_log_file->stream << format_as_log_no_color(lvl, msg) << std::endl;
   }
 }
 

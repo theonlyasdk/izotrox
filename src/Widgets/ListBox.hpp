@@ -1,16 +1,14 @@
-
-
 #pragma once
-#include "Layout.hpp"
-#include <vector>
-#include <string>
+
+#include "Widgets/Widget.hpp"
+#include "Widgets/Layout.hpp"
 #include <functional>
 
 namespace Izo {
 
-class ListView : public Layout {
+class ListBox : public Layout {
 public:
-    ListView();
+    ListBox();
 
     void add_item(std::shared_ptr<Widget> item);
 

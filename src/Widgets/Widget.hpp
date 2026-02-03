@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Painter.hpp"
-#include "Animator.hpp"
+#include "Graphics/Painter.hpp"
+#include "Graphics/Animator.hpp"
 #include "Geometry/Primitives.hpp"
 #include "Input/KeyCode.hpp"
 

@@ -1,7 +1,7 @@
 
 
-#include "ListItem.hpp"
-#include "ListView.hpp"
+#include "Widgets/ListItem.hpp"
+#include "ListBox.hpp"
 #include "Core/ThemeDB.hpp"
 
 namespace Izo {
@@ -34,7 +34,7 @@ bool ListItem::on_touch(IntPoint point, bool down, bool captured) {
 
          if (!down && inside && m_touch_started_inside_local && !m_gesture_cancelled) {
 
-             if (auto* parent = dynamic_cast<ListView*>(m_parent)) {
+             if (auto* parent = dynamic_cast<ListBox*>(m_parent)) {
                  int idx = layout_index();
                  if (idx >= 0) {
                      parent->select(idx);

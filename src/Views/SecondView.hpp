@@ -1,6 +1,6 @@
 #pragma once
 #include "Graphics/View.hpp"
-#include "Graphics/LinearLayout.hpp"
+#include "Widgets/LinearLayout.hpp"
 #include "Graphics/Label.hpp"
 #include "Graphics/Button.hpp"
 #include "Graphics/Font.hpp"

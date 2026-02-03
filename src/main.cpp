@@ -11,15 +11,15 @@
 #include <string>
 #include <format>
 
-#include "Core/Izotrox.hpp"
+#include "Debug/Izometa.hpp"
 #include "Debug/Logger.hpp"
 #include "Graphics/Color.hpp"
 #include "Input/Input.hpp"
 #include "Graphics/Canvas.hpp"
 #include "Graphics/Painter.hpp"
 #include "Graphics/Font.hpp"
-#include "Graphics/Widget.hpp"
-#include "Graphics/LinearLayout.hpp"
+#include "Widgets/Widget.hpp"
+#include "Widgets/LinearLayout.hpp"
 #include "Graphics/Label.hpp"
 #include "Graphics/Button.hpp"
 #include "Graphics/ProgressBar.hpp"
@@ -30,12 +30,12 @@
 #include "Core/ResourceManager.hpp"
 #include "Views/SplashScreen.hpp"
 #include "Graphics/View.hpp"
-#include "Graphics/ListView.hpp"
-#include "Graphics/ListItem.hpp"
+#include "Widgets/ListBox.hpp"
+#include "Widgets/ListItem.hpp"
 #include "Core/Application.hpp"
 #include "Core/ThemeDB.hpp"
 #include "Core/ViewManager.hpp"
-#include "Core/IzoShell.hpp"
+#include "Debug/IzoShell.hpp"
 #include "Platform/Android/AndroidDevice.hpp"
 #include "Core/SystemStats.hpp"
 #include "Views/SecondView.hpp"
@@ -240,7 +240,7 @@ int main(int argc, char* argv[]) {
     tb_demo->set_width(WidgetSizePolicy::MatchParent);
     tb_demo->set_on_submit([&](const std::string& text) {
         if (!text.empty()) {
-            Logger::the().info("Shell> " + text);
+            LogInfo("Shell> {}", text);
             IzoShell::the().execute(text);
             tb_demo->clear();
         }
@@ -255,7 +255,7 @@ int main(int argc, char* argv[]) {
     lbl_wrap_demo->set_wrap(true);
     root->add_child(lbl_wrap_demo);
 
-    auto listview = std::make_shared<ListView>();
+    auto listview = std::make_shared<ListBox>();
     listview->set_height(400);
     listview->set_width(WidgetSizePolicy::MatchParent);
 
@@ -336,7 +336,7 @@ int main(int argc, char* argv[]) {
         app.present(*canvas);
     }
 
-    Logger::the().info("Bye!");
+    LogInfo("Bye!");
     canvas->clear(Color::Black);
     app.present(*canvas);
 

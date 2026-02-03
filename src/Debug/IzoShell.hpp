@@ -19,6 +19,7 @@ public:
 
     static IzoShell& the();
 
+    void register_all_commands();
     void register_command(const std::string& name, const std::string& description, 
                          const std::string& usage, CommandHandler handler);
     void execute(const std::string& input);
