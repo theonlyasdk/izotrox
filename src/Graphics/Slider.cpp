@@ -3,11 +3,13 @@
 #include "Slider.hpp"
 #include "Core/ThemeDB.hpp"
 #include <algorithm>
+#include "Core/ResourceManager.hpp"
 
 namespace Izo {
 
-Slider::Slider(Image* handleImage, Image* handleFocusImage, float value) 
-    : m_val(value), m_handle(handleImage), m_handle_focus(handleFocusImage) {
+Slider::Slider(float value) : m_val(value) {
+    m_handle = ImageManager::the().get("slider-handle");
+    m_handle_focus = ImageManager::the().get("slider-handle-focus");
     set_focusable(true);
     set_show_focus_indicator(false);
 }

@@ -4,6 +4,7 @@
 #include "Graphics/OptionBox.hpp"
 
 #include "Core/ResourceManager.hpp"
+#include "ThemePreviewView.hpp"
 
 namespace Izo {
 
@@ -12,7 +13,7 @@ std::shared_ptr<View> SecondView::create(Font* font) {
     root->set_focusable(false);
     root->set_width(WidgetSizePolicy::MatchParent);
     root->set_height(WidgetSizePolicy::MatchParent);
-    root->set_padding(20, 20, 20, 20);
+    root->set_padding_ltrb(20, 20, 20, 20);
 
     auto title = std::make_shared<Label>("Second View", font);
     title->set_width(WidgetSizePolicy::MatchParent);
@@ -52,7 +53,7 @@ std::shared_ptr<View> SecondView::create(Font* font) {
     auto btn_next_screen = std::make_shared<Button>("Go to next screen", font);
     btn_next_screen->set_width(WidgetSizePolicy::MatchParent);
     btn_next_screen->set_on_click([font]() {
-        auto view = SecondView::create(font);
+        auto view = ThemePreviewView::create(font);
         ViewManager::the().push(view);
     });
     root->add_child(btn_next_screen);

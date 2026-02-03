@@ -70,7 +70,7 @@ public:
     void set_width(int w) { m_width = w; }
     void set_focused(bool focused);
     void set_focusable(bool focusable) { m_focusable = focusable; }
-    void set_padding(int left, int top, int right, int bottom);
+    void set_padding_ltrb(int left, int top, int right, int bottom);
     void set_show_focus_indicator(bool show) { m_show_focus_indicator = show; }
     void set_parent(Widget* parent) { m_parent = parent; }
     Widget* parent() const { return m_parent; }

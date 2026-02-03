@@ -37,4 +37,6 @@ private:
     unsigned char* data = nullptr;
 };
 
+using ImageManager = ResourceManager<Image>;
+
 } 

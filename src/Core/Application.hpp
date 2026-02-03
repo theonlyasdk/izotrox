@@ -2,8 +2,10 @@
 
 #include <cstdint>
 #include <functional>
+#include <map>
 
 #include "Graphics/Canvas.hpp"
+#include <any>
 
 namespace Izo {
 

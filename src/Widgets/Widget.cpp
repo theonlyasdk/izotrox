@@ -114,7 +114,7 @@ bool Widget::hovering() const {
     return global_bounds().contains(Input::the().touch_point());
 }
 
-void Widget::set_padding(int left,int top, int right, int bottom)
+void Widget::set_padding_ltrb(int left,int top, int right, int bottom)
  { 
         m_padding_left = left; 
         m_padding_top = top; 

@@ -10,7 +10,7 @@ namespace Izo {
 
 class Slider : public Widget {
 public:
-    Slider(Image* handleImage, Image* handleFocusImage, float value = 0.0f);
+    Slider(float value = 0.0f);
 
     void set_value(float v);
     float value() const;

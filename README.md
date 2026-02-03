@@ -17,6 +17,7 @@
 ## Libraries Used
 - **[inifile-cpp](https://github.com/Rookfighter/inifile-cpp)** - for INI file parsing.
 - **[Magic Enum C++](https://github.com/Neargye/magic_enum/)** - for enum name resolution.
+- **[args](https://github.com/Taywee/args)** - for command-line argument parsing.
 - **[stb](https://github.com/nothings/stb)**
     - **[stb_image](https://github.com/nothings/stb/blob/master/stb_image.h)** - for reading and decoding image data.
     - **[stb_image_write](https://github.com/nothings/stb/blob/master/stb_image_write.h)** - for encoding and writing image data.

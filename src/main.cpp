@@ -6,46 +6,46 @@
  */
 
 #include <unistd.h>
+
 #include <chrono>
+#include <format>
+#include <iostream>
 #include <memory>
 #include <string>
-#include <format>
 
-#include "Debug/Izometa.hpp"
-#include "Debug/Logger.hpp"
-#include "Graphics/Color.hpp"
-#include "Input/Input.hpp"
-#include "Graphics/Canvas.hpp"
-#include "Graphics/Painter.hpp"
-#include "Graphics/Font.hpp"
-#include "Widgets/Widget.hpp"
-#include "Widgets/LinearLayout.hpp"
-#include "Graphics/Label.hpp"
-#include "Graphics/Button.hpp"
-#include "Graphics/ProgressBar.hpp"
-#include "Graphics/TextBox.hpp"
-#include "Graphics/Toast.hpp"
-#include "Graphics/Slider.hpp"
-#include "Graphics/Image.hpp"
-#include "Core/ResourceManager.hpp"
-#include "Views/SplashScreen.hpp"
-#include "Graphics/View.hpp"
-#include "Widgets/ListBox.hpp"
-#include "Widgets/ListItem.hpp"
 #include "Core/Application.hpp"
+#include "Core/ArgsParser.hpp"
+#include "Core/ResourceManager.hpp"
+#include "Core/Settings.hpp"
+#include "Core/SystemStats.hpp"
 #include "Core/ThemeDB.hpp"
 #include "Core/ViewManager.hpp"
 #include "Debug/IzoShell.hpp"
+#include "Debug/Izometa.hpp"
+#include "Debug/Logger.hpp"
+#include "Graphics/Button.hpp"
+#include "Graphics/Canvas.hpp"
+#include "Graphics/Color.hpp"
+#include "Graphics/Font.hpp"
+#include "Graphics/Image.hpp"
+#include "Graphics/Label.hpp"
+#include "Graphics/Painter.hpp"
+#include "Graphics/ProgressBar.hpp"
+#include "Graphics/Slider.hpp"
+#include "Graphics/TextBox.hpp"
+#include "Graphics/Toast.hpp"
+#include "Graphics/View.hpp"
+#include "Input/Input.hpp"
 #include "Platform/Android/AndroidDevice.hpp"
-#include "Core/SystemStats.hpp"
 #include "Views/SecondView.hpp"
+#include "Views/SplashScreen.hpp"
 #include "Views/ThemePreviewView.hpp"
+#include "Widgets/LinearLayout.hpp"
+#include "Widgets/ListBox.hpp"
+#include "Widgets/ListItem.hpp"
+#include "Widgets/Widget.hpp"
 
 using namespace Izo;
-
-
-using FontManager = ResourceManager<Font>;
-using ImageManager = ResourceManager<Image>;
 
 void draw_debug_panel(Painter& painter, Font& font, float fps) {
     static float timer = 0;
@@ -68,31 +68,57 @@ void draw_debug_panel(Painter& painter, Font& font, float fps) {
     font.draw_text(painter, {20, 15}, cached_text, Color::White);
 }
 
-int main(int argc, char* argv[]) {
+const std::string try_parse_arguments(int argc, const char* argv[]) {
+    ArgsParser parser("Izotrox - Advanced UI Framework");
+    parser.add_argument("theme", "t", "Theme name to load", false);
+    parser.add_argument("resource-root", "r", "Resource root directory", false);
+    parser.add_argument("save-theme-preview", "p", "Save theme preview to file", false);
+
+    if (!parser.parse(argc, argv)) {
+        return parser.get_error();
+    }
+
+    if (parser.help_requested()) {
+        std::cout << parser.help_str();
+        std::exit(0);
+    }
+
+    if (auto theme = parser.value("theme")) {
+        Settings::the().set<std::string>("theme-name", theme.value());
+    }
+
+    if (auto root = parser.value("resource-root")) {
+        ResourceManagerBase::set_resource_root(root.value());
+        Settings::the().set<std::string>("resource-root", root.value());
+    }
+
+    if (auto preview = parser.value("save-theme-preview")) {
+        Settings::the().set<std::string>("preview-path", preview.value());
+    }
+
+    return "";
+}
+
+std::shared_ptr<Canvas> canvas;
+std::unique_ptr<Painter> painter;
+
+int main(int argc, const char* argv[]) {
+    Settings::the().set<std::string>("theme-name", "default");
+    Settings::the().set<std::string>("resource-root", "res");
+
+    auto parse_error = try_parse_arguments(argc, argv);
+    if (!parse_error.empty()) {
+        LogError("Error parsing arguments: {}", parse_error);
+        return 1;
+    }
+
     Logger::the().enable_logging_to_file();
 
     LogInfo("Izotrox v{}.{}.{} Booting... (compiled on {}, {})", IZO_VERSION_MAJOR, IZO_VERSION_MINOR, IZO_VERSION_REVISION, IZO_BUILD_DATE, IZO_BUILD_TIME);
 
-    /* TODO: Improve command line argument handling, possibly with a better library */
-    std::string theme_name = "default";
-    std::string preview_path;
-    
-    for (int i = 1; i < argc; i++) {
-        std::string arg = argv[i];
-        if (arg == "--theme" && i + 1 < argc) {
-            theme_name = argv[++i];
-        } else if (arg == "--resource-root" && i + 1 < argc) {
-            std::string root = argv[++i];
-            ResourceManagerBase::set_resource_root(root);
-        } else if (arg == "--save-theme-preview" && i + 1 < argc) {
-            preview_path = argv[++i];
-        }
-    }
-
-    int width = 800;
-    int height = 600;
-
-    bool headless = !preview_path.empty();
+    bool headless = Settings::the().has("preview-path");
+    LogInfo("Headless: {}", headless);
+    std::string theme_name = Settings::the().get<std::string>("theme-name");
     std::string theme_path = "theme/" + theme_name + ".ini";
 
     if (!ThemeDB::the().load(theme_path)) {
@@ -103,6 +129,8 @@ int main(int argc, char* argv[]) {
         }
     }
 
+    int width = 800;
+    int height = 600;
     bool running = true;
 
     Application app(width, height, "Izotrox");
@@ -114,58 +142,48 @@ int main(int argc, char* argv[]) {
     width = app.width();
     height = app.height();
 
-    auto canvas = std::make_unique<Canvas>(width, height);
-    auto painter = std::make_unique<Painter>(*canvas);
-
-    FontManager fonts;
-    ImageManager manager;
+    canvas = std::make_shared<Canvas>(width, height);
+    painter = std::make_unique<Painter>(*canvas);
 
     std::string fontFamily = ThemeDB::the().get<std::string>("System", "FontFamily", "fonts/Inter-Bold.ttf");
     float fontSize = ThemeDB::the().get<float>("System", "FontSize", 64.0);
-    Font* systemFont = fonts.load("system-ui", fontFamily, fontSize);
+    auto systemFont = FontManager::the().load("system-ui", fontFamily, fontSize).get();
 
     if (!systemFont) {
         LogFatal("Could not load system font!");
         return 1;
     }
-    
+
     // Load earlier for preview
-    Image* sliderHandle = manager.load("slider-handle", "icons/slider-handle.png");
-    Image* sliderHandleFocus = manager.load("slider-handle-focus", "icons/slider-handle-focus.png");
+    auto sliderHandle = ImageManager::the().load("slider-handle", "icons/slider-handle.png").get();
+    auto sliderHandleFocus = ImageManager::the().load("slider-handle-focus", "icons/slider-handle-focus.png").get();
 
-    if (!preview_path.empty()) {
-
-        // Setup minimal environment for preview
-        auto previewView = ThemePreviewView::create(systemFont, sliderHandle, sliderHandleFocus);
-        
-        // We need to simulate one frame
+    if (headless) {
+        std::string preview_path = Settings::the().get<std::string>("preview-path");
+        auto preview_view = ThemePreviewView::create(systemFont);
         canvas->clear(ThemeDB::the().get<Color>("Colors", "Window.Background", Color(255)));
-        
+
         // Layout the view
-        int w = width;
-        int h = height; // Fixed size for preview
-        
-        // Manually setup view for rendering
-        if (auto viewPtr = std::dynamic_pointer_cast<View>(previewView)) {
-             // We need to set resizing
-             // Since ViewManager manages resizing usually...
-             // Let's just create ViewManager but push previewView
-             ViewManager::the().resize(w, h);
-             ViewManager::the().push(previewView, ViewTransition::None);
-             
-             // Update once
-             ViewManager::the().update();
-             ViewManager::the().draw(*painter);
+        int w = canvas->width();   // Fixed size for preview
+        int h = canvas->height();  // Fixed size for preview
+        if (auto viewPtr = std::dynamic_pointer_cast<View>(preview_view)) {
+            ViewManager::the().resize(w, h);
+            ViewManager::the().push(preview_view, ViewTransition::None);
+            ViewManager::the().update();
+            ViewManager::the().draw(*painter);
         }
-        
+
         // Save to file
         if (canvas->save_to_file(preview_path)) {
-             LogInfo("Theme preview saved to {}", preview_path);
-             return 0;
+            LogInfo("Theme preview saved to {}", preview_path);
+            return 0;
         } else {
-             LogError("Failed to save theme preview to {}", preview_path);
-             return 1;
+            LogError("Failed to save theme preview to {}", preview_path);
+            return 1;
         }
+    
+        LogInfo("Theme preview saved to '{}'", preview_path);
+        return 0;
     }
 
     SplashScreen splash(app, *painter, *canvas, *systemFont);
@@ -179,9 +197,8 @@ int main(int argc, char* argv[]) {
 
     splash.next_step("Loading Fonts...");
 
-    Font* toast_font = fonts.load("toast", fontFamily, fontSize/2);
-
-    Font* inconsolata = fonts.load("inconsolata", "fonts/Inconsolata-Regular.ttf", 18.0f);
+    auto toast_font = FontManager::the().load("toast", fontFamily, fontSize / 2).get();
+    auto inconsolata = FontManager::the().load("inconsolata", "fonts/Inconsolata-Regular.ttf", 18.0f).get();
     ToastManager::the().set_font(toast_font);
 
     splash.next_step("Building UI...");
@@ -227,11 +244,11 @@ int main(int argc, char* argv[]) {
     auto pb_demo = std::make_shared<ProgressBar>(0.0f);
     root->add_child(pb_demo);
 
-    auto slider_demo = std::make_shared<Slider>(sliderHandle, sliderHandleFocus, 0.5f);
+    auto slider_demo = std::make_shared<Slider>(0.5f);
     slider_demo->set_width(WidgetSizePolicy::MatchParent);
     slider_demo->set_on_change([&](float v) {
         pb_demo->set_progress(v);
-        AndroidDevice::set_brightness((v/100)*255);
+        AndroidDevice::set_brightness((v / 100) * 255);
     });
     root->add_child(slider_demo);
 
@@ -263,7 +280,7 @@ int main(int argc, char* argv[]) {
     for (size_t i = 0; i < MAX_LIST_ITEMS; ++i) {
         auto item = std::make_shared<ListItem>(Orientation::Horizontal);
 
-        item->set_padding(10, 10, 10, 10);
+        item->set_padding_ltrb(10, 10, 10, 10);
 
         auto label = std::make_shared<Label>("Item " + std::to_string(i), systemFont);
         label->set_focusable(false);
@@ -341,5 +358,4 @@ int main(int argc, char* argv[]) {
     app.present(*canvas);
 
     return 0;
-
 }

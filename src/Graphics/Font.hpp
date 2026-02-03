@@ -52,4 +52,6 @@ private:
     void load();
 };
 
+using FontManager = ResourceManager<Font>;
+
 } 

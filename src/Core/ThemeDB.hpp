@@ -4,7 +4,7 @@
 #include "Debug/Generics.hpp"
 #include "Graphics/Color.hpp"
 #include "Graphics/ColorVariant.hpp"
-#include "Lib/inicpp.h"
+#include "Lib/inicpp.hpp"
 #include "Lib/magic_enum.hpp"
 #include <string>
 

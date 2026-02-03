@@ -26,34 +26,41 @@ private:
 template <typename T>
 class ResourceManager : public ResourceManagerBase {
 public:
-    virtual ~ResourceManager() {
-        unload_all();
+    static ResourceManager& the() {
+        static ResourceManager instance;
+        return instance;
     }
 
+    ~ResourceManager() = default;
 
     template <typename... Args>
-    T* load(const std::string& name, const std::string& path, Args&&... args) {
-        std::filesystem::path root(ResourceManagerBase::resource_root());
-        std::filesystem::path relative(path);
-        std::string full_path = (root / relative).string();
+    std::shared_ptr<T> load(const std::string& name,
+                            const std::string& path,
+                            Args&&... args)
+    {
+        std::filesystem::path root(resource_root());
+        std::filesystem::path full = root / path;
 
-        auto res = std::make_shared<T>(full_path, std::forward<Args>(args)...);
+        auto it = resources.find(name);
+        if (it != resources.end())
+            return it->second;
 
-        if (!res->valid()) {
-            LogError("ResourceManager: Failed to load resource '{}' from '{}'", name, full_path);
-            std::exit(1);
+        auto res = std::make_shared<T>(full.string(),
+                                       std::forward<Args>(args)...);
+
+        if (!res || !res->valid()) {
+            LogError("ResourceManager: Failed to load resource '{}' from '{}'",
+                     name, full.string());
+            return {};
         }
 
-        resources[name] = res;
-        return res.get();
+        resources.emplace(name, res);
+        return res;
     }
 
-    T* get(const std::string& name) {
+    T* get(const std::string& name) const {
         auto it = resources.find(name);
-        if (it != resources.end()) {
-            return it->second.get();
-        }
-        return nullptr;
+        return (it != resources.end()) ? it->second.get() : nullptr;
     }
 
     void unload(const std::string& name) {
@@ -65,6 +72,10 @@ public:
     }
 
 private:
+    ResourceManager() = default;
+    ResourceManager(const ResourceManager&) = delete;
+    ResourceManager& operator=(const ResourceManager&) = delete;
+
     std::map<std::string, std::shared_ptr<T>> resources;
 };
 

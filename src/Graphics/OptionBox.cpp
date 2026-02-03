@@ -130,7 +130,7 @@ OptionBox::OptionBox(Font* font)
     : m_font(font),
       m_bg_anim(ThemeDB::the().get<Color>("Colors", "OptionBox.Background", Color(200))) {
     m_focusable = true;
-    set_padding(12, 8, 12, 8);
+    set_padding_ltrb(12, 8, 12, 8);
 }
 
 void OptionBox::add_option(const std::string& option) {

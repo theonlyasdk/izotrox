@@ -1,5 +1,5 @@
 /*
- * inicpp.h
+ * inicpp.hpp
  *
  * Created on: 26 Dec 2015
  *     Author: Fabian Meyer
