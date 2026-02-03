@@ -12,7 +12,7 @@
 ## Limitations
 - Only works on Linux-based systems due to the usage of Linux-specific APIs. As a result, Izotrox is not supported on Windows or macOS.
 - No hardware acceleration on Android due to all rendering being done on the CPU itself.
-- Unoptimized rendering method might cause lag on complex layouts.
+- Unoptimized rendering method might cause lag while rendering complex layouts.
 
 ## Libraries Used
 - **[inifile-cpp](https://github.com/Rookfighter/inifile-cpp)** - for INI file parsing.
