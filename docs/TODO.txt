@@ -7,11 +7,10 @@
 7. DONE Theme Editor
 	Allow renaming of keys and sections
 	Allow moving of keys to different section
-
 8. DONE Theme improvements
 	Allow reading values from different sections instead of reading it from values section by default
 9. Add license header from main.cpp to all other cpp files
-10. Add schema support to theme  Editor
+10. DONE Add schema support to theme  Editor
 A schema is a JSON file which describes the structure of a theme.
 For example, a schema could describe that a theme has a [Colors] section and a [Fonts] section.
 And it should also describe the type of values that can be stored in each section.

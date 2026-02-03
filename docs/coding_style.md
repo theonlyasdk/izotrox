@@ -1,10 +1,10 @@
 # Coding style
 
-1. Core Philosophy
-* Readability: Code should be simple, explicit, and readable. Avoid over-engineering.
+1. Code Readability
+Code should be simple, explicit, and readable. Avoid over-engineering.
 
 2. Memory Management
-* Smart Pointers: Use strict ownership semantics.
+* Smart Pointers: Use strict ownership semantics. Use C++ smart pointers (`std::shared_ptr` and `std::unique_ptr`, though `std::shared_ptr` should be used sparingly) instead of raw pointers. Use `std::weak_ptr` to break cyclic dependencies.
 
 3. Naming Conventions
 
