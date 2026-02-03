@@ -3,13 +3,16 @@
 #include <mutex>
 #include <string>
 #include <memory>
-#include <Core/Izotrox.hpp>
+/* <format> include is needed for std::format() defined in the Log macros */
+#include <format>
 
 /* If LogFatal() should terminate the app with LOG_FATAL_EXIT_CODE */
 // #define LOG_FATAL_TERMINATES_APP
 #ifdef LOG_FATAL_TERMINATES_APP
 #define LOG_FATAL_EXIT_CODE 1
 #endif
+
+#define LOG_DEBUG_OUTPUT
 
 namespace Izo {
 
@@ -57,7 +60,7 @@ private:
 #define LogTrace(fmt, ...) \
     Logger::the().trace(std::format(fmt, ##__VA_ARGS__))
 
-#ifdef IZO_DEBUG
+#ifdef LOG_DEBUG_OUTPUT
 #define LogDebug(fmt, ...) \
     Logger::the().debug(std::format(fmt, ##__VA_ARGS__))
 #else

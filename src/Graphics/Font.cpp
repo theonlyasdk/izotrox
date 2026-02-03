@@ -1,11 +1,10 @@
-#define STB_TRUETYPE_IMPLEMENTATION
+#include "Debug/Logger.hpp"
 #include "Font.hpp"
-#include "Lib/stb_truetype.h"
 #include <cstdio>
-#include <iostream>
-#include <cmath>
 #include <sstream>
-#include <algorithm>
+
+#include "Lib/stb_truetype.h"
+#define STB_TRUETYPE_IMPLEMENTATION
 
 namespace Izo {
 
@@ -21,7 +20,7 @@ Font::~Font() {
 void Font::load() {
     FILE* f = std::fopen(path.c_str(), "rb");
     if (!f) {
-        std::cerr << "Failed to open font file: " << path << std::endl;
+        LogError("Failed to open font file: {}", path);
         return;
     }
 
@@ -34,7 +33,7 @@ void Font::load() {
     std::fclose(f);
 
     if (!stbtt_InitFont(info.get(), data.data(), 0)) {
-        std::cerr << "Failed to init font" << std::endl;
+        LogError("Failed to init font");
         return;
     }
 

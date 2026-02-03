@@ -1,14 +1,11 @@
-#include <Debug/Logger.hpp>
-#include <Debug/ConsoleColor.hpp>
-
 #include <chrono>
-#include <iomanip>
-#include <iostream>
-#include <mutex>
 #include <sstream>
 #include <fstream>
 #include <filesystem>
-#include "Core/Application.hpp"
+#include <iostream>
+
+#include <Debug/Logger.hpp>
+#include <Debug/ConsoleColor.hpp>
 
 namespace Izo {
 
