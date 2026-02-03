@@ -7,7 +7,7 @@
 namespace Izo {
 
 ProgressBar::ProgressBar(float progress) : m_value(progress) {
-    set_focusable(false);
+    set_focusable(true);
 }
 
 void ProgressBar::set_progress(float v) { 

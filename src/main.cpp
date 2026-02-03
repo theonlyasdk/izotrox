@@ -58,7 +58,7 @@ void draw_debug_panel(Painter& painter, Font& font, float fps) {
         float temp = SystemStats::get_cpu_temp();
         int mem = SystemStats::get_free_memory_mb();
 
-        cached_text = std::format("FPS: {:.1f} | Temp: {:.1f}C | Mem: {}MB", fps, temp, mem);
+        cached_text = std::format("FPS: {:.1f} | Temp: {:.1f}C | FreeMem: {}MB", fps, temp, mem);
         cached_w = font.width(cached_text) + 20;
         cached_h = font.height() + 10;
         timer = 0;
@@ -207,6 +207,7 @@ int main(int argc, const char* argv[]) {
     root->set_width(WidgetSizePolicy::MatchParent);
     root->set_height(WidgetSizePolicy::MatchParent);
     root->set_show_focus_indicator(false);
+    root->set_padding(20);
 
     auto lbl_title = std::make_shared<Label>("Izotrox UI Demo", systemFont);
     lbl_title->set_width(WidgetSizePolicy::MatchParent);
@@ -278,9 +279,7 @@ int main(int argc, const char* argv[]) {
 
     size_t MAX_LIST_ITEMS = 1000;
     for (size_t i = 0; i < MAX_LIST_ITEMS; ++i) {
-        auto item = std::make_shared<ListItem>(Orientation::Horizontal);
-
-        item->set_padding_ltrb(10, 10, 10, 10);
+        auto item = std::make_shared<ListItem>(Orientation::Vertical);
 
         auto label = std::make_shared<Label>("Item " + std::to_string(i), systemFont);
         label->set_focusable(false);

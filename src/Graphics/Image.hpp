@@ -3,6 +3,7 @@
 #include "Canvas.hpp"
 #include "Painter.hpp"
 #include "Geometry/Primitives.hpp"
+#include "Core/ResourceManager.hpp"
 
 #include <string>
 

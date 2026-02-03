@@ -13,7 +13,7 @@ std::shared_ptr<View> SecondView::create(Font* font) {
     root->set_focusable(false);
     root->set_width(WidgetSizePolicy::MatchParent);
     root->set_height(WidgetSizePolicy::MatchParent);
-    root->set_padding_ltrb(20, 20, 20, 20);
+    root->set_padding(20);
 
     auto title = std::make_shared<Label>("Second View", font);
     title->set_width(WidgetSizePolicy::MatchParent);

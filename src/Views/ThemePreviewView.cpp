@@ -1,6 +1,8 @@
 #include "ThemePreviewView.hpp"
 #include "Graphics/Image.hpp"
 #include "Widgets/ListItem.hpp"
+#include "SecondView.hpp"
+#include "Core/ViewManager.hpp"
 
 namespace Izo {
 
@@ -9,7 +11,7 @@ std::shared_ptr<View> ThemePreviewView::create(Font* font) {
     root->set_focusable(false);
     root->set_width(WidgetSizePolicy::MatchParent);
     root->set_height(WidgetSizePolicy::MatchParent);
-    root->set_padding_ltrb(10, 10, 10, 10);
+    root->set_padding(20);
 
     auto title = std::make_shared<Label>("Theme Preview", font);
     title->set_width(WidgetSizePolicy::MatchParent);
@@ -17,14 +19,21 @@ std::shared_ptr<View> ThemePreviewView::create(Font* font) {
 
     auto btn_row = std::make_shared<LinearLayout>(Orientation::Horizontal);
     btn_row->set_width(WidgetSizePolicy::MatchParent);
-    btn_row->set_padding_ltrb(0, 0, 0, 10);
+    btn_row->set_padding(0);
 
     auto normal_btn = std::make_shared<Button>("Normal Button", font);
     normal_btn->set_width(WidgetSizePolicy::WrapContent);
+    normal_btn->set_on_click([]() {
+        ViewManager::the().pop();
+    });
     btn_row->add_child(normal_btn);
 
     auto primary_btn = std::make_shared<Button>("Primary Button", font);
     primary_btn->set_width(WidgetSizePolicy::WrapContent);
+    primary_btn->set_on_click([font]() {
+        auto view = SecondView::create(font);
+        ViewManager::the().push(view);
+    });
     btn_row->add_child(primary_btn);
 
     root->add_child(btn_row);

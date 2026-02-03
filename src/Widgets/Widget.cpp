@@ -1,10 +1,11 @@
 
 
 #include "Widgets/Widget.hpp"
+
+#include "Core/Application.hpp"
 #include "Core/ThemeDB.hpp"
 #include "Graphics/Painter.hpp"
 #include "Input/Input.hpp"
-#include "Core/Application.hpp"
 
 namespace Izo {
 
@@ -28,11 +29,15 @@ void Widget::update() {
 
 void Widget::measure(int parent_w, int parent_h) {
     int w = 0, h = 0;
-    if (m_width == (int)WidgetSizePolicy::MatchParent) w = parent_w;
-    else if (m_width > 0) w = m_width;
+    if (m_width == (int)WidgetSizePolicy::MatchParent)
+        w = parent_w;
+    else if (m_width > 0)
+        w = m_width;
 
-    if (m_height == (int)WidgetSizePolicy::MatchParent) h = parent_h;
-    else if (m_height > 0) h = m_height;
+    if (m_height == (int)WidgetSizePolicy::MatchParent)
+        h = parent_h;
+    else if (m_height > 0)
+        h = m_height;
 
     m_measured_size = {0, 0, w, h};
 }
@@ -72,7 +77,7 @@ bool Widget::on_touch(IntPoint point, bool down, bool captured) {
 
     if (!inside && !captured) return false;
 
-    IntPoint local_point = { point.x - b.x, point.y - b.y };
+    IntPoint local_point = {point.x - b.x, point.y - b.y};
 
     return on_touch_event(local_point, down);
 }
@@ -82,9 +87,9 @@ void Widget::draw_focus_outline(Painter& painter) {
     if (t > 0) {
         int max_thickness = ThemeDB::the().get<int>("Looks", "Widget.FocusThickness", 12);
         int roundness = ThemeDB::the().get<int>("Looks", "Widget.Roundness", 6);
-        float expansion = max_thickness * (1.0f - t); 
+        float expansion = max_thickness * (1.0f - t);
         uint8_t alpha = (uint8_t)(255 * t);
-        Color theme_focus = ThemeDB::the().get<Color>("Colors", "Widget.Focus", Color(0,0,255));
+        Color theme_focus = ThemeDB::the().get<Color>("Colors", "Widget.Focus", Color(0, 0, 255));
         Color color(theme_focus.r, theme_focus.g, theme_focus.b, alpha);
 
         IntRect b = global_bounds();
@@ -92,13 +97,12 @@ void Widget::draw_focus_outline(Painter& painter) {
         int draw_thickness = (int)(max_thickness * (1.0f - t)) + 1;
         if (draw_thickness < 1) draw_thickness = 1;
         int exp_int = (int)expansion;
-        
-        painter.draw_rounded_rect({ 
-            b.x - exp_int, 
-            b.y - exp_int, 
-            b.w + exp_int * 2, 
-            b.h + exp_int * 2 
-        }, roundness, color, draw_thickness);
+
+        painter.draw_rounded_rect({b.x - exp_int,
+                                   b.y - exp_int,
+                                   b.w + exp_int * 2,
+                                   b.h + exp_int * 2},
+                                  roundness, color, draw_thickness);
     }
 }
 
@@ -114,16 +118,27 @@ bool Widget::hovering() const {
     return global_bounds().contains(Input::the().touch_point());
 }
 
-void Widget::set_padding_ltrb(int left,int top, int right, int bottom)
- { 
-        m_padding_left = left; 
-        m_padding_top = top; 
-        m_padding_right = right; 
-        m_padding_bottom = bottom; 
-    }
+void Widget::set_padding_ltrb(int left, int top, int right, int bottom) {
+    m_padding_left = left;
+    m_padding_top = top;
+    m_padding_right = right;
+    m_padding_bottom = bottom;
+}
 
-void Widget::show() { if (!m_visible) { m_visible = true; } }
-void Widget::hide() { if (m_visible) { m_visible = false; } }
+void Widget::set_padding(int padding) {
+    set_padding_ltrb(padding, padding, padding, padding);
+}
+
+void Widget::show() {
+    if (!m_visible) {
+        m_visible = true;
+    }
+}
+void Widget::hide() {
+    if (m_visible) {
+        m_visible = false;
+    }
+}
 
 const IntRect Widget::global_bounds() const {
     IntRect bounds = m_bounds;
@@ -137,4 +152,4 @@ const IntRect Widget::global_bounds() const {
     return bounds;
 }
 
-} 
+}  // namespace Izo

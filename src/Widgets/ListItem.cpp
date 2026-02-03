@@ -10,7 +10,8 @@ ListItem::ListItem(Orientation orientation) : LinearLayout(orientation) {
     set_width(WidgetSizePolicy::MatchParent);
     set_height(WidgetSizePolicy::WrapContent);
     set_focusable(false);
-    set_show_focus_indicator(false); 
+    set_show_focus_indicator(false);
+    set_padding(5);
 }
 
 void ListItem::draw_content(Painter& painter) {

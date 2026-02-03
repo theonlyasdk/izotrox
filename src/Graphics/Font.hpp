@@ -6,6 +6,7 @@
 
 #include "Geometry/Primitives.hpp"
 #include "Painter.hpp"
+#include "Core/ResourceManager.hpp"
 
 typedef struct stbtt_fontinfo stbtt_fontinfo;
 

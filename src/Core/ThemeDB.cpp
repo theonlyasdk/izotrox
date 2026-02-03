@@ -52,6 +52,11 @@ bool ThemeDB::load(const std::string& path) {
     list_theme_sections_and_values(ini_file);
 
     LogInfo("Successfully loaded theme from {}!", path);
+    LogInfo("Theme Details:");
+    LogInfo("  Name: {}", get<std::string>("ThemeManifest", "Name", "Unknown"));
+    LogInfo("  Author: {}", get<std::string>("ThemeManifest", "Author", "Unknown"));
+    LogInfo("  Version: {}", get<std::string>("ThemeManifest", "Version", "0.0.0"));
+
     current_path = path;
     return true;
 }
