@@ -1,4 +1,4 @@
-#include "ResourceManager.hpp"
+#include "Core/ResourceManager.hpp"
 
 namespace Izo {
 

@@ -1,4 +1,4 @@
-#include "Painter.hpp"
+#include "Graphics/Painter.hpp"
 
 #include <algorithm>
 #include <cmath>

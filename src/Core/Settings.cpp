@@ -1,4 +1,4 @@
-#include "Settings.hpp"
+#include "Core/Settings.hpp"
 
 namespace Izo {
 

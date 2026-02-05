@@ -1,8 +1,8 @@
 #pragma once
-#include "Graphics/View.hpp"
-#include "Widgets/LinearLayout.hpp"
-#include "Graphics/Label.hpp"
-#include "Graphics/Button.hpp"
+#include "UI/View/View.hpp"
+#include "UI/Layout/LinearLayout.hpp"
+#include "UI/Widgets/Label.hpp"
+#include "UI/Widgets/Button.hpp"
 #include "Graphics/Font.hpp"
 #include <memory>
 

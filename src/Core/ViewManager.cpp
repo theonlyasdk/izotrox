@@ -1,5 +1,5 @@
 #include "ViewManager.hpp"
-#include "Application.hpp"
+#include "Core/Application.hpp"
 #include "ThemeDB.hpp"
 #include "Input/Input.hpp"
 

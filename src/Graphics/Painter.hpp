@@ -3,8 +3,8 @@
 #include <algorithm>
 #include <vector>
 
-#include "Canvas.hpp"
-#include "Color.hpp"
+#include "Graphics/Canvas.hpp"
+#include "Graphics/Color.hpp"
 #include "Geometry/Primitives.hpp"
 
 namespace Izo {

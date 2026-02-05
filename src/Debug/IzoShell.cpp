@@ -2,7 +2,7 @@
 #include "Core/ThemeDB.hpp"
 #include "Core/Application.hpp"
 #include "Debug/Logger.hpp"
-#include "Graphics/Toast.hpp"
+#include "UI/Widgets/Toast.hpp"
 #include "Core/ResourceManager.hpp"
 #include "Core/File.hpp"
 

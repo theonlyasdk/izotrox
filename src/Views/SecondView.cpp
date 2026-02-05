@@ -1,7 +1,7 @@
 #include "SecondView.hpp"
 #include "Core/ViewManager.hpp"
 #include "Core/ThemeDB.hpp"
-#include "Graphics/OptionBox.hpp"
+#include "UI/Widgets/OptionBox.hpp"
 
 #include "Core/ResourceManager.hpp"
 #include "ThemePreviewView.hpp"

@@ -1,13 +1,13 @@
 #pragma once
-#include "Graphics/View.hpp"
-#include "Widgets/LinearLayout.hpp"
-#include "Graphics/Label.hpp"
-#include "Graphics/Button.hpp"
-#include "Graphics/TextBox.hpp"
-#include "Widgets/ListBox.hpp"
-#include "Graphics/ProgressBar.hpp"
-#include "Graphics/Slider.hpp"
-#include "Graphics/OptionBox.hpp"
+#include "UI/View/View.hpp"
+#include "UI/Layout/LinearLayout.hpp"
+#include "UI/Widgets/Label.hpp"
+#include "UI/Widgets/Button.hpp"
+#include "UI/Widgets/TextBox.hpp"
+#include "UI/Widgets/ListBox.hpp"
+#include "UI/Widgets/ProgressBar.hpp"
+#include "UI/Widgets/Slider.hpp"
+#include "UI/Widgets/OptionBox.hpp"
 #include "Graphics/Font.hpp"
 #include <memory>
 

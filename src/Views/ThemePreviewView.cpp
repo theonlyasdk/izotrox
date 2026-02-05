@@ -1,6 +1,6 @@
 #include "ThemePreviewView.hpp"
 #include "Graphics/Image.hpp"
-#include "Widgets/ListItem.hpp"
+#include "UI/Widgets/ListItem.hpp"
 #include "SecondView.hpp"
 #include "Core/ViewManager.hpp"
 
@@ -38,17 +38,9 @@ std::shared_ptr<View> ThemePreviewView::create(Font* font) {
 
     root->add_child(btn_row);
 
-    auto textbox_lbl = std::make_shared<Label>("Text Input:", font);
-    textbox_lbl->set_width(WidgetSizePolicy::MatchParent);
-    root->add_child(textbox_lbl);
-
     auto textbox = std::make_shared<TextBox>("Enter text here...", font);
     textbox->set_width(WidgetSizePolicy::MatchParent);
     root->add_child(textbox);
-
-    auto list_lbl = std::make_shared<Label>("List View:", font);
-    list_lbl->set_width(WidgetSizePolicy::MatchParent);
-    root->add_child(list_lbl);
 
     auto listbox = std::make_shared<ListBox>();
     listbox->set_width(WidgetSizePolicy::MatchParent);
@@ -64,33 +56,13 @@ std::shared_ptr<View> ThemePreviewView::create(Font* font) {
     
     root->add_child(listbox);
 
-    auto progress_lbl = std::make_shared<Label>("Progress Bar:", font);
-    progress_lbl->set_width(WidgetSizePolicy::MatchParent);
-    root->add_child(progress_lbl);
-
     auto progressbar = std::make_shared<ProgressBar>(0.6f);
     progressbar->set_width(WidgetSizePolicy::MatchParent);
     root->add_child(progressbar);
 
-    auto slider_lbl = std::make_shared<Label>("Slider:", font);
-    slider_lbl->set_width(WidgetSizePolicy::MatchParent);
-    root->add_child(slider_lbl);
-
     auto slider = std::make_shared<Slider>(0.4f);
     slider->set_width(WidgetSizePolicy::MatchParent);
     root->add_child(slider);
-
-    auto option_lbl = std::make_shared<Label>("Option Box:", font);
-    option_lbl->set_width(WidgetSizePolicy::MatchParent);
-    root->add_child(option_lbl);
-
-    auto optionbox = std::make_shared<OptionBox>(font);
-    optionbox->set_width(WidgetSizePolicy::MatchParent);
-    optionbox->add_option("Option 1");
-    optionbox->add_option("Option 2");
-    optionbox->add_option("Option 3");
-    optionbox->set_selected_index(0);
-    root->add_child(optionbox);
 
     auto success_lbl = std::make_shared<Label>("Success: Theme loaded", font);
     success_lbl->set_color_variant(ColorVariant::Success);
@@ -101,6 +73,14 @@ std::shared_ptr<View> ThemePreviewView::create(Font* font) {
     error_lbl->set_color_variant(ColorVariant::Error);
     error_lbl->set_width(WidgetSizePolicy::MatchParent);
     root->add_child(error_lbl);
+
+    auto optionbox = std::make_shared<OptionBox>(font);
+    optionbox->set_width(WidgetSizePolicy::MatchParent);
+    optionbox->add_option("Option 1");
+    optionbox->add_option("Option 2");
+    optionbox->add_option("Option 3");
+    optionbox->set_selected_index(0);
+    root->add_child(optionbox);
 
     return std::make_shared<View>(root);
 }

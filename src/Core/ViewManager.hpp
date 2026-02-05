@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Graphics/View.hpp"
-#include "Graphics/Animator.hpp"
+#include "UI/View/View.hpp"
+#include "Motion/Animator.hpp"
 #include "Geometry/Primitives.hpp"
 
 #include <vector>

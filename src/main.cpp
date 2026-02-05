@@ -23,27 +23,27 @@
 #include "Debug/IzoShell.hpp"
 #include "Debug/Izometa.hpp"
 #include "Debug/Logger.hpp"
-#include "Graphics/Button.hpp"
+#include "UI/Widgets/Button.hpp"
 #include "Graphics/Canvas.hpp"
 #include "Graphics/Color.hpp"
 #include "Graphics/Font.hpp"
 #include "Graphics/Image.hpp"
-#include "Graphics/Label.hpp"
+#include "UI/Widgets/Label.hpp"
 #include "Graphics/Painter.hpp"
-#include "Graphics/ProgressBar.hpp"
-#include "Graphics/Slider.hpp"
-#include "Graphics/TextBox.hpp"
-#include "Graphics/Toast.hpp"
-#include "Graphics/View.hpp"
+#include "UI/Widgets/ProgressBar.hpp"
+#include "UI/Widgets/Slider.hpp"
+#include "UI/Widgets/TextBox.hpp"
+#include "UI/Widgets/Toast.hpp"
+#include "UI/View/View.hpp"
 #include "Input/Input.hpp"
 #include "Platform/Android/AndroidDevice.hpp"
 #include "Views/SecondView.hpp"
 #include "Views/SplashScreen.hpp"
 #include "Views/ThemePreviewView.hpp"
-#include "Widgets/LinearLayout.hpp"
-#include "Widgets/ListBox.hpp"
-#include "Widgets/ListItem.hpp"
-#include "Widgets/Widget.hpp"
+#include "UI/Layout/LinearLayout.hpp"
+#include "UI/Widgets/ListBox.hpp"
+#include "UI/Widgets/ListItem.hpp"
+#include "UI/Widgets/Widget.hpp"
 
 using namespace Izo;
 
@@ -53,12 +53,14 @@ void draw_debug_panel(Painter& painter, Font& font, float fps) {
     static int cached_w = 0;
     static int cached_h = 0;
 
+    constexpr int update_interval_s = 1;
     timer += Application::the().delta();
-    if (cached_text.empty() || timer >= 1000.0f) {
-        float temp = SystemStats::get_cpu_temp();
-        int mem = SystemStats::get_free_memory_mb();
+    if (cached_text.empty() || timer >= update_interval_s * 1000.0f) {
+        float temp = SystemStats::cpu_temp();
+        int mem = SystemStats::free_memory_mb();
+        int app_mem = SystemStats::app_memory_usage_mb();
 
-        cached_text = std::format("FPS: {:.1f} | Temp: {:.1f}C | FreeMem: {}MB", fps, temp, mem);
+        cached_text = std::format("FPS: {:.1f} | Temp: {:.1f}C | FreeMem: {}MB | AppMem: {}MB", fps, temp, mem, app_mem);
         cached_w = font.width(cached_text) + 20;
         cached_h = font.height() + 10;
         timer = 0;
@@ -99,7 +101,7 @@ const std::string try_parse_arguments(int argc, const char* argv[]) {
     return "";
 }
 
-std::shared_ptr<Canvas> canvas;
+std::unique_ptr<Canvas> canvas;
 std::unique_ptr<Painter> painter;
 
 int main(int argc, const char* argv[]) {
@@ -117,7 +119,7 @@ int main(int argc, const char* argv[]) {
     LogInfo("Izotrox v{}.{}.{} Booting... (compiled on {}, {})", IZO_VERSION_MAJOR, IZO_VERSION_MINOR, IZO_VERSION_REVISION, IZO_BUILD_DATE, IZO_BUILD_TIME);
 
     bool headless = Settings::the().has("preview-path");
-    LogInfo("Headless: {}", headless);
+    LogTrace("Headless mode: {}", headless);
     std::string theme_name = Settings::the().get<std::string>("theme-name");
     std::string theme_path = "theme/" + theme_name + ".ini";
 
@@ -142,7 +144,7 @@ int main(int argc, const char* argv[]) {
     width = app.width();
     height = app.height();
 
-    canvas = std::make_shared<Canvas>(width, height);
+    canvas = std::make_unique<Canvas>(width, height);
     painter = std::make_unique<Painter>(*canvas);
 
     std::string fontFamily = ThemeDB::the().get<std::string>("System", "FontFamily", "fonts/Inter-Bold.ttf");

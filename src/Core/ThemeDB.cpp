@@ -1,12 +1,12 @@
 #include "ThemeDB.hpp"
 #include "Debug/Logger.hpp"
-#include "File.hpp"
+#include "Core/File.hpp"
 #include "Graphics/ColorVariant.hpp"
 #include "ViewManager.hpp"
 #include <sstream>
 #include <format>
 #include <filesystem>
-#include "ResourceManager.hpp"
+#include "Core/ResourceManager.hpp"
 
 
 namespace Izo {

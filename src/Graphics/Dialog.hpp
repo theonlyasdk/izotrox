@@ -1,8 +1,8 @@
 #pragma once
 
-#include "Widgets/Widget.hpp"
-#include "Font.hpp"
-#include "Animator.hpp"
+#include "UI/Widgets/Widget.hpp"
+#include "Graphics/Font.hpp"
+#include "Motion/Animator.hpp"
 #include "Geometry/Primitives.hpp"
 
 #include <functional>

@@ -1,10 +1,10 @@
 #include <fstream>
 #include <string>
 #include <sstream>
-#include "SystemStats.hpp"
+#include "Core/SystemStats.hpp"
 
 namespace Izo {
-    float SystemStats::get_cpu_temp() {
+    float SystemStats::cpu_temp() {
         std::ifstream f("/sys/class/thermal/thermal_zone0/temp");
         if (f) {
             int temp;
@@ -14,7 +14,7 @@ namespace Izo {
         return 0.0f;
     }
 
-    int SystemStats::get_free_memory_mb() {
+    int SystemStats::free_memory_mb() {
         std::ifstream f("/proc/meminfo");
         std::string line;
         while (std::getline(f, line)) {
@@ -22,6 +22,21 @@ namespace Izo {
                 std::stringstream ss(line);
                 std::string label;
                 int kb;
+                ss >> label >> kb;
+                return kb / 1024;
+            }
+        }
+        return 0;
+    }
+
+    int SystemStats::app_memory_usage_mb() {
+        std::ifstream f("/proc/self/status");
+        std::string line;
+        while (std::getline(f, line)) {
+            if (line.find("VmRSS:") == 0) {
+                std::stringstream ss(line);
+                std::string label;
+                int kb = 0;
                 ss >> label >> kb;
                 return kb / 1024;
             }

@@ -1,4 +1,4 @@
-#include "Dialog.hpp"
+#include "Graphics/Dialog.hpp"
 #include "Core/ThemeDB.hpp"
 
 namespace Izo {

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Canvas.hpp"
-#include "Painter.hpp"
+#include "Graphics/Canvas.hpp"
+#include "Graphics/Painter.hpp"
 #include "Geometry/Primitives.hpp"
 #include "Core/ResourceManager.hpp"
 

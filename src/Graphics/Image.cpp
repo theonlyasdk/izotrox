@@ -1,6 +1,6 @@
 #include "Debug/Logger.hpp"
 #define STB_IMAGE_IMPLEMENTATION
-#include "Image.hpp"
+#include "Graphics/Image.hpp"
 #include "Lib/stb_image.h"
 
 namespace Izo {

@@ -3,7 +3,8 @@
 namespace Izo {
 class SystemStats {
 public:
-    static float get_cpu_temp();
-    static int get_free_memory_mb();
+    static float cpu_temp();
+    static int free_memory_mb();
+    static int app_memory_usage_mb();
 };
 }

@@ -1,4 +1,4 @@
-#include "Canvas.hpp"
+#include "Graphics/Canvas.hpp"
 #include <cstring>
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION

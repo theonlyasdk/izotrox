@@ -1,5 +1,5 @@
 #pragma once
-#include "Color.hpp"
+#include "Graphics/Color.hpp"
 #include "Geometry/Primitives.hpp"
 #include <vector>
 #include <memory>
