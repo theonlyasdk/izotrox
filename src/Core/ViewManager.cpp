@@ -2,6 +2,7 @@
 #include "Core/Application.hpp"
 #include "ThemeDB.hpp"
 #include "Input/Input.hpp"
+#include "Graphics/Dialog.hpp"
 
 namespace Izo {
 
@@ -29,7 +30,7 @@ void ViewManager::push(std::shared_ptr<View> view, ViewTransition transition) {
 
     // Queue the operation if we're currently processing one
     if (m_processing_operation) {
-        m_pending_ops.push_back({OperationType::Push, view, transition});
+        m_pending_operations.push_back({OperationType::Push, view, transition});
         return;
     }
 
@@ -47,7 +48,7 @@ void ViewManager::push(std::shared_ptr<View> view, ViewTransition transition) {
 void ViewManager::pop(ViewTransition transition) {
     // Calculate effective stack size considering pending pops
     size_t pending_pops = 0;
-    for (const auto& op : m_pending_ops) {
+    for (const auto& op : m_pending_operations) {
         if (op.type == OperationType::Pop) pending_pops++;
     }
     
@@ -64,7 +65,7 @@ void ViewManager::pop(ViewTransition transition) {
 
     // Queue the operation if we're currently processing one
     if (m_processing_operation) {
-        m_pending_ops.push_back({OperationType::Pop, nullptr, transition});
+        m_pending_operations.push_back({OperationType::Pop, nullptr, transition});
         return;
     }
 
@@ -78,27 +79,38 @@ void ViewManager::pop(ViewTransition transition) {
     m_processing_operation = false;
 }
 
-void ViewManager::open(std::shared_ptr<Widget> dialog) {
+void ViewManager::open_dialog(std::shared_ptr<Dialog> dialog) {
     m_dialog = dialog;
 }
 
 void ViewManager::dismiss_dialog() {
-    m_dialog = nullptr;
+    m_dialog.reset();
+}
+
+bool ViewManager::has_active_dialog() const {
+    return m_dialog != nullptr;
+}
+
+bool ViewManager::is_animating() const { 
+    return m_animating; 
+}
+
+size_t ViewManager::stack_size() const { 
+    return m_stack.size(); 
 }
 
 void ViewManager::process_pending_operations() {
-    if (m_pending_ops.empty() || m_processing_operation) {
+    if (m_pending_operations.empty() || m_processing_operation) {
         return;
     }
 
-    // Process the first pending operation
-    PendingOperation op = m_pending_ops.front();
-    m_pending_ops.pop_front();
+    PendingOperation pending = m_pending_operations.front();
+    m_pending_operations.pop_front();
 
-    if (op.type == OperationType::Push) {
-        push(op.view, op.transition);
-    } else if (op.type == OperationType::Pop) {
-        pop(op.transition);
+    if (pending.type == OperationType::Push) {
+        push(pending.view, pending.transition);
+    } else if (pending.type == OperationType::Pop) {
+        pop(pending.transition);
     }
 }
 
@@ -132,14 +144,16 @@ void ViewManager::resize(int w, int h) {
         m_outgoing_view->resize(w, h);
     }
     if (m_dialog) {
-        m_dialog->measure(w, h); // Adjust dialog if needed
+        m_dialog->measure(w, h);
     }
 }
 
 void ViewManager::update() {
+    constexpr bool dialog_should_block_view_updates = true;
+
     if (m_dialog) {
         m_dialog->update();
-        return; // Dialog blocks view updates
+        if (dialog_should_block_view_updates) return;
     }
 
     if (m_animating) {
@@ -265,7 +279,9 @@ void ViewManager::draw(Painter& painter) {
     }
 
     if (m_dialog) {
-        painter.fill_rect({0, 0, m_width, m_height}, Color(0, 0, 0, 100)); // Dimming
+        constexpr uint8_t max_dialog_bg_alpha = 150;
+        int dialog_bg_alpha = (uint8_t)(m_dialog->m_dialog_anim.value() * max_dialog_bg_alpha);
+        painter.fill_rect({0, 0, m_width, m_height}, Color(0, 0, 0, dialog_bg_alpha));
         m_dialog->draw(painter);
         m_dialog->draw_focus(painter);
     }
@@ -285,18 +301,22 @@ void ViewManager::on_touch(IntPoint point, bool down) {
 }
 
 void ViewManager::on_key(KeyCode key) {
+    // Handle Escape key to pop the view stack
+    // This now works during animations too, queueing the operation
+    if (key == KeyCode::Escape) {
+        if (has_active_dialog()) {
+            m_dialog->close();
+            return;
+        }
+        pop();  // Will queue if currently processing an operation
+        return;
+    }
+
     if (m_dialog) {
         m_dialog->on_key(key);
         return;
     }
-    
-    // Handle Escape key to pop the view stack
-    // This now works during animations too, queueing the operation
-    if (key == KeyCode::Escape) {
-        pop();  // Will queue if currently processing an operation
-        return;
-    }
-    
+
     // Route other keys to the active view (even during animations)
     auto active_view = get_active_input_view();
     if (active_view) {

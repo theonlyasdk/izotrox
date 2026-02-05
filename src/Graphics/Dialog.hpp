@@ -9,8 +9,11 @@
 
 namespace Izo {
 
+class ViewManager;
+
 class Dialog : public Widget {
 public:
+    friend class ViewManager;
     Dialog();
     virtual ~Dialog() = default;
 
@@ -18,8 +21,8 @@ public:
     virtual void draw_dialog_content(Painter& painter) { (void)painter; }
     void update() override;
     
-    void open();
-    void close();
+    virtual void open();
+    virtual void close();
     bool is_dialog_visible() const { return m_dialog_visible; }
 
     void set_dialog_bounds(const IntRect& bounds) { m_dialog_bounds = bounds; }
@@ -31,7 +34,6 @@ protected:
     IntRect m_dialog_bounds;
     bool m_dialog_visible = false;
     Animator<float> m_dialog_anim{0.0f};
-    
     std::function<void()> m_on_dismiss;
 };
 

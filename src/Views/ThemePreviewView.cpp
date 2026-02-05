@@ -75,10 +75,11 @@ std::shared_ptr<View> ThemePreviewView::create(Font* font) {
     root->add_child(error_lbl);
 
     auto optionbox = std::make_shared<OptionBox>(font);
-    optionbox->set_width(WidgetSizePolicy::MatchParent);
-    optionbox->add_option("Option 1");
-    optionbox->add_option("Option 2");
-    optionbox->add_option("Option 3");
+    optionbox->set_width(WidgetSizePolicy::WrapContent);
+    for(size_t i = 1; i <= 100; i++) {
+        optionbox->add_option("Option " + std::to_string(i));
+    }
+
     optionbox->select(0);
     root->add_child(optionbox);
 
