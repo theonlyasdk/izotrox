@@ -10,6 +10,10 @@
 
 namespace Izo {
 
+struct Logger::LogFile {
+    std::ofstream stream;
+};
+
 static const char *color_for_level(LogLevel lvl) {
   switch (lvl) {
     case LogLevel::Trace:  return ConsoleColor::BrightBlack;
@@ -36,20 +40,13 @@ static std::string timestamp() {
 
 static std::string level_to_string(LogLevel lvl) {
   switch (lvl) {
-    case LogLevel::Trace:
-      return "TRACE";
-    case LogLevel::Debug:
-      return "DEBUG";
-    case LogLevel::Info:
-      return "INFO";
-    case LogLevel::Warn:
-      return "WARN";
-    case LogLevel::Error:
-      return "ERROR";
-    case LogLevel::Fatal:
-      return "FATAL";
-    default:
-      return "UNKNOWN";
+    case LogLevel::Trace: return "TRACE";
+    case LogLevel::Debug: return "DEBUG";
+    case LogLevel::Info:  return "INFO";
+    case LogLevel::Warn:  return "WARN";
+    case LogLevel::Error: return "ERROR";
+    case LogLevel::Fatal: return "FATAL";
+    default:              return "UNKNOWN";
   }
 }
 
@@ -69,10 +66,6 @@ static std::string format_as_log_no_color(LogLevel lvl, const std::string &msg) 
   return oss.str();
 }
 
-struct Logger::LogFile {
-    std::ofstream stream;
-};
-
 Logger::Logger(){}
 Logger::~Logger() = default;
 
@@ -82,16 +75,12 @@ Logger &Logger::the() {
 }
 
 void Logger::enable_logging_to_file() {
-    std::string filename_str;
+    constexpr size_t MAX_LOGS = 10;
+    std::string filename;
+  
     {
         std::lock_guard<std::mutex> lock(m_log_mutex);
         if (m_log_file) return;
-
-        auto now = std::chrono::system_clock::now();
-        auto itt = std::chrono::system_clock::to_time_t(now);
-        std::stringstream ss;
-        ss << "izotrox-" << std::put_time(std::localtime(&itt), "%Y%m%d-%H%M%S") << ".log";
-        std::string filename = ss.str();
 
         namespace fs = std::filesystem;
         fs::path log_dir = "logs";
@@ -99,15 +88,34 @@ void Logger::enable_logging_to_file() {
             fs::create_directory(log_dir);
         }
 
-        fs::path log_path = log_dir / filename;
-        filename_str = log_path.string();
+        std::vector<fs::path> log_files;
+        for (const auto& entry : fs::directory_iterator(log_dir)) {
+            if (entry.is_regular_file() && entry.path().extension() == ".log") {
+                log_files.push_back(entry.path());
+            }
+        }
+
+        if (log_files.size() >= MAX_LOGS) {
+            std::sort(log_files.begin(), log_files.end());
+            for (size_t i = 0; i <= log_files.size() - MAX_LOGS; ++i) {
+                fs::remove(log_files[i]);
+            }
+        }
+
+        auto now = std::chrono::system_clock::now();
+        auto itt = std::chrono::system_clock::to_time_t(now);
+        std::stringstream ss;
+        ss << "izotrox-" << std::put_time(std::localtime(&itt), "%Y%m%d-%H%M%S") << ".log";
+
+        fs::path log_path = log_dir / ss.str();
+        filename = log_path.string();
 
         m_log_file = std::make_unique<LogFile>();
         m_log_file->stream.open(log_path, std::ios::out | std::ios::app);
     }
 
-    if (!filename_str.empty()) {
-        info("Logging to file {}", filename_str);
+    if (!filename.empty()) {
+        LogInfo("Logging to file {}", filename);
     }
 }
 

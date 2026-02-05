@@ -79,7 +79,7 @@ std::shared_ptr<View> ThemePreviewView::create(Font* font) {
     optionbox->add_option("Option 1");
     optionbox->add_option("Option 2");
     optionbox->add_option("Option 3");
-    optionbox->set_selected_index(0);
+    optionbox->select(0);
     root->add_child(optionbox);
 
     return std::make_shared<View>(root);

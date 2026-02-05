@@ -48,14 +48,15 @@
 using namespace Izo;
 
 void draw_debug_panel(Painter& painter, Font& font, float fps) {
+    constexpr float UPDATE_FREQUENCY = 0.5f;
+
     static float timer = 0;
     static std::string cached_text;
     static int cached_w = 0;
     static int cached_h = 0;
 
-    constexpr int update_interval_s = 1;
     timer += Application::the().delta();
-    if (cached_text.empty() || timer >= update_interval_s * 1000.0f) {
+    if (cached_text.empty() || timer >= UPDATE_FREQUENCY * 1000.0f) {
         float temp = SystemStats::cpu_temp();
         int mem = SystemStats::free_memory_mb();
         int app_mem = SystemStats::app_memory_usage_mb();
@@ -66,10 +67,11 @@ void draw_debug_panel(Painter& painter, Font& font, float fps) {
         timer = 0;
     }
 
-    painter.fill_rect({10, 10, cached_w, cached_h}, Color(0, 0, 0, 128));
+    painter.fill_rounded_rect({10, 10, cached_w, cached_h}, 15, Color(0, 0, 0, 128));
     font.draw_text(painter, {20, 15}, cached_text, Color::White);
 }
 
+/* @returns Error message if parsing failed, empty string otherwise */
 const std::string try_parse_arguments(int argc, const char* argv[]) {
     ArgsParser parser("Izotrox - Advanced UI Framework");
     parser.add_argument("theme", "t", "Theme name to load", false);
@@ -116,7 +118,9 @@ int main(int argc, const char* argv[]) {
 
     Logger::the().enable_logging_to_file();
 
-    LogInfo("Izotrox v{}.{}.{} Booting... (compiled on {}, {})", IZO_VERSION_MAJOR, IZO_VERSION_MINOR, IZO_VERSION_REVISION, IZO_BUILD_DATE, IZO_BUILD_TIME);
+    LogInfo("Izotrox v{}.{}.{} Booting... (compiled on {}, {})", 
+        IZO_VERSION_MAJOR, IZO_VERSION_MINOR, IZO_VERSION_REVISION, 
+        IZO_BUILD_DATE, IZO_BUILD_TIME);
 
     bool headless = Settings::the().has("preview-path");
     LogTrace("Headless mode: {}", headless);
@@ -156,18 +160,16 @@ int main(int argc, const char* argv[]) {
         return 1;
     }
 
-    // Load earlier for preview
-    auto sliderHandle = ImageManager::the().load("slider-handle", "icons/slider-handle.png").get();
-    auto sliderHandleFocus = ImageManager::the().load("slider-handle-focus", "icons/slider-handle-focus.png").get();
+    ImageManager::the().load("slider-handle", "icons/slider-handle.png").get();
+    ImageManager::the().load("slider-handle-focus", "icons/slider-handle-focus.png").get();
 
     if (headless) {
-        std::string preview_path = Settings::the().get<std::string>("preview-path");
+        auto preview_path = Settings::the().get<std::string>("preview-path");
         auto preview_view = ThemePreviewView::create(systemFont);
         canvas->clear(ThemeDB::the().get<Color>("Colors", "Window.Background", Color(255)));
 
-        // Layout the view
-        int w = canvas->width();   // Fixed size for preview
-        int h = canvas->height();  // Fixed size for preview
+        int w = canvas->width();
+        int h = canvas->height();
         if (auto viewPtr = std::dynamic_pointer_cast<View>(preview_view)) {
             ViewManager::the().resize(w, h);
             ViewManager::the().push(preview_view, ViewTransition::None);
@@ -183,9 +185,6 @@ int main(int argc, const char* argv[]) {
             LogError("Failed to save theme preview to {}", preview_path);
             return 1;
         }
-    
-        LogInfo("Theme preview saved to '{}'", preview_path);
-        return 0;
     }
 
     SplashScreen splash(app, *painter, *canvas, *systemFont);

@@ -36,7 +36,7 @@ std::shared_ptr<View> SecondView::create(Font* font) {
     optionBox->add_option("dracula");
     optionBox->add_option("ios-dark");
     optionBox->add_option("tokyo-night");
-    optionBox->set_selected_index(0);
+    optionBox->select(0);
     optionBox->set_on_change([](int index, const std::string& value) {
         ThemeDB::the().load(std::format("theme/{}.ini", value));
     });

@@ -18,8 +18,8 @@ public:
     virtual void draw_dialog_content(Painter& painter) { (void)painter; }
     void update() override;
     
-    void show_dialog();
-    void hide_dialog();
+    void open();
+    void close();
     bool is_dialog_visible() const { return m_dialog_visible; }
 
     void set_dialog_bounds(const IntRect& bounds) { m_dialog_bounds = bounds; }

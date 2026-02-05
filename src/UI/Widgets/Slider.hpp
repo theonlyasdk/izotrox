@@ -21,7 +21,7 @@ public:
     bool on_touch_event(IntPoint point, bool down) override;
 
 private:
-    float m_val;
+    float m_value;
     Image* m_handle;
     Image* m_handle_focus;
     bool m_pressed = false;

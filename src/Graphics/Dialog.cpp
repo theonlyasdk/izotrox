@@ -15,7 +15,7 @@ void Dialog::update() {
     m_dialog_anim.update(16.0f);
 }
 
-void Dialog::show_dialog() {
+void Dialog::open() {
     if (m_dialog_visible) return;
     m_dialog_visible = true;
     
@@ -24,7 +24,7 @@ void Dialog::show_dialog() {
     m_dialog_anim.set_target(1.0f, duration, easing);
 }
 
-void Dialog::hide_dialog() {
+void Dialog::close() {
     if (!m_dialog_visible) return;
     
     int duration = ThemeDB::the().get<int>("Feel", "Dialog.AnimationDuration", 300);

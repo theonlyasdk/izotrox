@@ -72,7 +72,7 @@ private:
     Logger& operator=(const Logger&) = delete;
 
     struct LogFile;
-    std::mutex          m_log_mutex;
+    std::mutex               m_log_mutex;
     std::unique_ptr<LogFile> m_log_file;
 };
 

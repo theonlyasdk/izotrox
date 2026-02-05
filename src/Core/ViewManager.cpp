@@ -78,7 +78,7 @@ void ViewManager::pop(ViewTransition transition) {
     m_processing_operation = false;
 }
 
-void ViewManager::show_dialog(std::shared_ptr<Widget> dialog) {
+void ViewManager::open(std::shared_ptr<Widget> dialog) {
     m_dialog = dialog;
 }
 
@@ -93,7 +93,7 @@ void ViewManager::process_pending_operations() {
 
     // Process the first pending operation
     PendingOperation op = m_pending_ops.front();
-    m_pending_ops.erase(m_pending_ops.begin());
+    m_pending_ops.pop_front();
 
     if (op.type == OperationType::Push) {
         push(op.view, op.transition);

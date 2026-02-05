@@ -6,6 +6,7 @@
 
 #include <vector>
 #include <memory>
+#include <deque>
 
 namespace Izo {
 
@@ -27,7 +28,7 @@ public:
     void push(std::shared_ptr<View> view, ViewTransition transition = ViewTransition::ThemeDefault);
     void pop(ViewTransition transition = ViewTransition::ThemeDefault);
 
-    void show_dialog(std::shared_ptr<Widget> dialog);
+    void open(std::shared_ptr<Widget> dialog);
     void dismiss_dialog();
     bool has_active_dialog() const { return m_dialog != nullptr; }
 
@@ -67,7 +68,7 @@ private:
     bool m_is_pop = false;
 
     // Parallel animation support
-    std::vector<PendingOperation> m_pending_ops;
+    std::deque<PendingOperation> m_pending_ops;
     bool m_processing_operation = false;
 
     int m_width = 0;

@@ -23,8 +23,8 @@ public:
     void add_option(const std::string& option);
     void set_options(const std::vector<std::string>& options);
     
-    void set_selected_index(int index);
-    int selected_index() const { return m_selected_index; }
+    void select(int index);
+    int selected_index() const;
     std::string selected_value() const;
     
     void set_on_change(std::function<void(int, const std::string&)> callback) { m_on_change = callback; }

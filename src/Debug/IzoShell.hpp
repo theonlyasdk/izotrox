@@ -27,6 +27,7 @@ public:
 
 private:
     IzoShell();
+
     std::map<std::string, Command> m_commands;
     std::vector<std::string> split(const std::string& str, char delimiter);
 };
