@@ -14,7 +14,7 @@ namespace Izo {
         return 0.0f;
     }
 
-    int SystemStats::free_memory_mb() {
+    int SystemStats::sys_free_memory_mb() {
         std::ifstream f("/proc/meminfo");
         std::string line;
         while (std::getline(f, line)) {

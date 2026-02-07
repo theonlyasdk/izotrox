@@ -48,27 +48,33 @@
 using namespace Izo;
 
 void draw_debug_panel(Painter& painter, Font& font, float fps) {
-    constexpr float UPDATE_FREQUENCY = 0.5f;
+    constexpr float UPDATE_FREQUENCY = 1.5f; // every 1.5 seconds
+    constexpr int PANEL_ROUNDNESS = 20;
+    constexpr int PANEL_PADDING = 10;
 
     static float timer = 0;
     static std::string cached_text;
     static int cached_w = 0;
     static int cached_h = 0;
 
+    int app_width = Application::the().width();
+    int app_height = Application::the().height();
+
     timer += Application::the().delta();
     if (cached_text.empty() || timer >= UPDATE_FREQUENCY * 1000.0f) {
         float temp = SystemStats::cpu_temp();
-        int mem = SystemStats::free_memory_mb();
+        int mem = SystemStats::sys_free_memory_mb();
         int app_mem = SystemStats::app_memory_usage_mb();
 
         cached_text = std::format("FPS: {:.1f} | Temp: {:.1f}C | FreeMem: {}MB | AppMem: {}MB", fps, temp, mem, app_mem);
-        cached_w = font.width(cached_text) + 20;
+        cached_w = font.width(cached_text) + (PANEL_PADDING * 2);
         cached_h = font.height() + 10;
         timer = 0;
     }
 
-    painter.fill_rounded_rect({10, 10, cached_w, cached_h}, 15, Color(0, 0, 0, 128));
-    font.draw_text(painter, {20, 15}, cached_text, Color::White);
+    int pos_x = app_width / 2 - cached_w / 2;
+    painter.fill_rounded_rect({pos_x, 10, cached_w, cached_h}, PANEL_ROUNDNESS, Color(0, 0, 0, 128));
+    font.draw_text(painter, {PANEL_PADDING + pos_x, 15}, cached_text, Color::White);
 }
 
 /* @returns Error message if parsing failed, empty string otherwise */
@@ -116,7 +122,7 @@ int main(int argc, const char* argv[]) {
         return 1;
     }
 
-    Logger::the().enable_logging_to_file();
+    // Logger::the().enable_logging_to_file();
 
     LogInfo("Izotrox v{}.{}.{} Booting... (compiled on {}, {})", 
         IZO_VERSION_MAJOR, IZO_VERSION_MINOR, IZO_VERSION_REVISION, 
