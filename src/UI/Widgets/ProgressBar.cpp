@@ -12,9 +12,13 @@ namespace Izo {
 
 ProgressBar::ProgressBar(float progress) : m_value(progress) {
     set_focusable(true);
+    set_height(20);
 }
 
 ProgressBar::ProgressBar(bool indeterminate) : m_value(0) {
+    set_height(20);
+    set_focusable(true);
+
     if (indeterminate) {
         m_type = ProgressBar::Type::Indeterminate;
         m_indeterminate_anim.set_target(1.0f, 1000, Easing::EaseInOutCubic);

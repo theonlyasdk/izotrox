@@ -58,7 +58,6 @@ std::shared_ptr<View> ThemePreviewView::create(Font* font) {
 
     auto progressbar = std::make_shared<ProgressBar>(true);
     progressbar->set_width(WidgetSizePolicy::MatchParent);
-    progressbar->set_height(10);
     root->add_child(progressbar);
 
     auto slider = std::make_shared<Slider>(0.4f);

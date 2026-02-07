@@ -21,10 +21,10 @@ void Button::draw_content(Painter& painter) {
     int app_height = Application::the().height();
 
     if (b.x + b.w > app_width) {
-        b.w = app_width - b.x - (parent()->padding().left + parent()->padding().right);
+        b.w = app_width - b.x;
     }
     if (b.y + b.h > app_height) {
-        b.h = app_height - b.y - (parent()->padding().top + parent()->padding().bottom);
+        b.h = app_height - b.y;
     }
 
     painter.fill_rounded_rect(b, roundness, c); 
