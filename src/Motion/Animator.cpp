@@ -6,7 +6,7 @@
 namespace Izo {
 template <typename T>
 Animator<T>::Animator(T startVal)
-    : current(startVal), start(startVal), target(startVal) {}
+    : current(startVal), start(startVal), target(startVal), m_running(true) {}
 
 template <typename T> Animator<T>::Animator() : current(), start(), target() {}
 
@@ -17,25 +17,25 @@ void Animator<T>::set_target(T targetVal, float durationMs, Easing ease) {
   duration = durationMs;
   elapsed = 0.0f;
   easing = ease;
-  running = true;
+  m_running = true;
 }
 
 template <typename T> void Animator<T>::snap_to(T targetVal) {
   current = targetVal;
   target = targetVal;
   start = targetVal;
-  running = false;
+  m_running = false;
 }
 
 template <typename T> T Animator<T>::value() const { return current; }
-template <typename T> bool Animator<T>::is_running() const { return running; }
+template <typename T> bool Animator<T>::running() const { return m_running; }
 
 template <typename T> void Animator<T>::set_loop(bool loop) {
     m_loop = loop;
 }
 
 template <typename T> bool Animator<T>::update(float dtMs) {
-  if (!running)
+  if (!m_running)
     return false;
 
   elapsed += dtMs;
@@ -44,7 +44,7 @@ template <typename T> bool Animator<T>::update(float dtMs) {
         elapsed = std::fmod(elapsed, duration);
     } else {
         current = target;
-        running = false;
+        m_running = false;
         return true;
     }
   }

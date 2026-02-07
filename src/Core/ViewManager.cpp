@@ -1,4 +1,5 @@
 #include "ViewManager.hpp"
+#include <memory>
 #include "Core/Application.hpp"
 #include "ThemeDB.hpp"
 #include "Input/Input.hpp"
@@ -91,6 +92,10 @@ bool ViewManager::has_active_dialog() const {
     return m_dialog != nullptr;
 }
 
+std::shared_ptr<Dialog> ViewManager::active_dialog() const {
+    return m_dialog;
+}
+
 bool ViewManager::is_animating() const { 
     return m_animating; 
 }
@@ -149,11 +154,13 @@ void ViewManager::resize(int w, int h) {
 }
 
 void ViewManager::update() {
-    constexpr bool dialog_should_block_view_updates = true;
-
     if (m_dialog) {
         m_dialog->update();
-        if (dialog_should_block_view_updates) return;
+    }
+
+    // m_dialog sometimes might be nullptr after update
+    if (m_dialog && !m_dialog->m_dialog_anim.running()) {
+        return;
     }
 
     if (m_animating) {

@@ -187,7 +187,7 @@ void Painter::fill_rect(const IntRect& rect, Color color) {
                 uint32_t bg_pixel = m_canvas->pixel({px, py});
 
 #ifdef __ANDROID__
-                Color bg_color(bg);
+                Color bg_color(bg_pixel);
                 uint32_t nr = (final_color.r * a + bg_color.r * inv_a) >> 8;
                 uint32_t ng = (final_color.g * a + bg_color.g * inv_a) >> 8;
                 uint32_t nb = (final_color.b * a + bg_color.b * inv_a) >> 8;

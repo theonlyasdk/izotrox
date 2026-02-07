@@ -62,6 +62,8 @@ struct Rect {
     /* In-place operations */
     void expand(T amount);
     void contract(T amount);
+    void contract_vert(T amount);
+    void contract_horiz(T amount);
 };
 
 using IntRect = Rect<int>;

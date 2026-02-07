@@ -40,7 +40,7 @@ public:
 
     void snap_to(T targetVal);
     T value() const;
-    bool is_running() const;
+    bool running() const;
 
     void set_loop(bool loop);
 
@@ -55,7 +55,7 @@ private:
     float duration = 0.0f;
     float elapsed = 0.0f;
     Easing easing = Easing::EaseInOutQuad;
-    bool running = false;
+    bool m_running = false;
     bool m_loop = false;
 };
 

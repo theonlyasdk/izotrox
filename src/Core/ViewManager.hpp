@@ -33,6 +33,7 @@ public:
     void open_dialog(std::shared_ptr<Dialog> dialog);
     void dismiss_dialog();
     bool has_active_dialog() const;
+    std::shared_ptr<Dialog> active_dialog() const;
 
     void resize(int w, int h);
     void update();

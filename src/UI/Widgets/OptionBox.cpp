@@ -11,9 +11,11 @@
 namespace Izo {
 
 constexpr int OPTION_ITEM_HEIGHT_PADDING = 20;
+constexpr int OPTION_LIST_ITEM_GAP = 10;
 constexpr int DIALOG_MIN_WIDTH = 400;
 constexpr int DIALOG_MIN_HEIGHT = 600;
-constexpr int PADDING = 40;
+constexpr int PADDING_FROM_EDGES = 40;
+constexpr int DIALOG_PADDING = 10;
 
 class OptionsDialog : public Dialog {
    public:
@@ -25,9 +27,9 @@ class OptionsDialog : public Dialog {
         int win_w = Application::the().width();
         int win_h = Application::the().height();
 
-        int dialog_w = std::min(win_w - PADDING, DIALOG_MIN_WIDTH);
+        int dialog_w = std::min(win_w - PADDING_FROM_EDGES, DIALOG_MIN_WIDTH);
         int item_h = m_font->height() + OPTION_ITEM_HEIGHT_PADDING;
-        int dialog_h = std::min(win_h - PADDING, num_options * item_h);
+        int dialog_h = std::min(win_h - PADDING_FROM_EDGES, num_options * item_h);
 
         IntRect target_rect{(win_w - dialog_w) / 2, (win_h - dialog_h) / 2, dialog_w, dialog_h};
 
@@ -43,7 +45,8 @@ class OptionsDialog : public Dialog {
     void update() override {
         Dialog::update();
         m_dialog_anim.update(Application::the().delta());
-        if (m_closing && !m_dialog_anim.is_running()) {
+
+        if (m_closing && !m_dialog_anim.running()) {
             ViewManager::the().dismiss_dialog();
         }
     }
@@ -55,12 +58,12 @@ class OptionsDialog : public Dialog {
         int win_w = Application::the().width();
         int win_h = Application::the().height();
 
-        int dialog_w = std::min(win_w - PADDING, DIALOG_MIN_WIDTH);
+        int dialog_w = std::min(win_w - PADDING_FROM_EDGES, DIALOG_MIN_WIDTH);
         int item_h = m_font->height() + OPTION_ITEM_HEIGHT_PADDING;
-        int dialog_h = std::min(win_h - PADDING, num_options * item_h);
+        int dialog_h = std::min(win_h - PADDING_FROM_EDGES, num_options * item_h);
 
         IntRect dialog_bounds_after_anim{
-            (win_w - dialog_w) / 2, (win_h - dialog_h) / 2, dialog_w, dialog_h,
+            (win_w - dialog_w) / 2, (win_h - dialog_h) / 2, dialog_w, dialog_h + DIALOG_PADDING * 2,
         };
 
         IntRect current{
@@ -73,19 +76,20 @@ class OptionsDialog : public Dialog {
         set_bounds(current);
 
         auto roundness = ThemeDB::the().get<int>("Looks", "Widget.Roundness", 12);
-        auto color_bg = ThemeDB::the().get<Color>("Colors", "OptionBox.ExpandedBackground", Color(100));
+        auto color_bg = ThemeDB::the().get<Color>("Colors", "OptionBox.Background", Color(100));
         auto color_border = ThemeDB::the().get<Color>("Colors", "OptionBox.Border", Color(200));
         auto color_highlight = ThemeDB::the().get<Color>("Colors", "OptionBox.Highlight", Color(200));
         auto color_text = ThemeDB::the().get<Color>("Colors", "OptionBox.Text", Color(255));
 
         color_bg.a = (uint8_t)(color_bg.a * anim_progress);
         color_border.a = (uint8_t)(color_border.a * anim_progress);
-    
-        painter.fill_rounded_rect(current, roundness, color_bg);
-        painter.draw_rounded_rect(current, roundness, color_border);
+        
+        int outer_radius = roundness + DIALOG_PADDING;
+        painter.fill_rounded_rect(current, outer_radius, color_bg);
+        painter.draw_rounded_rect(current, outer_radius, color_border);
 
         if (anim_progress > 0.5f && m_font) {
-            if (!m_dialog_anim.is_running()) {
+            if (!m_dialog_anim.running()) {
                 current.w = dialog_bounds_after_anim.w;
                 current.h = dialog_bounds_after_anim.h;
             }
@@ -95,19 +99,24 @@ class OptionsDialog : public Dialog {
 
             painter.push_clip(current);
             for (int i = 0; i < (int)m_options.size(); ++i) {
-                int iy = current.y + 10 + i * item_h;
-                if (iy + item_h < current.y || iy > current.y + current.h) continue;
+                int iy = current.y + DIALOG_PADDING + (i * item_h);
+
+                if (iy + item_h < current.y || iy > current.y + current.h) 
+                    continue;
 
                 IntRect highlight_rect = {current.x, iy, current.w, item_h};
+                // highlight_rect.contract_vert(DIALOG_PADDING / 2);
+                highlight_rect.contract_horiz(DIALOG_PADDING);
+
                 bool hovering = highlight_rect.contains(Input::the().touch_point());
 
                 if (i == m_selected || hovering) {
                     color_highlight.a = (uint8_t)(color_highlight.a * alpha);
-                    painter.fill_rect(highlight_rect, color_highlight);
+                    painter.fill_rounded_rect(highlight_rect, roundness, color_highlight);
                 }
 
                 color_text.a = (uint8_t)(255 * alpha);
-                m_font->draw_text(painter, {current.x + 20, iy + (item_h - m_font->height()) / 2}, m_options[i], color_text);
+                m_font->draw_text(painter, {current.x + DIALOG_PADDING * 2, iy + (item_h - m_font->height()) / 2}, m_options[i], color_text);
             }
             painter.pop_clip();
         }
@@ -230,12 +239,12 @@ void OptionBox::draw_content(Painter& painter) {
 
 bool OptionBox::on_touch_event(IntPoint point, bool down) {
     auto color_bg = ThemeDB::the().get<Color>("Colors", "OptionBox.Background", Color(100));
-    auto color_expanded_bg = ThemeDB::the().get<Color>("Colors", "OptionBox.ExpandedBackground", Color(100));
+    auto color_active = ThemeDB::the().get<Color>("Colors", "OptionBox.Active", Color(100));
 
     if (content_box().contains(point)) {
         if (down) {
             m_pressed = true;
-            m_bg_anim.set_target(color_expanded_bg, 100);
+            m_bg_anim.set_target(color_active, 100);
         } else if (m_pressed) {
             m_pressed = false;
             m_bg_anim.set_target(color_bg, 200);

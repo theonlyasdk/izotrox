@@ -51,6 +51,16 @@ template <typename T> void Rect<T>::expand(T amount) {
   h += amount * 2;
 }
 
+template <typename T> void Rect<T>::contract_vert(T amount) {
+  y += amount;
+  h -= amount * 2;
+}
+
+template <typename T> void Rect<T>::contract_horiz(T amount) {
+  x += amount;
+  w -= amount * 2;
+}
+
 template <typename T> void Rect<T>::contract(T amount) {
   x += amount;
   y += amount;
