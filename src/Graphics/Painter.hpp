@@ -35,7 +35,7 @@ class Painter {
     void draw_pixel(IntPoint point, Color color);
     void fill_rect(const IntRect& rect, Color color);
     void clear_rect(const IntRect& rect, Color color);
-    void draw_rect(const IntRect& rect, Color color);
+    void outline_rect(const IntRect& rect, Color color);
     void draw_line(IntPoint p1, IntPoint p2, Color color);
     void fill_rounded_rect(const IntRect& rect, int radius, Color color, int corners = AllCorners);
     void draw_rounded_rect(const IntRect& rect, int radius, Color color, int thickness = 1);

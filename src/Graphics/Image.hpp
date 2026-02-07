@@ -4,6 +4,7 @@
 #include "Graphics/Painter.hpp"
 #include "Geometry/Primitives.hpp"
 #include "Core/ResourceManager.hpp"
+#include "UI/Enums.hpp"
 
 #include <string>
 
@@ -17,18 +18,6 @@ public:
     bool valid() const { return data != nullptr; }
     int width() const { return w; }
     int height() const { return h; }
-
-    enum class Anchor {
-        TopLeft,
-        TopRight,
-        BottomLeft,
-        BottomRight,
-        Center,
-        CenterStartHoriz, 
-        CenterStartVert,  
-        CenterEndHoriz,   
-        CenterEndVert     
-    };
 
     void draw(Painter& painter, IntPoint pos);
     void draw_scaled(Painter& painter, const IntRect& rect, Anchor anchor = Anchor::TopLeft);

@@ -4,9 +4,10 @@
 #include <string>
 #include <memory>
 #include <format>
+#include "Core/Application.hpp"
 
 /* If LogFatal() should terminate the app with LOG_FATAL_EXIT_CODE */
-// #define LOG_FATAL_TERMINATES_APP
+#define LOG_FATAL_TERMINATES_APP
 #ifdef LOG_FATAL_TERMINATES_APP
 #define LOG_FATAL_EXIT_CODE 1
 #endif
@@ -61,7 +62,7 @@ public:
     void fatal(std::format_string<Args...> fmt, Args&&... args) {
         log(LogLevel::Fatal, std::format(fmt, std::forward<Args>(args)...));
         #ifdef LOG_FATAL_TERMINATES_APP
-            std::exit(LOG_FATAL_EXIT_CODE);
+            Application::the().quit(LOG_FATAL_EXIT_CODE);
         #endif
     }
 

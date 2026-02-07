@@ -79,10 +79,10 @@ void draw_debug_panel(Painter& painter, Font& font, float fps) {
 
 /* @returns Error message if parsing failed, empty string otherwise */
 const std::string try_parse_arguments(int argc, const char* argv[]) {
-    ArgsParser parser("Izotrox - Advanced UI Framework");
-    parser.add_argument("theme", "t", "Theme name to load", false);
+    ArgsParser parser("Izotrox - Experimental GUI engine for Android and Linux");
+    parser.add_argument("theme", "t", "Name of the theme to load", false);
     parser.add_argument("resource-root", "r", "Resource root directory", false);
-    parser.add_argument("save-theme-preview", "p", "Save theme preview to file", false);
+    parser.add_argument("save-theme-preview", "p", "Save theme preview to file. Specify a custom theme using --theme", false);
 
     if (!parser.parse(argc, argv)) {
         return parser.get_error();
@@ -235,8 +235,6 @@ int main(int argc, const char* argv[]) {
         terminates the app (if LOG_FATAL_TERMINATE_APP is enabled)
         with error code defined in LOG_FATAL_EXIT_CODE */
         LogFatal("UwU app crashed");
-        /* For now, we manually call Application::quit(1) */
-        Application::the().quit(1);
     });
     root->add_child(btn_crash_app);
 

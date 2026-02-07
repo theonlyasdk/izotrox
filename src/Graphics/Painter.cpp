@@ -118,12 +118,11 @@ void Painter::draw_pixel(IntPoint point, Color color) {
             uint32_t inv_a = 256 - a;
 
 #ifdef __ANDROID__
-            Color bgC(bg);
-            uint32_t r = (color.r * a + bgC.r * inv_a) >> 8;
-            uint32_t g = (color.g * a + bgC.g * inv_a) >> 8;
-            uint32_t b = (color.b * a + bgC.b * inv_a) >> 8;
-            m_canvas->set_pixel(
-                {dx, dy}, Color((uint8_t)r, (uint8_t)g, (uint8_t)b).as_argb());
+            Color bg_color(bg);
+            uint32_t r = (color.r * a + bg_color.r * inv_a) >> 8;
+            uint32_t g = (color.g * a + bg_color.g * inv_a) >> 8;
+            uint32_t b = (color.b * a + bg_color.b * inv_a) >> 8;
+            m_canvas->set_pixel({dx, dy}, Color((uint8_t)r, (uint8_t)g, (uint8_t)b).as_argb());
 #else
             uint32_t rb = bg & 0xFF00FF;
             uint32_t g = bg & 0x00FF00;
@@ -204,7 +203,7 @@ void Painter::clear_rect(const IntRect& rect, Color color) {
     fill_rect(rect, color);
 }
 
-void Painter::draw_rect(const IntRect& rect, Color color) {
+void Painter::outline_rect(const IntRect& rect, Color color) {
     if (rect.w < 0 || rect.h < 0) return;
 
     fill_rect({rect.x, rect.y, rect.w, 1}, color);

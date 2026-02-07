@@ -89,9 +89,6 @@ void Application::present(Canvas& canvas) {
     )
 }
 
-uint32_t Application::width() const { return impl->width; }
-uint32_t Application::height() const { return impl->height; }
-
 void Application::on_resize(std::function<void(int, int)> callback) {
     impl->on_resize = callback;
 }
@@ -115,6 +112,16 @@ void Application::show() {
             impl->sdl_app->show();
         }
     )
+}
+
+const uint32_t Application::width() const { 
+    return impl->width; 
+}
+const uint32_t Application::height() const { 
+    return impl->height; 
+}
+const IntRect Application::screen_rect() const {
+    return IntRect{0, 0, static_cast<int>(width()), static_cast<int>(height())};
 }
 
 }

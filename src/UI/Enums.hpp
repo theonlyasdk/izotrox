@@ -25,6 +25,18 @@ enum class Align {
     Stretch
 };
 
+enum class Anchor {
+    TopLeft,
+    TopRight,
+    BottomLeft,
+    BottomRight,
+    Center,
+    CenterStartHoriz, 
+    CenterStartVert,  
+    CenterEndHoriz,   
+    CenterEndVert     
+};
+
 enum class TextAlign {
     Left,
     Center,

@@ -1,3 +1,4 @@
+#include "Core/Application.hpp"
 #include "Debug/Logger.hpp"
 #include "Graphics/Image.hpp"
 
@@ -8,17 +9,21 @@ namespace Izo {
 
 Image::Image(const std::string& path) {
     data = stbi_load(path.c_str(), &w, &h, &channels, 4); 
+
     if (!data) {
         LogError("Failed to load image: {}", path);
     }
 }
 
 Image::~Image() {
-    if (data) stbi_image_free(data);
+    if (data) {
+        stbi_image_free(data);
+    }
 }
 
 void Image::draw(Painter& painter, IntPoint pos) {
     if (!data) return;
+    if (!Application::the().screen_rect().contains(pos)) return;
 
     for (int iy = 0; iy < h; ++iy) {
         for (int ix = 0; ix < w; ++ix) {
@@ -37,6 +42,7 @@ void Image::draw(Painter& painter, IntPoint pos) {
 
 void Image::draw_scaled(Painter& painter, const IntRect& rect, Anchor anchor) {
     if (!data || rect.w <= 0 || rect.h <= 0) return;
+    if (!Application::the().screen_rect().contains(rect.x, rect.y)) return;
 
     int dx = rect.x;
     int dy = rect.y;

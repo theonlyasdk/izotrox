@@ -4,6 +4,7 @@
 #include <functional>
 #include <map>
 
+#include "Geometry/Primitives.hpp"
 #include "Graphics/Canvas.hpp"
 #include <any>
 
@@ -22,11 +23,12 @@ public:
 
     void present(Canvas& canvas);
 
-    uint32_t width() const;
-    uint32_t height() const;
+    const uint32_t width() const;
+    const uint32_t height() const;
+    const IntRect screen_rect() const;
 
-    float delta() const noexcept { return _delta; }
-    void set_delta(float dt) noexcept { _delta = dt; }
+    float delta() const { return _delta; }
+    void set_delta(float dt) { _delta = dt; }
 
     void quit(int exit_code);
     void show();
