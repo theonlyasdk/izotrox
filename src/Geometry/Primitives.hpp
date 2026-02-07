@@ -69,4 +69,15 @@ struct Rect {
 using IntRect = Rect<int>;
 using FloatRect = Rect<float>;
 
+struct Padding {
+    int left, right, top, bottom;
+
+    Padding(int all) {
+        left = right = top = bottom = all;
+    }
+    Padding(int left, int right, int top, int bottom) {
+        left=left;right=right;top=top;bottom=bottom;
+    }
+};
+
 } 

@@ -17,6 +17,16 @@ void Button::draw_content(Painter& painter) {
     IntRect b = global_bounds();
     Color c = m_bg_anim.value();
 
+    int app_width = Application::the().width();
+    int app_height = Application::the().height();
+
+    if (b.x + b.w > app_width) {
+        b.w = app_width - b.x - (parent()->padding().left + parent()->padding().right);
+    }
+    if (b.y + b.h > app_height) {
+        b.h = app_height - b.y - (parent()->padding().top + parent()->padding().bottom);
+    }
+
     painter.fill_rounded_rect(b, roundness, c); 
     painter.draw_rounded_rect(b, roundness, color_btn_text);
 

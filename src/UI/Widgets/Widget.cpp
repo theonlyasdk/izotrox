@@ -150,4 +150,15 @@ const IntRect Widget::global_bounds() const {
     return bounds;
 }
 
+void Widget::set_padding(Padding padding) {
+    m_padding_left=padding.left;
+    m_padding_right=padding.right;
+    m_padding_bottom=padding.bottom;
+    m_padding_top=padding.top;
+}
+
+const Padding Widget::padding() const {
+    return Padding{m_padding_left, m_padding_right, m_padding_top, m_padding_bottom};
+}
+
 }  // namespace Izo

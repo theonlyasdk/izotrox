@@ -145,7 +145,7 @@ void ProgressBar::update() {
 }
 
 void ProgressBar::measure(int parent_w, int parent_h) {
-    m_measured_size = local_bounds();
+    m_measured_size = {0, 0, 100, height()};
 }
 
 bool ProgressBar::on_touch_event(IntPoint point, bool down) {

@@ -59,6 +59,9 @@ public:
     bool visible() const { return m_visible; }
     bool hovering() const;
 
+    void set_padding(Padding padding);
+    const Padding padding() const;
+
     void set_height(int h) { m_height = h; }
     void set_height(WidgetSizePolicy p) { m_height = (int)p; }
 

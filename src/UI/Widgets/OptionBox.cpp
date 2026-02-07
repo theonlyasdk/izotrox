@@ -16,7 +16,7 @@ constexpr int OPTION_LIST_ITEM_GAP = 10;
 constexpr int DIALOG_MIN_WIDTH = 400;
 constexpr int DIALOG_MIN_HEIGHT = 600;
 constexpr int DIALOG_PADDING = 10;
-constexpr int MARGIN_FROM_EDGE = 10;
+constexpr int MARGIN_FROM_EDGE = 40;
 
 class OptionsDialog : public Dialog {
    public:
@@ -116,7 +116,9 @@ class OptionsDialog : public Dialog {
                 }
 
                 color_text.a = (uint8_t)(255 * alpha);
+                painter.push_rounded_clip(highlight_rect, roundness);
                 m_font->draw_text(painter, {current.x + DIALOG_PADDING * 2, iy + (item_h - m_font->height()) / 2}, m_options[i], color_text);
+                painter.pop_clip();
             }
             painter.pop_clip();
         }
