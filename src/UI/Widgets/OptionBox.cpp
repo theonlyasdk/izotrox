@@ -5,17 +5,18 @@
 #include "Core/Application.hpp"
 #include "Core/ThemeDB.hpp"
 #include "Core/ViewManager.hpp"
+#include "Geometry/Primitives.hpp"
 #include "Graphics/Dialog.hpp"
 #include "Input/Input.hpp"
 
 namespace Izo {
 
-constexpr int OPTION_ITEM_HEIGHT_PADDING = 20;
+constexpr int OPTION_LIST_ITEM_HEIGHT_PADDING = 20;
 constexpr int OPTION_LIST_ITEM_GAP = 10;
 constexpr int DIALOG_MIN_WIDTH = 400;
 constexpr int DIALOG_MIN_HEIGHT = 600;
-constexpr int PADDING_FROM_EDGES = 40;
 constexpr int DIALOG_PADDING = 10;
+constexpr int MARGIN_FROM_EDGE = 10;
 
 class OptionsDialog : public Dialog {
    public:
@@ -27,9 +28,9 @@ class OptionsDialog : public Dialog {
         int win_w = Application::the().width();
         int win_h = Application::the().height();
 
-        int dialog_w = std::min(win_w - PADDING_FROM_EDGES, DIALOG_MIN_WIDTH);
-        int item_h = m_font->height() + OPTION_ITEM_HEIGHT_PADDING;
-        int dialog_h = std::min(win_h - PADDING_FROM_EDGES, num_options * item_h);
+        int dialog_w = std::min(win_w - MARGIN_FROM_EDGE, DIALOG_MIN_WIDTH);
+        int item_h = m_font->height() + OPTION_LIST_ITEM_HEIGHT_PADDING;
+        int dialog_h = std::min(win_h - MARGIN_FROM_EDGE, num_options * item_h);
 
         IntRect target_rect{(win_w - dialog_w) / 2, (win_h - dialog_h) / 2, dialog_w, dialog_h};
 
@@ -58,9 +59,9 @@ class OptionsDialog : public Dialog {
         int win_w = Application::the().width();
         int win_h = Application::the().height();
 
-        int dialog_w = std::min(win_w - PADDING_FROM_EDGES, DIALOG_MIN_WIDTH);
-        int item_h = m_font->height() + OPTION_ITEM_HEIGHT_PADDING;
-        int dialog_h = std::min(win_h - PADDING_FROM_EDGES, num_options * item_h);
+        int dialog_w = std::min(win_w - MARGIN_FROM_EDGE, DIALOG_MIN_WIDTH);
+        int item_h = m_font->height() + OPTION_LIST_ITEM_HEIGHT_PADDING;
+        int dialog_h = std::min(win_h - MARGIN_FROM_EDGE, num_options * item_h);
 
         IntRect dialog_bounds_after_anim{
             (win_w - dialog_w) / 2, (win_h - dialog_h) / 2, dialog_w, dialog_h + DIALOG_PADDING * 2,
@@ -95,7 +96,7 @@ class OptionsDialog : public Dialog {
             }
 
             float alpha = (anim_progress - 0.5f) * 2.0f;
-            int item_h = m_font->height() + OPTION_ITEM_HEIGHT_PADDING;
+            int item_h = m_font->height() + OPTION_LIST_ITEM_HEIGHT_PADDING;
 
             painter.push_clip(current);
             for (int i = 0; i < (int)m_options.size(); ++i) {
@@ -105,7 +106,6 @@ class OptionsDialog : public Dialog {
                     continue;
 
                 IntRect highlight_rect = {current.x, iy, current.w, item_h};
-                // highlight_rect.contract_vert(DIALOG_PADDING / 2);
                 highlight_rect.contract_horiz(DIALOG_PADDING);
 
                 bool hovering = highlight_rect.contains(Input::the().touch_point());
@@ -125,16 +125,25 @@ class OptionsDialog : public Dialog {
     bool on_touch_event(IntPoint point, bool down) override {
         if (m_closing) return true;
 
-        int item_h = m_font->height() + OPTION_ITEM_HEIGHT_PADDING;
-        int idx = (point.y - global_bounds().y) / item_h;
+        // FIXME: Point passed to on_touch_event is transformed
+        //        It's not clear that the point is transformed 
+        //        causing unintended bugs. I just spent half an hour
+        //        trying to fix the below logic before I realised
+        //        the transformed point was the problem.
+        IntPoint actual_touch_point = Input::the().touch_point();
+        int touch_y = actual_touch_point.y;
+        int item_height = m_font->height() + OPTION_LIST_ITEM_HEIGHT_PADDING;
+
+        // We're just finding out i from y = dialog.y + padding + (i * item_height)
+        int i = (touch_y - global_bounds().y - DIALOG_PADDING) / item_height;
 
         if (down) {
-            if (!global_bounds().contains(point)) {
+            if (!global_bounds().contains(actual_touch_point)) {
                 close();
                 return true;
             }
-            if (idx >= 0 && idx < (int)m_options.size()) {
-                m_callback(idx);
+            if (i >= 0 && i < (int)m_options.size()) {
+                m_callback(i);
                 close();
             }
         }

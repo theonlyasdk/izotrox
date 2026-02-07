@@ -1,4 +1,5 @@
 #include "Motion/Animator.hpp"
+#include "Debug/Logger.hpp"
 #include "Graphics/Color.hpp"
 #include <algorithm>
 #include <cmath>
@@ -14,7 +15,7 @@ template <typename T>
 void Animator<T>::set_target(T targetVal, float durationMs, Easing ease) {
   start = current;
   target = targetVal;
-  duration = durationMs;
+  m_duration = durationMs;
   elapsed = 0.0f;
   easing = ease;
   m_running = true;
@@ -27,21 +28,56 @@ template <typename T> void Animator<T>::snap_to(T targetVal) {
   m_running = false;
 }
 
-template <typename T> T Animator<T>::value() const { return current; }
-template <typename T> bool Animator<T>::running() const { return m_running; }
+template <typename T> T Animator<T>::value() const { 
+    return current; 
+}
+
+template <typename T> bool Animator<T>::running() const { 
+    return m_running; 
+}
+
+template <typename T> AnimationLoopMode Animator<T>::loop_mode() const { 
+    return m_loop_mode; 
+}
+
+template <typename T> float Animator<T>::duration() const { 
+    return m_duration; 
+}
+
+template <typename T> int Animator<T>::loop_count() const { 
+    return m_loop_count; 
+}
 
 template <typename T> void Animator<T>::set_loop(bool loop) {
     m_loop = loop;
+}
+
+template <typename T> void Animator<T>::set_loop_mode(AnimationLoopMode loop_mode) {
+    m_loop_mode = loop_mode;
 }
 
 template <typename T> bool Animator<T>::update(float dtMs) {
   if (!m_running)
     return false;
 
-  elapsed += dtMs;
-  if (elapsed >= duration) {
+  if (elapsed <= 0) {
+    m_reversing = false;
+  }
+
+  if (m_reversing) {
+    elapsed -= dtMs;
+  } else {
+    elapsed += dtMs;
+  }
+
+  if (elapsed >= m_duration) {
     if (m_loop) {
-        elapsed = std::fmod(elapsed, duration);
+        if (m_loop_mode == AnimationLoopMode::ReverseOnLoop) {
+            m_reversing = true;
+        } else {
+            elapsed = std::fmod(elapsed, m_duration);            
+        }
+        m_loop_count++;
     } else {
         current = target;
         m_running = false;
@@ -49,7 +85,7 @@ template <typename T> bool Animator<T>::update(float dtMs) {
     }
   }
 
-  float t = elapsed / duration;
+  float t = elapsed / m_duration;
   float k = apply_easing(t);
 
   current = interpolate(start, target, k);
@@ -76,11 +112,8 @@ static float spring(float p, bool in, bool bounce) {
     const float friction  = 0.6f;   
     const float overshoot = bounce ? 0.1f : 0.0f;
 
-    float t = in ? (1.0f - std::cos(p * M_PI * 0.5f))
-                 : (std::sin(p * M_PI * 0.5f));
-
-    float value = 1.0f - std::exp(-t * tension) *
-                        std::cos(t * (M_PI / (2.0f - friction)));
+    float t = in ? (1.0f - std::cos(p * M_PI * 0.5f)) : (std::sin(p * M_PI * 0.5f));
+    float value = 1.0f - std::exp(-t * tension) * std::cos(t * (M_PI / (2.0f - friction)));
 
     if (bounce) {
         value += overshoot * std::sin(t * M_PI * 4.0f);

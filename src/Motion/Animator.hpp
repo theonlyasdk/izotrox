@@ -27,7 +27,12 @@ enum class Easing {
 
     SpringEaseIn,
     SpringEaseOut,
-    SpringEaseBounce
+    SpringEaseBounce,
+};
+
+enum class AnimationLoopMode {
+    NoLoop,
+    ReverseOnLoop,
 };
 
 template <typename T>
@@ -37,14 +42,16 @@ public:
     Animator();
 
     void set_target(T targetVal, float durationMs, Easing ease = Easing::Linear);
-
     void snap_to(T targetVal);
+    void set_loop(bool loop);
+    void set_loop_mode(AnimationLoopMode mode);
+    bool update(float dtMs);
+
+    AnimationLoopMode loop_mode() const;
     T value() const;
     bool running() const;
-
-    void set_loop(bool loop);
-
-    bool update(float dtMs);
+    float duration() const;
+    int loop_count() const;
 
 private:
     float apply_easing(float t) const;
@@ -52,11 +59,14 @@ private:
     T current;
     T start;
     T target;
-    float duration = 0.0f;
+    float m_duration = 0.0f;
     float elapsed = 0.0f;
+    int m_loop_count = 0;
     Easing easing = Easing::EaseInOutQuad;
+    AnimationLoopMode m_loop_mode = AnimationLoopMode::ReverseOnLoop;
     bool m_running = false;
     bool m_loop = false;
+    bool m_reversing = false;
 };
 
 } 
