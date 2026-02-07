@@ -1,7 +1,5 @@
 #pragma once
 
-#include "Geometry/Primitives.hpp"
-
 namespace Izo {
 
 /* Forward declaration, do not delete */

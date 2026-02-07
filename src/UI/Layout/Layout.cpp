@@ -1,7 +1,8 @@
 #include "Layout.hpp"
 #include "Input/Input.hpp"
-#include "Core/ThemeDB.hpp"
+#include "Graphics/Painter.hpp"
 #include "Core/Application.hpp"
+
 #include <cmath>
 
 namespace Izo {

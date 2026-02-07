@@ -3,6 +3,7 @@
 #include "UI/Widgets/ListItem.hpp"
 #include "Core/ThemeDB.hpp"
 #include "Input/Input.hpp"
+#include "Graphics/Painter.hpp"
 
 namespace Izo {
 

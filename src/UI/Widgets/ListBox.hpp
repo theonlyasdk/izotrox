@@ -1,10 +1,11 @@
 #pragma once
 
-#include "UI/Widgets/Widget.hpp"
 #include "UI/Layout/Layout.hpp"
 #include <functional>
 
 namespace Izo {
+
+class Widget;
 
 class ListBox : public Layout {
 public:

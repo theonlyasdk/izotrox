@@ -1,12 +1,14 @@
 #pragma once
 
-#include "UI/Widgets/Widget.hpp"
 #include "Geometry/Primitives.hpp"
 #include "Input/KeyCode.hpp"
 
 #include <memory>
 
 namespace Izo {
+
+class Widget;
+class Painter;
 
 class View {
 public:

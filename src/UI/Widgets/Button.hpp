@@ -1,14 +1,15 @@
 #pragma once
 
-#include "UI/Widgets/Widget.hpp"
-#include "Graphics/Font.hpp"
 #include "Graphics/Color.hpp"
+#include "UI/Widgets/Widget.hpp"
 #include "Motion/Animator.hpp"
 
 #include <string>
 #include <functional>
 
 namespace Izo {
+
+class Font;
 
 class Button : public Widget {
 public:

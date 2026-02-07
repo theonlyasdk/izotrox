@@ -1,7 +1,6 @@
 #pragma once
 
 #include "UI/Widgets/Widget.hpp"
-#include "Graphics/Color.hpp"
 #include "Graphics/Image.hpp"
 
 #include <functional>

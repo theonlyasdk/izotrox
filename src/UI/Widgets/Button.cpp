@@ -2,6 +2,8 @@
 #include "Core/ThemeDB.hpp"
 #include "Input/Input.hpp"
 #include "Core/Application.hpp"
+#include "Graphics/Painter.hpp"
+#include "Graphics/Font.hpp"
 
 namespace Izo {
 

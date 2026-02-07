@@ -1,11 +1,12 @@
 #pragma once
 
-#include "Graphics/Painter.hpp"
-#include "Motion/Animator.hpp"
 #include "Geometry/Primitives.hpp"
 #include "Input/KeyCode.hpp"
+#include "Motion/Animator.hpp"
 
 namespace Izo {
+
+class Painter;
 
 enum class WidgetSizePolicy {
     Fixed = 0,

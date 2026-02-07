@@ -8,7 +8,6 @@
 
 #include "Debug/Logger.hpp"
 
-
 namespace Izo {
 
 template <typename T>

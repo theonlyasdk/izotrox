@@ -1,15 +1,15 @@
 #pragma once
 
+#include "Graphics/Color.hpp"
 #include "UI/Widgets/Widget.hpp"
-#include "Graphics/Font.hpp"
-#include "Motion/Animator.hpp"
-#include "Geometry/Primitives.hpp"
 
 #include <vector>
 #include <string>
 #include <functional>
 
 namespace Izo {
+
+class Font;
 
 class OptionBox : public Widget {
 public:

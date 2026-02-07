@@ -1,9 +1,10 @@
 
+#include <algorithm>
 
 #include "UI/Widgets/Slider.hpp"
 #include "Core/ThemeDB.hpp"
-#include <algorithm>
 #include "Core/ResourceManager.hpp"
+#include "Graphics/Painter.hpp"
 
 namespace Izo {
 

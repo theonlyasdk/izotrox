@@ -1,5 +1,6 @@
 #include "UI/Widgets/Container.hpp"
 #include "Input/Input.hpp"
+#include "Graphics/Painter.hpp"
 
 namespace Izo {
 

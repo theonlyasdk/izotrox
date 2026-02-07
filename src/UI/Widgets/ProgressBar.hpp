@@ -1,7 +1,6 @@
 #pragma once
 
 #include "UI/Widgets/Widget.hpp"
-#include "Graphics/Color.hpp"
 
 namespace Izo {
 

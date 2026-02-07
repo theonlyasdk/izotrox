@@ -1,6 +1,7 @@
 #include "Motion/Animator.hpp"
 #include "Graphics/Color.hpp"
 #include <algorithm>
+#include <cmath>
 
 namespace Izo {
 template <typename T>

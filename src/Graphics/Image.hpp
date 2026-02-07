@@ -1,14 +1,13 @@
 #pragma once
 
-#include "Graphics/Canvas.hpp"
-#include "Graphics/Painter.hpp"
-#include "Geometry/Primitives.hpp"
 #include "Core/ResourceManager.hpp"
 #include "UI/Enums.hpp"
 
 #include <string>
 
 namespace Izo {
+
+class Painter;
 
 class Image {
 public:

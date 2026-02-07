@@ -1,8 +1,9 @@
 
+#include <algorithm>
 
 #include "UI/Widgets/ProgressBar.hpp"
 #include "Core/ThemeDB.hpp"
-#include <algorithm>
+#include "Graphics/Painter.hpp"
 
 namespace Izo {
 

@@ -1,8 +1,5 @@
 #pragma once
 
-#include <cmath>
-#include "Graphics/Color.hpp"
-
 namespace Izo {
 
 enum class Easing {
