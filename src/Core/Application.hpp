@@ -2,11 +2,9 @@
 
 #include <cstdint>
 #include <functional>
-#include <map>
 
 #include "Geometry/Primitives.hpp"
 #include "Graphics/Canvas.hpp"
-#include <any>
 
 namespace Izo {
 

@@ -1,13 +1,13 @@
 #pragma once
 
-#include <algorithm>
 #include <vector>
 
-#include "Graphics/Canvas.hpp"
-#include "Graphics/Color.hpp"
 #include "Geometry/Primitives.hpp"
 
 namespace Izo {
+
+class Canvas;
+class Color;
 
 class Painter {
    public:
@@ -24,9 +24,7 @@ class Painter {
     void push_clip(const IntRect& rect);
     void push_rounded_clip(const IntRect& rect, int radius);
     void pop_clip();
-    void set_global_alpha(float alpha) {
-        m_global_alpha = std::clamp(alpha, 0.0f, 1.0f);
-    }
+    void set_global_alpha(float alpha);
     float global_alpha() const {
         return m_global_alpha;
     }
@@ -44,9 +42,11 @@ class Painter {
     }
 
    private:
+    IntRect apply_translate_to_rect(const IntRect& rect);
+
     Canvas* m_canvas;
-    int m_tx = 0;
-    int m_ty = 0;
+    int m_translate_x = 0;
+    int m_translate_y = 0;
     struct Translation {
         int x;
         int y;
