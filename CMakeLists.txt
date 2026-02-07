@@ -33,7 +33,7 @@ target_include_directories(izotrox PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_include_directories(izotrox PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 target_compile_definitions(izotrox PRIVATE LUA_USE_POSIX)
-target_compile_options(izotrox PRIVATE)
+target_compile_options(izotrox PRIVATE -std=c++23)
 
 target_link_libraries(izotrox PRIVATE m)
 

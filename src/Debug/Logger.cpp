@@ -4,6 +4,8 @@
 #include <fstream>
 #include <filesystem>
 #include <mutex>
+#include <vector>
+#include <algorithm>
 
 #include <Debug/Logger.hpp>
 #include <Debug/ConsoleColor.hpp>

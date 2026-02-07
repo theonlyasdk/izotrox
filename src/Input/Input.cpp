@@ -1,5 +1,3 @@
-
-
 #include "Input.hpp"
 #include <Debug/Logger.hpp>
 #include <fcntl.h>
@@ -114,7 +112,7 @@ static KeyCode linux_code_to_ascii(int code, bool shift) {
 
 void Input::run_thread() {
 #ifdef __ANDROID__
-    Logger::the().info("Starting Android Input Thread");
+    LogInfo("Starting Android Input Thread");
 
     struct pollfd fds[16];
     int count = 0;
@@ -135,7 +133,7 @@ void Input::run_thread() {
                 ioctl(fd, EVIOCGBIT(EV_ABS, sizeof(abs_b)), abs_b);
                 if (abs_b[ABS_MT_POSITION_X/8] & (1<<(ABS_MT_POSITION_X%8))) {
                     keep = true;
-                    Logger::the().info(std::format("Input '{}' is a Touchscreen", path));
+                    LogInfo("Input '{}' is a Touchscreen", path);
                 }
             }
 
@@ -144,7 +142,7 @@ void Input::run_thread() {
                  ioctl(fd, EVIOCGBIT(EV_KEY, sizeof(key_b)), key_b);
                  if (key_b[KEY_ENTER/8] & (1<<(KEY_ENTER%8))) {
                      keep = true;
-                     Logger::the().info(std::format("Input '{}' is a Keyboard", path));
+                     LogInfo("Input '{}' is a Keyboard", path);
                  }
             }
 
@@ -159,7 +157,7 @@ void Input::run_thread() {
     }
 
     if (count == 0) {
-        Logger::the().error("No input devices found!");
+        LogError("No input devices found!");
         return;
     }
 
@@ -215,7 +213,7 @@ void Input::run_thread() {
     for (int i = 0; i < count; i++) {
         close(fds[i].fd);
     }
-    Logger::the().info("Input thread stopped");
+    LogInfo("Input thread stopped");
 #endif
 }
 
