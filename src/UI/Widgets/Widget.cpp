@@ -12,6 +12,7 @@ Widget::Widget() : m_bounds{0, 0, 0, 0}, m_measured_size{0, 0, 0, 0}, m_focus_an
 void Widget::draw(Painter& painter) {
     if (!m_visible) return;
     draw_content(painter);
+    draw_debug_info(painter);
 }
 
 void Widget::draw_focus(Painter& painter) {
@@ -19,6 +20,12 @@ void Widget::draw_focus(Painter& painter) {
     if (m_focusable && m_show_focus_indicator) {
         draw_focus_outline(painter);
     }
+}
+
+void Widget::draw_debug_info(Painter& painter) {
+    if (!Application::the().debug_mode()) return;
+
+    painter.outline_rect(global_bounds(), Color::Red);
 }
 
 void Widget::update() {

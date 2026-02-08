@@ -106,6 +106,11 @@ const std::string try_parse_arguments(int argc, const char* argv[]) {
         Settings::the().set<std::string>("preview-path", preview.value());
     }
 
+    if (auto preview = parser.value("debug")) {
+        bool enable_debug = preview.value() == "true" || preview.value() == "t";
+        Settings::the().set<bool>("debug", enable_debug);
+    }
+
     return "";
 }
 
@@ -153,6 +158,8 @@ int main(int argc, const char* argv[]) {
 
     width = app.width();
     height = app.height();
+
+    app.set_debug(Settings::the().get_or<bool>("debug", true));
 
     canvas = std::make_unique<Canvas>(width, height);
     painter = std::make_unique<Painter>(*canvas);

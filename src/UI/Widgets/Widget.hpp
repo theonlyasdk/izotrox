@@ -86,6 +86,7 @@ public:
 protected:
     void handle_focus_logic(bool inside, bool down);
     void draw_focus_outline(Painter& painter);
+    void draw_debug_info(Painter& painter);
 
     IntRect m_bounds;
     IntRect m_measured_size;

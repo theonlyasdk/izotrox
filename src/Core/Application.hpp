@@ -25,6 +25,9 @@ public:
     const uint32_t height() const;
     const IntRect screen_rect() const;
 
+    void set_debug(bool flag);
+    const bool debug_mode() const;
+
     float delta() const { return _delta; }
     void set_delta(float dt) { _delta = dt; }
 
@@ -33,6 +36,7 @@ public:
     void on_resize(std::function<void(int, int)> callback);
 private:
     float _delta{0.f};
+    bool m_debug;
 
     struct Impl;
     std::unique_ptr<Impl> impl;

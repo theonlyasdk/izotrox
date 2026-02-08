@@ -5,6 +5,7 @@
 #include <any>
 #include <memory>
 #include <vector>
+#include "Debug/Logger.hpp"
 
 namespace Izo {
 
@@ -19,9 +20,24 @@ public:
     
     template<typename T>
     T get(const std::string& key) const {
-        return std::any_cast<T>(data->at(key));
+        try {
+            return std::any_cast<T>(data->at(key));
+        } catch (...) {
+            LogError("Trying to read settings: Key not found: {}", key);
+        }
     }
-    
+
+    template<typename T>
+    T get_or(const std::string& key, const T& defaultValue) const {
+        try {
+            return std::any_cast<T>(data->at(key));
+        }
+        catch (...) {
+            LogError("Settings read failed for key: {}", key);
+            return defaultValue;
+        }
+    }
+
     bool has(const std::string& key) const;
     
     void remove(const std::string& key);
