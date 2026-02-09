@@ -4,9 +4,12 @@
 #include "UI/Widgets/Container.hpp"
 #include "Input/Input.hpp"
 
+#include "UI/Widgets/Widget.hpp"
+
 namespace Izo {
 
-View::View(std::shared_ptr<Widget> root) : m_root(root) {}
+View::View(std::unique_ptr<Widget> root) : m_root(std::move(root)) {}
+View::~View() = default;
 
 void View::resize(int w, int h) {
     m_width = w;
@@ -36,11 +39,11 @@ void View::draw(Painter& painter) {
 void View::on_touch(IntPoint point, bool down) {
     if (down && m_root) {
         // Unfocus widgets if clicked outside their bounds
-        auto root_container = std::dynamic_pointer_cast<Container>(m_root);
+        Container* root_container = dynamic_cast<Container*>(m_root.get());
         if (root_container) {
-            std::vector<std::shared_ptr<Widget>> focusables;
+            std::vector<Widget*> focusables;
             root_container->collect_focusable_widgets(focusables);
-            for (auto& w : focusables) {
+            for (auto* w : focusables) {
                 if (!w->global_bounds().contains(point)) {
                     w->set_focused(false);
                 }
@@ -61,8 +64,8 @@ void View::on_scroll(int y) {
 
 void View::on_key(KeyCode key) {
     if (key == KeyCode::Tab) { 
-        std::vector<std::shared_ptr<Widget>> focusables;
-        auto root_container = std::dynamic_pointer_cast<Container>(m_root);
+        std::vector<Widget*> focusables;
+        Container* root_container = dynamic_cast<Container*>(m_root.get());
         if (root_container) {
             root_container->collect_focusable_widgets(focusables);
         }
@@ -77,7 +80,7 @@ void View::on_key(KeyCode key) {
             }
         }
 
-        for (auto& w : focusables) w->set_focused(false);
+        for (auto* w : focusables) w->set_focused(false);
 
         int nextIdx = (current_idx + 1) % focusables.size();
         focusables[nextIdx]->set_focused(true);

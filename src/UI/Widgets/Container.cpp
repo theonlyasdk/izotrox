@@ -23,7 +23,7 @@ bool Container::on_touch(IntPoint point, bool down, bool captured) {
         return true;
     } 
 
-    std::shared_ptr<Widget> target = nullptr;
+    Widget* target = nullptr;
     bool handled = false;
 
     for (auto it = m_children.rbegin(); it != m_children.rend(); ++it) {
@@ -33,9 +33,9 @@ bool Container::on_touch(IntPoint point, bool down, bool captured) {
         bool inside = child->global_bounds().contains(point);
         if (inside) {
             if (child->on_touch(point, down, false)) {
-                target = child;
+                target = child.get();
                 handled = true;
-                if (down) m_captured_child = child;
+                if (down) m_captured_child = child.get();
                 break; 
             }
         }
@@ -43,7 +43,7 @@ bool Container::on_touch(IntPoint point, bool down, bool captured) {
 
     if (down) {
         for (auto& child : m_children) {
-            if (child != target && child->visible()) {
+            if (child.get() != target && child->visible()) {
                 child->on_touch(point, down, false); 
             }
         }
@@ -84,10 +84,10 @@ void Container::update() {
     }
 }
 
-void Container::collect_focusable_widgets(std::vector<std::shared_ptr<Widget>>& out_list) {
+void Container::collect_focusable_widgets(std::vector<Widget*>& out_list) {
     for (auto& child : m_children) {
         if (!child->visible()) continue;
-        if (child->focusable()) out_list.push_back(child);
+        if (child->focusable()) out_list.push_back(child.get());
 
         Container* container = dynamic_cast<Container*>(child.get());
         if (container) {

@@ -3,6 +3,8 @@
 #include "Motion/Animator.hpp"
 #include "Geometry/Primitives.hpp"
 #include "Input/KeyCode.hpp"
+#include "UI/View/View.hpp"
+#include "Graphics/Dialog.hpp"
 
 #include <vector>
 #include <memory>
@@ -10,9 +12,9 @@
 
 namespace Izo {
 
+class Painter;
 class View;
 class Dialog;
-class Painter;
 
 enum class ViewTransition {
     None,
@@ -25,25 +27,23 @@ enum class ViewTransition {
     MaterialUFade
 };
 
-class Dialog;
 
 class ViewManager {
 public:
     ViewManager(const ViewManager&) = delete;
     ViewManager& operator=(const ViewManager&) = delete;
 
-    static ViewManager& the() {
-        static ViewManager instance;
-        return instance;
-    }
+    static ViewManager& the();
+    ~ViewManager();
 
-    void push(std::shared_ptr<View> view, ViewTransition transition = ViewTransition::ThemeDefault);
+
+    void push(std::unique_ptr<View> view, ViewTransition transition = ViewTransition::ThemeDefault);
     void pop(ViewTransition transition = ViewTransition::ThemeDefault);
 
-    void open_dialog(std::shared_ptr<Dialog> dialog) { m_dialog = dialog; }
+    void open_dialog(std::unique_ptr<Dialog> dialog) { m_dialog = std::move(dialog); }
     void dismiss_dialog() { m_dialog.reset(); }
     bool has_active_dialog() const { return m_dialog != nullptr; }
-    std::shared_ptr<Dialog> active_dialog() const { return m_dialog; }
+    Dialog* active_dialog() const { return m_dialog.get(); }
 
     void resize(int w, int h);
     void update();
@@ -55,10 +55,10 @@ public:
     size_t stack_size() const { return m_stack.size(); }
 
 private:
-    ViewManager() = default;
+    ViewManager();
     void setup_transition(ViewTransition transition, bool is_pop);
     void process_pending_operations();
-    std::shared_ptr<View> get_active_input_view();
+    View* get_active_input_view();
 
     enum class OperationType {
         Push,
@@ -67,13 +67,13 @@ private:
 
     struct PendingOperation {
         OperationType type;
-        std::shared_ptr<View> view;  // Only used for Push
+        std::unique_ptr<View> view;  // Only used for Push
         ViewTransition transition;
     };
 
-    std::vector<std::shared_ptr<View>> m_stack;
-    std::shared_ptr<View> m_outgoing_view;
-    std::shared_ptr<Dialog> m_dialog;
+    std::vector<std::unique_ptr<View>> m_stack;
+    std::unique_ptr<View> m_outgoing_view;
+    std::unique_ptr<Dialog> m_dialog;
 
     Animator<float> m_transition_anim;
     ViewTransition m_current_transition = ViewTransition::None;

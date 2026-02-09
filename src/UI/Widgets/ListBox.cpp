@@ -11,13 +11,13 @@ ListBox::ListBox() {
     set_focusable(true);
 }
 
-void ListBox::add_item(std::shared_ptr<Widget> item) {
-    add_child(item);
+void ListBox::add_item(std::unique_ptr<Widget> item) {
+    add_child(std::move(item));
 }
 
 void ListBox::smooth_scroll_to_index(int index) {
     if (index < 0 || index >= (int)m_children.size()) return;
-    auto listitem = m_children[index];
+    const auto& listitem = m_children[index];
 
     // IMPORTANT: Use local_bounds() directly (untranslated layout bounds). 
     // DO NOT change this to global_bounds() here.
@@ -43,7 +43,7 @@ void ListBox::select(int index) {
     m_selected_index = index;
     
     for (size_t i = 0; i < m_children.size(); ++i) {
-        auto listItem = std::dynamic_pointer_cast<ListItem>(m_children[i]);
+        ListItem* listItem = dynamic_cast<ListItem*>(m_children[i].get());
         if (listItem) {
             listItem->set_selected((int)i == m_selected_index);
         }
@@ -179,7 +179,7 @@ void ListBox::draw_content(Painter& painter) {
         if (!child->visible()) continue;
         
         // Draw selection
-        auto item = std::dynamic_pointer_cast<ListItem>(child);
+        ListItem* item = dynamic_cast<ListItem*>(child.get());
         if (item && item->is_selected()) {
              IntRect cb = child->global_bounds();
              int corners = 0;

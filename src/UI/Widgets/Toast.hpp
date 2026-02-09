@@ -49,18 +49,18 @@ public:
     }
     
     void show(const std::string& message, int duration_ms = 2000);
-    void update(float delta);
+    void update();
     void draw(class Painter& painter, int screen_width, int screen_height);
     
     void set_font(Font* font) { m_font = font; }
     Font* font() const { return m_font; }
-    
+
 private:
     ToastManager() = default;
     
     Font* m_font = nullptr;
-    std::queue<std::shared_ptr<Toast>> m_queue;
-    std::shared_ptr<Toast> m_current;
+    std::queue<std::unique_ptr<Toast>> m_queue;
+    std::unique_ptr<Toast> m_current;
 };
 
 }

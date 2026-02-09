@@ -254,12 +254,12 @@ bool OptionBox::on_touch_event(IntPoint point, bool down) {
             m_pressed = false;
             m_bg_anim.set_target(color_bg, 200);
 
-            auto dialog = std::make_shared<OptionsDialog>(global_bounds(), m_options, m_font, m_selected_index, [this](int idx) {
+            auto dialog = std::make_unique<OptionsDialog>(global_bounds(), m_options, m_font, m_selected_index, [this](int idx) {
                 select(idx);
                 if (m_on_change) 
                     m_on_change(idx, m_options[idx]);
             });
-            ViewManager::the().open_dialog(dialog);
+            ViewManager::the().open_dialog(std::move(dialog));
         }
         return true;
     }

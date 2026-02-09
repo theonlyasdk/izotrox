@@ -88,14 +88,14 @@ void Toast::draw(Painter& painter, int screen_width, int screen_height) {
     m_font->draw_text_multiline(painter, {tx, ty}, m_message, text_c, max_text_width);
 }
 
-
 void ToastManager::show(const std::string& message, int duration_ms) {
-    m_queue.push(std::make_shared<Toast>(message, duration_ms));
+    m_queue.push(std::make_unique<Toast>(message, duration_ms));
 }
 
-void ToastManager::update(float delta) {
+void ToastManager::update() {
+    float delta = Application::the().delta();
     if (!m_current && !m_queue.empty()) {
-        m_current = m_queue.front();
+        m_current = std::move(m_queue.front());
         m_queue.pop();
     }
     

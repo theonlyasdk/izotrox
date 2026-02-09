@@ -17,7 +17,7 @@ class Image;
 
 class ThemePreviewView {
 public:
-    static std::shared_ptr<View> create(Font* font);
+    static std::unique_ptr<View> create(Font* font);
 };
 
 }

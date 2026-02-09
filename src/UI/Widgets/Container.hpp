@@ -9,9 +9,9 @@ namespace Izo {
 
 class Container : public Widget {
 public:
-    void add_child(std::shared_ptr<Widget> child) {
+    void add_child(std::unique_ptr<Widget> child) {
         child->set_parent(this);
-        m_children.push_back(child);
+        m_children.push_back(std::move(child));
     }
     virtual void draw_content(Painter& painter) override;
     virtual void draw_focus(Painter& painter) override;
@@ -21,14 +21,14 @@ public:
     virtual bool on_scroll(int y) override;
     virtual bool on_key(KeyCode key) override;
 
-    const std::vector<std::shared_ptr<Widget>>& children() const { return m_children; }
-    void collect_focusable_widgets(std::vector<std::shared_ptr<Widget>>& out_list);
+    const std::vector<std::unique_ptr<Widget>>& children() const { return m_children; }
+    void collect_focusable_widgets(std::vector<Widget*>& out_list);
 
     virtual void layout() override;
 
 protected:
-    std::vector<std::shared_ptr<Widget>> m_children;
-    std::shared_ptr<Widget> m_captured_child = nullptr;
+    std::vector<std::unique_ptr<Widget>> m_children;
+    Widget* m_captured_child = nullptr;
 };
 
 } 

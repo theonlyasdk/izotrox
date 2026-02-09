@@ -183,12 +183,10 @@ int main(int argc, const char* argv[]) {
 
         int w = canvas->width();
         int h = canvas->height();
-        if (auto viewPtr = std::dynamic_pointer_cast<View>(preview_view)) {
-            ViewManager::the().resize(w, h);
-            ViewManager::the().push(preview_view, ViewTransition::None);
-            ViewManager::the().update();
-            ViewManager::the().draw(*painter);
-        }
+        ViewManager::the().resize(w, h);
+        ViewManager::the().push(std::move(preview_view), ViewTransition::None);
+        ViewManager::the().update();
+        ViewManager::the().draw(*painter);
 
         // Save to file
         if (canvas->save_to_file(preview_path)) {
@@ -211,31 +209,31 @@ int main(int argc, const char* argv[]) {
 
     splash.next_step("Loading Fonts...");
 
-    auto toast_font = FontManager::the().load("toast", fontFamily, fontSize / 2).get();
+    auto toast_font = FontManager::the().load("toast", fontFamily, fontSize / 1.5).get();
     auto inconsolata = FontManager::the().load("inconsolata", "fonts/Inconsolata-Regular.ttf", 18.0f).get();
     ToastManager::the().set_font(toast_font);
 
     splash.next_step("Building UI...");
 
-    auto root = std::make_shared<LinearLayout>(Orientation::Vertical);
+    auto root = std::make_unique<LinearLayout>(Orientation::Vertical);
     root->set_width(WidgetSizePolicy::MatchParent);
     root->set_height(WidgetSizePolicy::MatchParent);
     root->set_show_focus_indicator(false);
     root->set_padding(20);
 
-    auto lbl_title = std::make_shared<Label>("Izotrox UI Demo", systemFont);
+    auto lbl_title = std::make_unique<Label>("Izotrox UI Demo", systemFont);
     lbl_title->set_width(WidgetSizePolicy::MatchParent);
-    root->add_child(lbl_title);
+    root->add_child(std::move(lbl_title));
 
-    auto btn_start_engine = std::make_shared<Button>("Start Engine", systemFont);
+    auto btn_start_engine = std::make_unique<Button>("Start Engine", systemFont);
     btn_start_engine->set_focusable(true);
-    root->add_child(btn_start_engine);
+    root->add_child(std::move(btn_start_engine));
 
-    auto btn_settings = std::make_shared<Button>("Settings", systemFont);
+    auto btn_settings = std::make_unique<Button>("Settings", systemFont);
     btn_settings->set_focusable(true);
-    root->add_child(btn_settings);
+    root->add_child(std::move(btn_settings));
 
-    auto btn_crash_app = std::make_shared<Button>("Crash App", systemFont);
+    auto btn_crash_app = std::make_unique<Button>("Crash App", systemFont);
     btn_crash_app->set_focusable(true);
     btn_crash_app->set_on_click([&running]() {
         /* LogFatal automatically calls the application destructor and
@@ -243,72 +241,74 @@ int main(int argc, const char* argv[]) {
         with error code defined in LOG_FATAL_EXIT_CODE */
         LogFatal("UwU app crashed");
     });
-    root->add_child(btn_crash_app);
+    root->add_child(std::move(btn_crash_app));
 
-    auto btn_second_view = std::make_shared<Button>("Go to Second View", systemFont);
+    auto btn_second_view = std::make_unique<Button>("Go to Second View", systemFont);
     btn_second_view->set_focusable(true);
     btn_second_view->set_width(WidgetSizePolicy::MatchParent);
     btn_second_view->set_on_click([systemFont]() {
         auto secondView = SecondView::create(systemFont);
-        ViewManager::the().push(secondView);
+        ViewManager::the().push(std::move(secondView));
     });
-    root->add_child(btn_second_view);
+    root->add_child(std::move(btn_second_view));
 
-    auto pb_demo = std::make_shared<ProgressBar>(0.0f);
-    root->add_child(pb_demo);
+    auto pb_demo = std::make_unique<ProgressBar>(0.0f);
+    ProgressBar* pb_demo_ptr = pb_demo.get();  // Keep raw pointer for lambda capture
+    root->add_child(std::move(pb_demo));
 
-    auto slider_demo = std::make_shared<Slider>(0.5f);
+    auto slider_demo = std::make_unique<Slider>(0.5f);
     slider_demo->set_width(WidgetSizePolicy::MatchParent);
-    slider_demo->set_on_change([&](float v) {
-        pb_demo->set_progress(v);
+    slider_demo->set_on_change([pb_demo_ptr](float v) {
+        pb_demo_ptr->set_progress(v);
         AndroidDevice::set_brightness((v / 100) * 255);
     });
-    root->add_child(slider_demo);
+    root->add_child(std::move(slider_demo));
 
-    auto tb_demo = std::make_shared<TextBox>("Shell> ", systemFont);
+    auto tb_demo = std::make_unique<TextBox>("Shell> ", systemFont);
+    TextBox* tb_demo_ptr = tb_demo.get();  // Keep raw pointer for lambda capture
     tb_demo->set_focusable(true);
     tb_demo->set_width(WidgetSizePolicy::MatchParent);
-    tb_demo->set_on_submit([&](const std::string& text) {
+    tb_demo->set_on_submit([tb_demo_ptr](const std::string& text) {
         if (!text.empty()) {
             LogInfo("Shell> {}", text);
             IzoShell::the().execute(text);
-            tb_demo->clear();
+            tb_demo_ptr->clear();
         }
     });
-    root->add_child(tb_demo);
+    root->add_child(std::move(tb_demo));
 
-    auto lbl_multiline_demo = std::make_shared<Label>("Multi-line\nLabel Test", systemFont);
-    root->add_child(lbl_multiline_demo);
+    auto lbl_multiline_demo = std::make_unique<Label>("Multi-line\nLabel Test", systemFont);
+    root->add_child(std::move(lbl_multiline_demo));
 
-    auto lbl_wrap_demo = std::make_shared<Label>("This is a very long text that should automatically wrap to the next line if the container width is not enough to hold it in a single line.", systemFont);
+    auto lbl_wrap_demo = std::make_unique<Label>("This is a very long text that should automatically wrap to the next line if the container width is not enough to hold it in a single line.", systemFont);
     lbl_wrap_demo->set_width(WidgetSizePolicy::MatchParent);
     lbl_wrap_demo->set_wrap(true);
-    root->add_child(lbl_wrap_demo);
+    root->add_child(std::move(lbl_wrap_demo));
 
-    auto listview = std::make_shared<ListBox>();
+    auto listview = std::make_unique<ListBox>();
     listview->set_height(400);
     listview->set_width(WidgetSizePolicy::MatchParent);
 
     size_t MAX_LIST_ITEMS = 1000;
     for (size_t i = 0; i < MAX_LIST_ITEMS; ++i) {
-        auto item = std::make_shared<ListItem>(Orientation::Vertical);
+        auto item = std::make_unique<ListItem>(Orientation::Vertical);
 
-        auto label = std::make_shared<Label>("Item " + std::to_string(i), systemFont);
+        auto label = std::make_unique<Label>("Item " + std::to_string(i), systemFont);
         label->set_focusable(false);
 
-        auto subLabel = std::make_shared<Label>("Details for " + std::to_string(i), systemFont);
+        auto subLabel = std::make_unique<Label>("Details for " + std::to_string(i), systemFont);
         subLabel->set_color_variant(ColorVariant::Secondary);
         subLabel->set_focusable(false);
 
-        item->add_child(label);
-        item->add_child(subLabel);
+        item->add_child(std::move(label));
+        item->add_child(std::move(subLabel));
 
-        listview->add_item(item);
+        listview->add_item(std::move(item));
     }
-    root->add_child(listview);
+    root->add_child(std::move(listview));
 
-    auto mainView = std::make_shared<View>(root);
-    ViewManager::the().push(mainView, ViewTransition::None);
+    auto mainView = std::make_unique<View>(std::move(root));
+    ViewManager::the().push(std::move(mainView), ViewTransition::None);
     ViewManager::the().resize(width, height);
 
     splash.next_step("Ready!");
@@ -353,7 +353,7 @@ int main(int argc, const char* argv[]) {
         if (key != KeyCode::None) ViewManager::the().on_key(key);
 
         ViewManager::the().update();
-        ToastManager::the().update(dt);
+        ToastManager::the().update();
 
         canvas->clear(ThemeDB::the().get<Color>("Colors", "Window.Background", Color(255)));
         ViewManager::the().draw(*painter);

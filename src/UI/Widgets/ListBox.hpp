@@ -11,7 +11,7 @@ class ListBox : public Layout {
 public:
     ListBox();
 
-    void add_item(std::shared_ptr<Widget> item);
+    void add_item(std::unique_ptr<Widget> item);
 
     void set_item_height(int h) { m_item_height = h; } 
 

@@ -9,11 +9,27 @@
 
 namespace Izo {
 
+ViewManager& ViewManager::the() {
+    static ViewManager instance;
+    return instance;
+}
+
+ViewManager::ViewManager() = default;
+ViewManager::~ViewManager() = default;
+
 void ViewManager::setup_transition(ViewTransition transition, bool is_pop) {
     int transition_duration = ThemeDB::the().get<int>("System", "ViewTransitionDuration", 500);
     Easing transition_easing = ThemeDB::the().get<Easing>("System", "ViewTransitionEasing", Easing::EaseOutQuart);
 
-    m_outgoing_view = m_stack.back();
+    if (is_pop) {
+        if (!m_stack.empty()) {
+            m_outgoing_view = std::move(m_stack.back());
+            m_stack.pop_back();
+        }
+    } else {
+        m_outgoing_view = nullptr;
+    }
+
     m_current_transition = transition;
     m_animating = true;
     m_is_pop = is_pop;
@@ -21,14 +37,14 @@ void ViewManager::setup_transition(ViewTransition transition, bool is_pop) {
     m_transition_anim.set_target(1.0f, transition_duration, transition_easing);
 }
 
-void ViewManager::push(std::shared_ptr<View> view, ViewTransition transition) {
+void ViewManager::push(std::unique_ptr<View> view, ViewTransition transition) {
     if (transition == ViewTransition::ThemeDefault) {
         transition = ThemeDB::the().get<ViewTransition>("System", "ViewTransition", ViewTransition::PushLeft);
     }
 
     // Queue the operation if we're currently processing one
     if (m_processing_operation) {
-        m_pending_operations.push_back({OperationType::Push, view, transition});
+        m_pending_operations.push_back({OperationType::Push, std::move(view), transition});
         return;
     }
 
@@ -39,7 +55,7 @@ void ViewManager::push(std::shared_ptr<View> view, ViewTransition transition) {
         setup_transition(transition, false);
     }
 
-    m_stack.push_back(view);
+    m_stack.push_back(std::move(view));
     m_processing_operation = false;
 }
 
@@ -71,9 +87,10 @@ void ViewManager::pop(ViewTransition transition) {
 
     if (transition != ViewTransition::None) {
         setup_transition(transition, true);
+    } else {
+        m_stack.pop_back();
     }
 
-    m_stack.pop_back();
     m_processing_operation = false;
 }
 
@@ -82,31 +99,31 @@ void ViewManager::process_pending_operations() {
         return;
     }
 
-    PendingOperation pending = m_pending_operations.front();
+    PendingOperation pending = std::move(m_pending_operations.front());
     m_pending_operations.pop_front();
 
     if (pending.type == OperationType::Push) {
-        push(pending.view, pending.transition);
+        push(std::move(pending.view), pending.transition);
     } else if (pending.type == OperationType::Pop) {
         pop(pending.transition);
     }
 }
 
-std::shared_ptr<View> ViewManager::get_active_input_view() {
+View* ViewManager::get_active_input_view() {
     // During a pop animation, input should go to the view that will be active
     // (the one below the currently animating outgoing view)
     if (m_animating && m_is_pop && m_stack.size() >= 1) {
-        return m_stack.back();
+        return m_stack.back().get();
     }
     
     // During a push animation, input goes to the new view (already at the top of stack)
     if (m_animating && !m_is_pop && m_stack.size() >= 1) {
-        return m_stack.back();
+        return m_stack.back().get();
     }
     
     // Not animating - return the current top view
     if (!m_stack.empty()) {
-        return m_stack.back();
+        return m_stack.back().get();
     }
     
     return nullptr;
@@ -167,12 +184,21 @@ void ViewManager::draw(Painter& painter) {
 
     Color color_win_bg = ThemeDB::the().get<Color>("Colors", "Window.Background", Color(0));
 
-    if (m_animating && m_outgoing_view) {
+    if (m_animating) {
         float t = m_transition_anim.value();
         float width = (float)m_width;
         float height = (float)m_height;
 
-        auto draw_view = [&](std::shared_ptr<View> v, float tx, float ty, float alpha, bool bg) {
+        View* incoming = m_stack.back().get();
+        View* outgoing = nullptr;
+
+        if (m_is_pop) {
+            outgoing = m_outgoing_view.get();
+        } else if (m_stack.size() >= 2) {
+            outgoing = m_stack[m_stack.size() - 2].get();
+        }
+
+        auto draw_view = [&](View* v, float tx, float ty, float alpha, bool bg) {
             if (!v) return;
             painter.set_global_alpha(alpha);
             painter.push_translate({(int)tx, (int)ty});
@@ -189,69 +215,69 @@ void ViewManager::draw(Painter& painter) {
         if (m_current_transition == ViewTransition::SlideLeft) {
             if (!m_is_pop) {
                 // Push: Move Left
-                draw_view(m_outgoing_view, -t * width, 0, 1.0f, false);
-                draw_view(m_stack.back(), (1.0f - t) * width, 0, 1.0f, true);
+                draw_view(outgoing, -t * width, 0, 1.0f, false);
+                draw_view(incoming, (1.0f - t) * width, 0, 1.0f, true);
             } else {
                 // Pop: Move Right (Reverse of Push)
-                draw_view(m_stack.back(), -(1.0f - t) * width, 0, 1.0f, true);
-                draw_view(m_outgoing_view, t * width, 0, 1.0f, false); 
+                draw_view(incoming, -(1.0f - t) * width, 0, 1.0f, true);
+                draw_view(outgoing, t * width, 0, 1.0f, false); 
             }
         } else if (m_current_transition == ViewTransition::SlideRight) {
             if (!m_is_pop) {
                 // Push: Move Right
-                draw_view(m_outgoing_view, t * width, 0, 1.0f, false);
-                draw_view(m_stack.back(), -(1.0f - t) * width, 0, 1.0f, true);
+                draw_view(outgoing, t * width, 0, 1.0f, false);
+                draw_view(incoming, -(1.0f - t) * width, 0, 1.0f, true);
             } else {
                 // Pop: Move Left (Reverse of Push)
-                draw_view(m_stack.back(), (1.0f - t) * width, 0, 1.0f, true);
-                draw_view(m_outgoing_view, -t * width, 0, 1.0f, false);
+                draw_view(incoming, (1.0f - t) * width, 0, 1.0f, true);
+                draw_view(outgoing, -t * width, 0, 1.0f, false);
             }
         } else if (m_current_transition == ViewTransition::PushLeft) {
             if (!m_is_pop) {
                 // Push: Incoming slides in from Right. Outgoing parallax Left.
-                draw_view(m_outgoing_view, -t * (width / 4.0f), 0, 1.0f, false);
+                draw_view(outgoing, -t * (width / 4.0f), 0, 1.0f, false);
                 draw_shadow(50.0f * t);
-                draw_view(m_stack.back(), (1.0f - t) * width, 0, 1.0f, true);
+                draw_view(incoming, (1.0f - t) * width, 0, 1.0f, true);
             } else {
                 // Pop: Outgoing slides out to Right. Incoming parallax from Left.
-                draw_view(m_stack.back(), -(1.0f - t) * (width / 4.0f), 0, 1.0f, true);
+                draw_view(incoming, -(1.0f - t) * (width / 4.0f), 0, 1.0f, true);
                 draw_shadow(50.0f * (1.0f - t));
-                draw_view(m_outgoing_view, t * width, 0, 1.0f, true); 
+                draw_view(outgoing, t * width, 0, 1.0f, true); 
             }
         } else if (m_current_transition == ViewTransition::PushRight) {
             if (!m_is_pop) {
-               // Push: Incoming slides in from Left. Outgoing slides out Right. (Like iOS Pop?)
-               draw_view(m_stack.back(), -(1.0f - t) * (width / 4.0f), 0, 1.0f, true);
+               // Push: Incoming slides in from Left. Outgoing slides out Right.
+               draw_view(incoming, -(1.0f - t) * (width / 4.0f), 0, 1.0f, true);
                draw_shadow(50.0f * (1.0f - t));
-               draw_view(m_outgoing_view, t * width, 0, 1.0f, true);
+               draw_view(outgoing, t * width, 0, 1.0f, true);
             } else {
                // Pop: Outgoing slides out Left. Incoming slides in from Right.
-               draw_view(m_outgoing_view, -t * (width / 4.0f), 0, 1.0f, false);
+               draw_view(outgoing, -t * (width / 4.0f), 0, 1.0f, false);
                draw_shadow(50.0f * t);
-               draw_view(m_stack.back(), (1.0f - t) * width, 0, 1.0f, true);
+               draw_view(incoming, (1.0f - t) * width, 0, 1.0f, true);
             }
         } else if (m_current_transition == ViewTransition::PushBottom) {
             if (!m_is_pop) {
                 // Push: Slide Up
-                draw_view(m_outgoing_view, 0, -t * (height / 4.0f), 1.0f, false);
+                draw_view(outgoing, 0, -t * (height / 4.0f), 1.0f, false);
                 draw_shadow(100.0f * t);
-                draw_view(m_stack.back(), 0, (1.0f - t) * height, 1.0f, true);
+                draw_view(incoming, 0, (1.0f - t) * height, 1.0f, true);
             } else {
                 // Pop: Slide Down
-                draw_view(m_stack.back(), 0, -(1.0f - t) * (height / 4.0f), 1.0f, true);
+                draw_view(incoming, 0, -(1.0f - t) * (height / 4.0f), 1.0f, true);
                 draw_shadow(100.0f * (1.0f - t));
-                draw_view(m_outgoing_view, 0, t * height, 1.0f, true);
+                draw_view(outgoing, 0, t * height, 1.0f, true);
             }
         } else if (m_current_transition == ViewTransition::MaterialUFade) {
             float offset = 50.0f;
             if (!m_is_pop) {
                  // Push: Right to Left (Incoming 50->0)
-                 draw_view(m_outgoing_view, -offset * t, 0, 1.0f - t, false);
-                 draw_view(m_stack.back(), offset * (1.0f - t), 0, t, true);
+                 draw_view(outgoing, -offset * t, 0, 1.0f - t, false);
+                 draw_view(incoming, offset * (1.0f - t), 0, t, true);
             } else {
                  // Pop: Left to Right (Outgoing 0->50)
-                 draw_view(m_stack.back(), -offset * (1.0f - t), 0, t, true);
-                 draw_view(m_outgoing_view, offset * t, 0, 1.0f - t, false);
+                 draw_view(incoming, -offset * (1.0f - t), 0, t, true);
+                 draw_view(outgoing, offset * t, 0, 1.0f - t, false);
             }
         }
     } else {

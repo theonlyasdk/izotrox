@@ -34,8 +34,6 @@ void ProgressBar::set_progress(float v) {
     }
 }
 
-
-
 void ProgressBar::set_animation_variant(ProgressBar::AnimationVariant variant) {
     m_variant = variant;
 
@@ -50,8 +48,6 @@ void ProgressBar::set_animation_variant(ProgressBar::AnimationVariant variant) {
             break;
     }
 }
-
-
 
 void ProgressBar::draw_normal(Painter& painter) {
     IntRect b = global_bounds();
@@ -108,7 +104,7 @@ void ProgressBar::draw_indeterminate(Painter& painter) {
     painter.fill_rounded_rect(bounds, roundness, color_bg);
     // We use clipping to ensure the fill respects the rounded corners of the background
     painter.push_rounded_clip({bounds.x, bounds.y, bounds.w, bounds.h}, roundness);
-    painter.fill_rounded_rect(ind_anim_rect, roundness, color_fill);
+    painter.fill_rect(ind_anim_rect, color_fill);
     painter.pop_clip();
 }
 

@@ -12,7 +12,8 @@ class Painter;
 
 class View {
 public:
-    View(std::shared_ptr<Widget> root);
+    View(std::unique_ptr<Widget> root);
+    virtual ~View();
 
     void resize(int w, int h);
     void update();
@@ -23,7 +24,7 @@ public:
     void on_key(KeyCode key);
 
 private:
-    std::shared_ptr<Widget> m_root;
+    std::unique_ptr<Widget> m_root;
     int m_width = 0, m_height = 0;
 };
 
