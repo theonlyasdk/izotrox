@@ -1,14 +1,18 @@
 #pragma once
 
-#include "UI/View/View.hpp"
 #include "Motion/Animator.hpp"
 #include "Geometry/Primitives.hpp"
+#include "Input/KeyCode.hpp"
 
 #include <vector>
 #include <memory>
 #include <deque>
 
 namespace Izo {
+
+class View;
+class Dialog;
+class Painter;
 
 enum class ViewTransition {
     None,

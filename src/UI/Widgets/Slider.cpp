@@ -4,6 +4,7 @@
 #include "UI/Widgets/Slider.hpp"
 #include "Core/ThemeDB.hpp"
 #include "Core/ResourceManager.hpp"
+#include "Graphics/Image.hpp"
 #include "Graphics/Painter.hpp"
 
 namespace Izo {

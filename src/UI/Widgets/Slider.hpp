@@ -1,11 +1,11 @@
 #pragma once
 
 #include "UI/Widgets/Widget.hpp"
-#include "Graphics/Image.hpp"
-
 #include <functional>
 
 namespace Izo {
+
+class Image;
 
 class Slider : public Widget {
 public:

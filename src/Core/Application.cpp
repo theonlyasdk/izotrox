@@ -1,4 +1,5 @@
 #include "Core/Application.hpp"
+#include "Graphics/Canvas.hpp"
 #include "Platform/PlatformMacros.hpp"
 #include <cstdint>
 

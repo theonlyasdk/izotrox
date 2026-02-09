@@ -1,4 +1,6 @@
 #include "ViewManager.hpp"
+#include "UI/View/View.hpp"
+#include "Graphics/Painter.hpp"
 #include <memory>
 #include "Core/Application.hpp"
 #include "ThemeDB.hpp"

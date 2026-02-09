@@ -1,4 +1,5 @@
 #include "UI/Widgets/TextBox.hpp"
+#include "Graphics/Font.hpp"
 #include "Core/ThemeDB.hpp"
 #include "Input/Input.hpp"
 #include "Core/Application.hpp"

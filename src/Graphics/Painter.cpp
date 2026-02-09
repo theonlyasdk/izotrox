@@ -1,4 +1,6 @@
 #include "Graphics/Painter.hpp"
+#include "Graphics/Color.hpp"
+#include "Graphics/Canvas.hpp"
 
 #include <algorithm>
 #include <cmath>

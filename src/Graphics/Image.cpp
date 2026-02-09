@@ -2,6 +2,7 @@
 #include "Debug/Logger.hpp"
 #include "Graphics/Image.hpp"
 #include "Graphics/Painter.hpp"
+#include "Graphics/Color.hpp"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "Lib/stb_image.h"

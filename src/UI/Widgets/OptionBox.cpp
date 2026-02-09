@@ -7,6 +7,7 @@
 #include "Core/ViewManager.hpp"
 #include "Geometry/Primitives.hpp"
 #include "Graphics/Dialog.hpp"
+#include "Graphics/Font.hpp"
 #include "Input/Input.hpp"
 
 namespace Izo {

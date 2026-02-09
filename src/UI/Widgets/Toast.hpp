@@ -5,11 +5,12 @@
 #include <queue>
 #include <functional>
 
-#include "UI/Widgets/Widget.hpp"
-#include "Graphics/Font.hpp"
-#include "Motion/Animator.hpp"
+#include <functional>
 
 namespace Izo {
+
+class Font;
+class Painter;
 
 class Toast {
 public:

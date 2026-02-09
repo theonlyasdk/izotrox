@@ -1,4 +1,5 @@
 #include "UI/Widgets/Toast.hpp"
+#include "Graphics/Font.hpp"
 #include "Graphics/Painter.hpp"
 #include "Core/ThemeDB.hpp"
 

@@ -4,9 +4,10 @@
 #include <functional>
 
 #include "Geometry/Primitives.hpp"
-#include "Graphics/Canvas.hpp"
 
 namespace Izo {
+
+class Canvas;
 
 class Application {
 public:

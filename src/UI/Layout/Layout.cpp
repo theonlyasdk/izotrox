@@ -1,6 +1,7 @@
 #include "Layout.hpp"
 #include "Input/Input.hpp"
 #include "Graphics/Painter.hpp"
+#include "Graphics/Color.hpp"
 #include "Core/Application.hpp"
 
 #include <cmath>

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "UI/Widgets/Widget.hpp"
-#include "Graphics/Font.hpp"
 #include "Motion/Animator.hpp"
 #include "Geometry/Primitives.hpp"
 

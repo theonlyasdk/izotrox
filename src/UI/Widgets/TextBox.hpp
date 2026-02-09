@@ -1,7 +1,6 @@
 #pragma once
 
 #include "UI/Widgets/Widget.hpp"
-#include "Graphics/Font.hpp"
 #include "Graphics/Color.hpp"
 #include "Motion/Animator.hpp"
 
@@ -9,6 +8,8 @@
 #include <functional>
 
 namespace Izo {
+
+class Font;
 
 class TextBox : public Widget {
 public:
