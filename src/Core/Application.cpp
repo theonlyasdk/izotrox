@@ -124,12 +124,5 @@ const IntRect Application::screen_rect() const {
     return IntRect{0, 0, static_cast<int>(width()), static_cast<int>(height())};
 }
 
-const bool Application::debug_mode() const {
-    return m_debug;
-}
-
-void Application::set_debug(bool flag) {
-    m_debug = flag;
-}
 
 }

@@ -7,11 +7,6 @@
 
 namespace Izo {
 
-ViewManager& ViewManager::the() {
-    static ViewManager instance;
-    return instance;
-}
-
 void ViewManager::setup_transition(ViewTransition transition, bool is_pop) {
     int transition_duration = ThemeDB::the().get<int>("System", "ViewTransitionDuration", 500);
     Easing transition_easing = ThemeDB::the().get<Easing>("System", "ViewTransitionEasing", Easing::EaseOutQuart);
@@ -78,30 +73,6 @@ void ViewManager::pop(ViewTransition transition) {
 
     m_stack.pop_back();
     m_processing_operation = false;
-}
-
-void ViewManager::open_dialog(std::shared_ptr<Dialog> dialog) {
-    m_dialog = dialog;
-}
-
-void ViewManager::dismiss_dialog() {
-    m_dialog.reset();
-}
-
-bool ViewManager::has_active_dialog() const {
-    return m_dialog != nullptr;
-}
-
-std::shared_ptr<Dialog> ViewManager::active_dialog() const {
-    return m_dialog;
-}
-
-bool ViewManager::is_animating() const { 
-    return m_animating; 
-}
-
-size_t ViewManager::stack_size() const { 
-    return m_stack.size(); 
 }
 
 void ViewManager::process_pending_operations() {

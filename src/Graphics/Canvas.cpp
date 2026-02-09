@@ -21,9 +21,6 @@ Canvas::~Canvas() {
     }
 }
 
-size_t Canvas::size_bytes() const {
-    return m_width * m_height * sizeof(uint32_t);
-}
 
 void Canvas::clear(Color color) {
     uint32_t c = color.as_argb();

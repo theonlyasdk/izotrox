@@ -25,15 +25,21 @@ class Dialog;
 
 class ViewManager {
 public:
-    static ViewManager& the();
+    ViewManager(const ViewManager&) = delete;
+    ViewManager& operator=(const ViewManager&) = delete;
+
+    static ViewManager& the() {
+        static ViewManager instance;
+        return instance;
+    }
 
     void push(std::shared_ptr<View> view, ViewTransition transition = ViewTransition::ThemeDefault);
     void pop(ViewTransition transition = ViewTransition::ThemeDefault);
 
-    void open_dialog(std::shared_ptr<Dialog> dialog);
-    void dismiss_dialog();
-    bool has_active_dialog() const;
-    std::shared_ptr<Dialog> active_dialog() const;
+    void open_dialog(std::shared_ptr<Dialog> dialog) { m_dialog = dialog; }
+    void dismiss_dialog() { m_dialog.reset(); }
+    bool has_active_dialog() const { return m_dialog != nullptr; }
+    std::shared_ptr<Dialog> active_dialog() const { return m_dialog; }
 
     void resize(int w, int h);
     void update();
@@ -41,8 +47,8 @@ public:
     void on_touch(IntPoint point, bool down);
     void on_key(KeyCode key);
 
-    bool is_animating() const;
-    size_t stack_size() const;
+    bool is_animating() const { return m_animating; }
+    size_t stack_size() const { return m_stack.size(); }
 
 private:
     ViewManager() = default;

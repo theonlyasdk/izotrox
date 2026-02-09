@@ -25,8 +25,8 @@ public:
     const uint32_t height() const;
     const IntRect screen_rect() const;
 
-    void set_debug(bool flag);
-    const bool debug_mode() const;
+    void set_debug(bool flag) { m_debug = flag; }
+    const bool debug_mode() const { return m_debug; }
 
     float delta() const { return _delta; }
     void set_delta(float dt) { _delta = dt; }

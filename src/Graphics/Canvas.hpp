@@ -22,7 +22,7 @@ public:
     uint32_t* pixels() { return m_pixels; }
     const uint32_t* pixels() const { return m_pixels; }
 
-    size_t size_bytes() const;
+    size_t size_bytes() const { return m_width * m_height * sizeof(uint32_t); }
 
     void clear(Color color);
 
