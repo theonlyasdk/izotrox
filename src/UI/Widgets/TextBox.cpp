@@ -11,8 +11,8 @@ namespace Izo {
 
 std::string TextBox::s_clipboard;
 
-TextBox::TextBox(const std::string& placeholder, Font* font)
-    : m_text_buffer(""), m_placeholder(placeholder), m_font(font) {}
+TextBox::TextBox(const std::string& placeholder)
+    : m_text_buffer(""), m_placeholder(placeholder) {}
 
 void TextBox::set_text(const std::string& t) {
     if (m_text_buffer != t) {
@@ -24,10 +24,6 @@ void TextBox::set_text(const std::string& t) {
         }
     }
 }
-
-
-
-
 
 int TextBox::get_cursor_index(int lx) {
     if (!m_font || m_text_buffer.empty()) return 0;

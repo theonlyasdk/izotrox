@@ -13,12 +13,11 @@ class Font;
 
 class Label : public Widget {
 public:
-    Label(const std::string& text, Font* font);
+    Label(const std::string& text);
 
     void draw_content(Painter& painter) override;
     void measure(int parent_w, int parent_h) override;
 
-    void set_font(Font* font) { m_font = font; }
     void set_wrap(bool wrap) { m_should_wrap = wrap; }
     
     void set_alignment(TextAlign align) { m_alignment = align; }
@@ -34,7 +33,6 @@ public:
 
 private:
     std::string m_text;
-    Font* m_font;
     bool m_should_wrap = false;
     TextAlign m_alignment = TextAlign::Left;
     ColorVariant m_color_variant = ColorVariant::Default;

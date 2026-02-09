@@ -7,7 +7,7 @@
 
 namespace Izo {
 
-Label::Label(const std::string& text, Font* font) : m_text(text), m_font(font) {}
+Label::Label(const std::string& text) : m_text(text) {}
 
 void Label::set_color(const Color& color) {
     m_has_custom_color = true;

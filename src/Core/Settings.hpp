@@ -32,13 +32,13 @@ public:
     }
 
     template<typename T>
-    T get_or(const std::string& key, const T& defaultValue) const {
+    T get_or(const std::string& key, const T& default_val) const {
         try {
             return std::any_cast<T>(data->at(key));
         }
         catch (...) {
-            LogError("Settings read failed for key: {}", key);
-            return defaultValue;
+            LogWarn("Settings key not found: '{}', using default value: '{}'", key, default_val);
+            return default_val;
         }
     }
 

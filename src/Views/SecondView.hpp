@@ -10,7 +10,7 @@ namespace Izo {
 
 class SecondView {
 public:
-    static std::unique_ptr<View> create(Font* font);
+    static std::unique_ptr<View> create();
 };
 
 } 

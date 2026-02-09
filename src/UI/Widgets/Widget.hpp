@@ -15,6 +15,8 @@ enum class WidgetSizePolicy {
     WrapContent = -2
 };
 
+class Font;
+
 class Widget {
 public:
     Widget();
@@ -24,6 +26,10 @@ public:
     virtual void draw_focus(Painter& painter); 
 
     virtual void update();
+
+    virtual void on_theme_reload();
+    void set_font(Font* font) { m_font = font; }
+    Font* font() const { return m_font; }
 
     virtual void layout() {};
     virtual void measure(int parent_w, int parent_h); 
@@ -124,6 +130,7 @@ protected:
     bool m_show_focus_indicator = true;
     Animator<float> m_focus_anim;
     Widget* m_parent = nullptr;
+    Font* m_font = nullptr;
 };
 
 } 

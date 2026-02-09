@@ -8,28 +8,28 @@
 
 namespace Izo {
 
-std::unique_ptr<View> SecondView::create(Font* font) {
+std::unique_ptr<View> SecondView::create() {
     auto root = std::make_unique<LinearLayout>(Orientation::Vertical);
     root->set_focusable(false);
     root->set_width(WidgetSizePolicy::MatchParent);
     root->set_height(WidgetSizePolicy::MatchParent);
     root->set_padding(20);
 
-    auto title = std::make_unique<Label>("Second View", font);
+    auto title = std::make_unique<Label>("Second View");
     title->set_width(WidgetSizePolicy::MatchParent);
     root->add_child(std::move(title));
 
-    auto description = std::make_unique<Label>("This is a second view pushed onto the view stack.", font);
+    auto description = std::make_unique<Label>("This is a second view pushed onto the view stack.");
     description->set_width(WidgetSizePolicy::MatchParent);
     description->set_wrap(true);
     root->add_child(std::move(description));
 
     // Demo OptionBox
-    auto optionLabel = std::make_unique<Label>("Select a theme:", font);
+    auto optionLabel = std::make_unique<Label>("Select a theme:");
     optionLabel->set_width(WidgetSizePolicy::MatchParent);
     root->add_child(std::move(optionLabel));
 
-    auto optionBox = std::make_unique<OptionBox>(font);
+    auto optionBox = std::make_unique<OptionBox>();
     optionBox->set_width(WidgetSizePolicy::MatchParent);
     optionBox->add_option("default");
     optionBox->add_option("catppuccin-mocha");
@@ -43,17 +43,17 @@ std::unique_ptr<View> SecondView::create(Font* font) {
 
     root->add_child(std::move(optionBox));
 
-    auto backBtn = std::make_unique<Button>("Go Back", font);
+    auto backBtn = std::make_unique<Button>("Go Back");
     backBtn->set_width(WidgetSizePolicy::MatchParent);
     backBtn->set_on_click([]() {
         ViewManager::the().pop();
     });
     root->add_child(std::move(backBtn));
     
-    auto btn_next_screen = std::make_unique<Button>("Go to next screen", font);
+    auto btn_next_screen = std::make_unique<Button>("Go to next screen");
     btn_next_screen->set_width(WidgetSizePolicy::MatchParent);
-    btn_next_screen->set_on_click([font]() {
-        auto view = ThemePreviewView::create(font);
+    btn_next_screen->set_on_click([]() {
+        auto view = ThemePreviewView::create();
         ViewManager::the().push(std::move(view));
     });
     root->add_child(std::move(btn_next_screen));

@@ -4,7 +4,6 @@
 
 namespace Izo {
 
-
 void Container::draw_content(Painter& painter) {
     painter.push_clip(global_bounds());
     for (auto& child : m_children) {
@@ -105,6 +104,13 @@ void Container::draw_focus(Painter& painter) {
             child->draw_focus(painter);
     }
     Widget::draw_focus(painter);
+}
+
+void Container::on_theme_reload() {
+    Widget::on_theme_reload();
+    for (auto& child : m_children) {
+        child->on_theme_reload();
+    }
 }
 
 } 

@@ -21,8 +21,8 @@ constexpr int MARGIN_FROM_EDGE = 40;
 
 class OptionsDialog : public Dialog {
    public:
-    OptionsDialog(const IntRect& start, const std::vector<std::string>& options, Font* font, int current_idx, std::function<void(int)> callback)
-        : m_start(start), m_options(options), m_font(font), m_selected(current_idx), m_callback(callback) {
+    OptionsDialog(const IntRect& start, const std::vector<std::string>& options, int current_idx, std::function<void(int)> callback)
+        : m_start(start), m_options(options), m_selected(current_idx), m_callback(callback) {
         m_focusable = true;
 
         int num_options = (int)m_options.size();
@@ -166,16 +166,14 @@ class OptionsDialog : public Dialog {
    private:
     IntRect m_start, m_target;
     std::vector<std::string> m_options;
-    Font* m_font;
     int m_selected;
     int m_hover = -1;
     bool m_closing = false;
     std::function<void(int)> m_callback;
 };
 
-OptionBox::OptionBox(Font* font)
-    : m_font(font),
-      m_selected_index(0),
+OptionBox::OptionBox()
+    : m_selected_index(0),
       m_bg_anim(ThemeDB::the().get<Color>("Colors", "OptionBox.Background", Color(200))) {
     m_focusable = true;
     set_padding_ltrb(12, 8, 12, 8);
@@ -197,10 +195,6 @@ void OptionBox::select(int index) {
         m_selected_index = index;
     }
 }
-
-
-
-
 
 void OptionBox::measure(int parent_w, int parent_h) {
     int total_text_width = 0;
@@ -231,10 +225,13 @@ void OptionBox::draw_content(Painter& painter) {
     painter.fill_rounded_rect(bounds, roundness, m_bg_anim.value());
     painter.draw_rounded_rect(bounds, roundness, color_border);
 
+    painter.push_rounded_clip(bounds, roundness);
+
     if (m_font && m_selected_index >= 0 && m_selected_index < (int)m_options.size()) {
         int ty = bounds.y + (bounds.h - m_font->height()) / 2;
         m_font->draw_text(painter, {bounds.x + m_padding_left, ty}, m_options[m_selected_index], color_text);
     }
+    painter.pop_clip();
 
     int ax = bounds.x + bounds.w - 20;
     int ay = bounds.y + bounds.h / 2;
@@ -254,7 +251,7 @@ bool OptionBox::on_touch_event(IntPoint point, bool down) {
             m_pressed = false;
             m_bg_anim.set_target(color_bg, 200);
 
-            auto dialog = std::make_unique<OptionsDialog>(global_bounds(), m_options, m_font, m_selected_index, [this](int idx) {
+            auto dialog = std::make_unique<OptionsDialog>(global_bounds(), m_options, m_selected_index, [this](int idx) {
                 select(idx);
                 if (m_on_change) 
                     m_on_change(idx, m_options[idx]);

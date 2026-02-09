@@ -7,11 +7,17 @@
 
 namespace Izo {
 
-Button::Button(const std::string& text, Font* font) 
-    : m_label(std::make_unique<Label>(text, font)),
+Button::Button(const std::string& text) 
+    : m_label(std::make_unique<Label>(text)),
       m_bg_anim(ThemeDB::the().get<Color>("Colors", "Button.Background", Color(100))) 
 {
     m_label->set_alignment(TextAlign::Center);
+}
+
+void Button::on_theme_reload() {
+    Widget::on_theme_reload();
+    if (m_label) 
+        m_label->on_theme_reload();
 }
 
 void Button::draw_content(Painter& painter) {

@@ -13,7 +13,7 @@ class Font;
 
 class TextBox : public Widget {
 public:
-    TextBox(const std::string& placeholder, Font* font);
+    TextBox(const std::string& placeholder);
 
     void set_text(const std::string& t);
     const std::string& text() const { return m_text_buffer; }
@@ -36,7 +36,6 @@ private:
 
     std::string m_text_buffer;
     std::string m_placeholder;
-    Font* m_font;
 
     Animator<Color> m_border_anim;
 

@@ -178,7 +178,7 @@ int main(int argc, const char* argv[]) {
 
     if (headless) {
         auto preview_path = Settings::the().get<std::string>("preview-path");
-        auto preview_view = ThemePreviewView::create(systemFont);
+        auto preview_view = ThemePreviewView::create();
         canvas->clear(ThemeDB::the().get<Color>("Colors", "Window.Background", Color(255)));
 
         int w = canvas->width();
@@ -221,19 +221,19 @@ int main(int argc, const char* argv[]) {
     root->set_show_focus_indicator(false);
     root->set_padding(20);
 
-    auto lbl_title = std::make_unique<Label>("Izotrox UI Demo", systemFont);
+    auto lbl_title = std::make_unique<Label>("Izotrox UI Demo");
     lbl_title->set_width(WidgetSizePolicy::MatchParent);
     root->add_child(std::move(lbl_title));
 
-    auto btn_start_engine = std::make_unique<Button>("Start Engine", systemFont);
+    auto btn_start_engine = std::make_unique<Button>("Start Engine");
     btn_start_engine->set_focusable(true);
     root->add_child(std::move(btn_start_engine));
 
-    auto btn_settings = std::make_unique<Button>("Settings", systemFont);
+    auto btn_settings = std::make_unique<Button>("Settings");
     btn_settings->set_focusable(true);
     root->add_child(std::move(btn_settings));
 
-    auto btn_crash_app = std::make_unique<Button>("Crash App", systemFont);
+    auto btn_crash_app = std::make_unique<Button>("Crash App");
     btn_crash_app->set_focusable(true);
     btn_crash_app->set_on_click([&running]() {
         /* LogFatal automatically calls the application destructor and
@@ -243,11 +243,11 @@ int main(int argc, const char* argv[]) {
     });
     root->add_child(std::move(btn_crash_app));
 
-    auto btn_second_view = std::make_unique<Button>("Go to Second View", systemFont);
+    auto btn_second_view = std::make_unique<Button>("Go to Second View");
     btn_second_view->set_focusable(true);
     btn_second_view->set_width(WidgetSizePolicy::MatchParent);
-    btn_second_view->set_on_click([systemFont]() {
-        auto secondView = SecondView::create(systemFont);
+    btn_second_view->set_on_click([]() {
+        auto secondView = SecondView::create();
         ViewManager::the().push(std::move(secondView));
     });
     root->add_child(std::move(btn_second_view));
@@ -264,7 +264,7 @@ int main(int argc, const char* argv[]) {
     });
     root->add_child(std::move(slider_demo));
 
-    auto tb_demo = std::make_unique<TextBox>("Shell> ", systemFont);
+    auto tb_demo = std::make_unique<TextBox>("Shell> ");
     TextBox* tb_demo_ptr = tb_demo.get();  // Keep raw pointer for lambda capture
     tb_demo->set_focusable(true);
     tb_demo->set_width(WidgetSizePolicy::MatchParent);
@@ -277,10 +277,10 @@ int main(int argc, const char* argv[]) {
     });
     root->add_child(std::move(tb_demo));
 
-    auto lbl_multiline_demo = std::make_unique<Label>("Multi-line\nLabel Test", systemFont);
+    auto lbl_multiline_demo = std::make_unique<Label>("Multi-line\nLabel Test");
     root->add_child(std::move(lbl_multiline_demo));
 
-    auto lbl_wrap_demo = std::make_unique<Label>("This is a very long text that should automatically wrap to the next line if the container width is not enough to hold it in a single line.", systemFont);
+    auto lbl_wrap_demo = std::make_unique<Label>("This is a very long text that should automatically wrap to the next line if the container width is not enough to hold it in a single line.");
     lbl_wrap_demo->set_width(WidgetSizePolicy::MatchParent);
     lbl_wrap_demo->set_wrap(true);
     root->add_child(std::move(lbl_wrap_demo));
@@ -293,10 +293,10 @@ int main(int argc, const char* argv[]) {
     for (size_t i = 0; i < MAX_LIST_ITEMS; ++i) {
         auto item = std::make_unique<ListItem>(Orientation::Vertical);
 
-        auto label = std::make_unique<Label>("Item " + std::to_string(i), systemFont);
+        auto label = std::make_unique<Label>("Item " + std::to_string(i));
         label->set_focusable(false);
 
-        auto subLabel = std::make_unique<Label>("Details for " + std::to_string(i), systemFont);
+        auto subLabel = std::make_unique<Label>("Details for " + std::to_string(i));
         subLabel->set_color_variant(ColorVariant::Secondary);
         subLabel->set_focusable(false);
 

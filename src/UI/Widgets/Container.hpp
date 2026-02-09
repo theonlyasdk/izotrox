@@ -20,6 +20,7 @@ public:
     virtual bool on_touch(IntPoint point, bool down, bool captured = false) override;
     virtual bool on_scroll(int y) override;
     virtual bool on_key(KeyCode key) override;
+    virtual void on_theme_reload() override;
 
     const std::vector<std::unique_ptr<Widget>>& children() const { return m_children; }
     void collect_focusable_widgets(std::vector<Widget*>& out_list);

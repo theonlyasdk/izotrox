@@ -15,7 +15,9 @@ class Font;
 
 class Button : public Widget {
 public:
-    Button(const std::string& text, Font* font);
+    Button(const std::string& text);
+
+    void on_theme_reload() override;
 
     void draw_content(Painter& painter) override;
     void update() override;

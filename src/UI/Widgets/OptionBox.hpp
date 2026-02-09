@@ -13,7 +13,7 @@ class Font;
 
 class OptionBox : public Widget {
 public:
-    OptionBox(Font* font);
+    OptionBox();
 
     void draw_content(Painter& painter) override;
     void update() override;
@@ -36,7 +36,6 @@ public:
 
 private:
 
-    Font* m_font;
     std::vector<std::string> m_options;
     int m_selected_index = 0;
     

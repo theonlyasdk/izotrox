@@ -9,7 +9,9 @@
 
 namespace Izo {
 
-Widget::Widget() : m_bounds{0, 0, 0, 0}, m_measured_size{0, 0, 0, 0}, m_focus_anim(0.0f), m_prev_touch_down(false), m_touch_started_inside(false), m_focusable(true) {}
+Widget::Widget() : m_bounds{0, 0, 0, 0}, m_measured_size{0, 0, 0, 0}, m_focus_anim(0.0f), m_prev_touch_down(false), m_touch_started_inside(false), m_focusable(true) {
+    on_theme_reload();
+}
 
 void Widget::draw(Painter& painter) {
     if (!m_visible) return;
@@ -39,6 +41,10 @@ void Widget::draw_debug_info(Painter& painter) {
     };
 
     app_font->draw_text(painter, txt_widget_type_pos, widget_type(), Color::Yellow);
+}
+
+void Widget::on_theme_reload() {
+    m_font = FontManager::the().get("system-ui");
 }
 
 void Widget::update() {
