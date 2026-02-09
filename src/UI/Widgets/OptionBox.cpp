@@ -9,45 +9,54 @@
 #include "Graphics/Dialog.hpp"
 #include "Graphics/Font.hpp"
 #include "Input/Input.hpp"
+#include "UI/Widgets/OptionItem.hpp"
 
 namespace Izo {
 
-constexpr int OPTION_LIST_ITEM_HEIGHT_PADDING = 20;
-constexpr int OPTION_LIST_ITEM_GAP = 10;
 constexpr int DIALOG_MIN_WIDTH = 400;
-constexpr int DIALOG_MIN_HEIGHT = 600;
 constexpr int DIALOG_PADDING = 10;
 constexpr int MARGIN_FROM_EDGE = 40;
 
 class OptionsDialog : public Dialog {
-   public:
+public:
     OptionsDialog(const IntRect& start, const std::vector<std::string>& options, int current_idx, std::function<void(int)> callback)
         : m_start(start), m_options(options), m_selected(current_idx), m_callback(callback) {
+        
         m_focusable = true;
+        set_padding(DIALOG_PADDING);
 
-        int num_options = (int)m_options.size();
+        for (int i = 0; i < (int)m_options.size(); ++i) {
+            auto item = std::make_unique<OptionItem>(m_options[i], i, [this](int idx) {
+                m_callback(idx);
+                close();
+            });
+            if (i == m_selected) item->set_selected(true);
+            add_child(std::move(item));
+        }
+
+        // Initial layout constants
         int win_w = Application::the().width();
         int win_h = Application::the().height();
-
         int dialog_w = std::min(win_w - MARGIN_FROM_EDGE, DIALOG_MIN_WIDTH);
-        int item_h = m_font->height() + OPTION_LIST_ITEM_HEIGHT_PADDING;
-        int dialog_h = std::min(win_h - MARGIN_FROM_EDGE, num_options * item_h);
 
-        IntRect target_rect{(win_w - dialog_w) / 2, (win_h - dialog_h) / 2, dialog_w, dialog_h};
+        // Measure children to determine height
+        // We subtract padding from both sides
+        measure(dialog_w - (DIALOG_PADDING * 2), win_h - MARGIN_FROM_EDGE);
+        
+        int dialog_h = std::min(win_h - MARGIN_FROM_EDGE, m_measured_size.h);
 
-        m_target = target_rect;
-        set_bounds({0, 0, m_target.w, m_target.h});
-
+        m_target = {(win_w - dialog_w) / 2, (win_h - dialog_h) / 2, dialog_w, dialog_h};
+        set_bounds(m_target);
+        
+        // Setup animation
         auto duration = ThemeDB::the().get<int>("Feel", "OptionBox.AnimationDuration", 300);
         auto easing = ThemeDB::the().get<Easing>("Feel", "OptionBox.AnimationEasing", Easing::EaseOutQuart);
-
         m_dialog_anim.set_target(1.0f, duration, easing);
     }
 
     void update() override {
         Dialog::update();
-        m_dialog_anim.update(Application::the().delta());
-
+        
         if (m_closing && !m_dialog_anim.running()) {
             ViewManager::the().dismiss_dialog();
         }
@@ -55,102 +64,54 @@ class OptionsDialog : public Dialog {
 
     void draw_content(Painter& painter) override {
         float anim_progress = m_dialog_anim.value();
+        if (anim_progress <= 0.0f) return;
 
-        int num_options = (int)m_options.size();
-        int win_w = Application::the().width();
-        int win_h = Application::the().height();
-
-        int dialog_w = std::min(win_w - MARGIN_FROM_EDGE, DIALOG_MIN_WIDTH);
-        int item_h = m_font->height() + OPTION_LIST_ITEM_HEIGHT_PADDING;
-        int dialog_h = std::min(win_h - MARGIN_FROM_EDGE, num_options * item_h);
-
-        IntRect dialog_bounds_after_anim{
-            (win_w - dialog_w) / 2, (win_h - dialog_h) / 2, dialog_w, dialog_h + DIALOG_PADDING * 2,
-        };
-
+        float old_alpha = painter.global_alpha();
+        painter.set_global_alpha(old_alpha * anim_progress);
+        
+        // Interpolate bounds
         IntRect current{
-            m_start.x + (int)((dialog_bounds_after_anim.x - m_start.x) * anim_progress),
-            m_start.y + (int)((dialog_bounds_after_anim.y - m_start.y) * anim_progress),
-            m_start.w + (int)((dialog_bounds_after_anim.w - m_start.w) * anim_progress),
-            m_start.h + (int)((dialog_bounds_after_anim.h - m_start.h) * anim_progress),
+            m_start.x + (int)((m_target.x - m_start.x) * anim_progress),
+            m_start.y + (int)((m_target.y - m_start.y) * anim_progress),
+            m_start.w + (int)((m_target.w - m_start.w) * anim_progress),
+            m_start.h + (int)((m_target.h - m_start.h) * anim_progress),
         };
-
+        
         set_bounds(current);
+        // We must remeasure and layout children since bounds are changing every frame
+        measure(current.w - (DIALOG_PADDING * 2), current.h - (DIALOG_PADDING * 2));
+        layout();
 
         auto roundness = ThemeDB::the().get<int>("Looks", "Widget.Roundness", 12);
         auto color_bg = ThemeDB::the().get<Color>("Colors", "OptionBox.Background", Color(100));
         auto color_border = ThemeDB::the().get<Color>("Colors", "OptionBox.Border", Color(200));
-        auto color_highlight = ThemeDB::the().get<Color>("Colors", "OptionBox.Highlight", Color(200));
-        auto color_text = ThemeDB::the().get<Color>("Colors", "OptionBox.Text", Color(255));
 
-        color_bg.a = (uint8_t)(color_bg.a * anim_progress);
-        color_border.a = (uint8_t)(color_border.a * anim_progress);
-        
         int outer_radius = roundness + DIALOG_PADDING;
         painter.fill_rounded_rect(current, outer_radius, color_bg);
         painter.draw_rounded_rect(current, outer_radius, color_border);
 
-        if (anim_progress > 0.5f && m_font) {
-            if (!m_dialog_anim.running()) {
-                current.w = dialog_bounds_after_anim.w;
-                current.h = dialog_bounds_after_anim.h;
-            }
+        Dialog::draw_content(painter);
 
-            float alpha = (anim_progress - 0.5f) * 2.0f;
-            int item_h = m_font->height() + OPTION_LIST_ITEM_HEIGHT_PADDING;
-
-            painter.push_clip(current);
-            for (int i = 0; i < (int)m_options.size(); ++i) {
-                int iy = current.y + DIALOG_PADDING + (i * item_h);
-
-                if (iy + item_h < current.y || iy > current.y + current.h) 
-                    continue;
-
-                IntRect highlight_rect = {current.x, iy, current.w, item_h};
-                highlight_rect.contract_horiz(DIALOG_PADDING);
-
-                bool hovering = highlight_rect.contains(Input::the().touch_point());
-
-                if (i == m_selected || hovering) {
-                    color_highlight.a = (uint8_t)(color_highlight.a * alpha);
-                    painter.fill_rounded_rect(highlight_rect, roundness, color_highlight);
-                }
-
-                color_text.a = (uint8_t)(255 * alpha);
-                painter.push_rounded_clip(highlight_rect, roundness);
-                m_font->draw_text(painter, {current.x + DIALOG_PADDING * 2, iy + (item_h - m_font->height()) / 2}, m_options[i], color_text);
-                painter.pop_clip();
-            }
-            painter.pop_clip();
-        }
+        painter.set_global_alpha(old_alpha);
     }
 
-    bool on_touch_event(IntPoint point, bool down) override {
+    bool on_touch(IntPoint point, bool down, bool captured) override {
         if (m_closing) return true;
+        
+        bool inside = global_bounds().contains(point);
 
-        // FIXME: Point passed to on_touch_event is transformed
-        //        It's not clear that the point is transformed 
-        //        causing unintended bugs. I just spent half an hour
-        //        trying to fix the below logic before I realised
-        //        the transformed point was the problem.
-        IntPoint actual_touch_point = Input::the().touch_point();
-        int touch_y = actual_touch_point.y;
-        int item_height = m_font->height() + OPTION_LIST_ITEM_HEIGHT_PADDING;
+        if (down && !m_prev_touch_down) {
+            m_touch_started_outside = !inside;
+        }
 
-        // We're just finding out i from y = dialog.y + padding + (i * item_height)
-        int i = (touch_y - global_bounds().y - DIALOG_PADDING) / item_height;
-
-        if (down) {
-            if (!global_bounds().contains(actual_touch_point)) {
+        if (!down && m_prev_touch_down) {
+            if (!inside && m_touch_started_outside) {
                 close();
                 return true;
             }
-            if (i >= 0 && i < (int)m_options.size()) {
-                m_callback(i);
-                close();
-            }
         }
-        return true;
+        
+        return Dialog::on_touch(point, down, captured);
     }
 
     void close() override {
@@ -159,16 +120,16 @@ class OptionsDialog : public Dialog {
 
         auto duration = ThemeDB::the().get<int>("Feel", "OptionBox.AnimationDuration", 300);
         auto easing = ThemeDB::the().get<Easing>("Feel", "OptionBox.AnimationEasing", Easing::EaseOutQuart);
-
         m_dialog_anim.set_target(0.0f, duration, easing);
     }
 
-   private:
+private:
     IntRect m_start, m_target;
     std::vector<std::string> m_options;
     int m_selected;
-    int m_hover = -1;
     bool m_closing = false;
+    bool m_touch_started_outside = false;
+    bool m_dimmer_touch = false;
     std::function<void(int)> m_callback;
 };
 
@@ -198,13 +159,13 @@ void OptionBox::select(int index) {
 
 void OptionBox::measure(int parent_w, int parent_h) {
     int total_text_width = 0;
-    int total_text_height = m_font->height();
+    int total_text_height = m_font ? m_font->height() : 20;
 
     for (const auto& option : m_options) {
-        total_text_width = std::max(total_text_width, m_font->width(option));
+        if (m_font) total_text_width = std::max(total_text_width, m_font->width(option));
     }
 
-    m_measured_size.w = total_text_width + m_padding_left + m_padding_right;
+    m_measured_size.w = total_text_width + m_padding_left + m_padding_right + 40; // +40 for arrow
     m_measured_size.h = total_text_height + m_padding_top + m_padding_bottom;
 }
 
@@ -215,9 +176,7 @@ void OptionBox::update() {
 
 void OptionBox::draw_content(Painter& painter) {
     auto roundness = ThemeDB::the().get<int>("Looks", "Widget.Roundness", 12);
-    auto color_bg = ThemeDB::the().get<Color>("Colors", "OptionBox.Background", Color(100));
     auto color_border = ThemeDB::the().get<Color>("Colors", "OptionBox.Border", Color(200));
-    auto color_highlight = ThemeDB::the().get<Color>("Colors", "OptionBox.Highlight", Color(200));
     auto color_text = ThemeDB::the().get<Color>("Colors", "OptionBox.Text", Color(255));
     auto color_arrow = ThemeDB::the().get<Color>("Colors", "OptionBox.Arrow", Color(200));
 

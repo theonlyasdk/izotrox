@@ -1,18 +1,20 @@
 #include "Graphics/Dialog.hpp"
+#include "Core/Application.hpp"
 #include "Core/ThemeDB.hpp"
 
 namespace Izo {
 
-Dialog::Dialog() {
+Dialog::Dialog() : LinearLayout(Orientation::Vertical) {
     m_focusable = true;
 }
 
 void Dialog::draw_content(Painter& painter) {
+    LinearLayout::draw_content(painter);
 }
 
 void Dialog::update() {
     Widget::update();
-    m_dialog_anim.update(16.0f);
+    m_dialog_anim.update(Application::the().delta());
 }
 
 void Dialog::open() {

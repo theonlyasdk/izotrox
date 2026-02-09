@@ -1,8 +1,6 @@
 #pragma once
 
-#include "UI/Widgets/Widget.hpp"
-#include "Motion/Animator.hpp"
-#include "Geometry/Primitives.hpp"
+#include "UI/Layout/LinearLayout.hpp"
 
 #include <functional>
 
@@ -10,7 +8,7 @@ namespace Izo {
 
 class ViewManager;
 
-class Dialog : public Widget {
+class Dialog : public LinearLayout {
 public:
     friend class ViewManager;
     Dialog();

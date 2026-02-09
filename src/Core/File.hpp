@@ -10,7 +10,6 @@ class File {
 public:
     static std::string read_all_text(const std::string& path);
 
-    /* TODO: Implement more file functions */
     static std::vector<uint8_t> read_all_bytes(const std::string& path);
 
     static bool write_all_text(const std::string& path, const std::string& content);

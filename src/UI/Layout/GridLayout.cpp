@@ -55,6 +55,11 @@ void GridLayout::layout_children() {
             row_idx++;
         }
     }
+
+    m_total_height = cur_y + padding;
+    if (col_idx > 0) { // We were in the middle of a row
+        m_total_height += row_heights.back() + spacing;
+    }
 }
 
 } 

@@ -144,7 +144,12 @@ void ViewManager::resize(int w, int h) {
 }
 
 void ViewManager::update() {
+    int scroll = Input::the().scroll_y();
+
     if (m_dialog) {
+        if (scroll != 0) {
+            m_dialog->on_scroll(scroll);
+        }
         m_dialog->update();
     }
 
@@ -171,7 +176,6 @@ void ViewManager::update() {
     // Update the active view (even during animations for parallel input)
     auto active_view = get_active_input_view();
     if (active_view) {
-        int scroll = Input::the().scroll_y();
         if (scroll != 0) {
             active_view->on_scroll(scroll);
         }
