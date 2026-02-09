@@ -1,44 +1,41 @@
-# Helper makefile for building Izotrox
-# To run the project, run 'make'
-# To push files to remote Android device, run 'make push'
+# Build helper for Izotrox
+
 TARGET      = izotrox
-SRCS        = $(shell find src -type f \( -name '*.cpp' -o -name '*.c' \))
-SDL_FLAGS   = $(shell pkg-config --libs --cflags sdl2)
-LDFLAGS     = -lm $(SDL_FLAGS)
+BUILD_DIR   = build
 INSTALL_DIR = /data/adb/$(TARGET).install.dir/
 
-.PHONY: all build cmake clean build_clean install run push
+.PHONY: all configure build run clean rebuild push
 
-all: build
+all: build run
 
-build: cmake
-	cd build && ninja -j$(shell nproc)
-	./build/$(TARGET)
-
-cmake:
-	mkdir -p build
-	cd build && cmake .. -G Ninja \
-		-DCMAKE_BUILD_TYPE=Release \
+configure:
+	@mkdir -p $(BUILD_DIR)
+	@cd $(BUILD_DIR) && cmake .. -G Ninja \
+		-DCMAKE_BUILD_TYPE=Debug \
 		-DCMAKE_CXX_STANDARD=23 \
-		-DCMAKE_CXX_STANDARD_REQUIRED=ON
-	cp build/compile_commands.json .
+		-DCMAKE_CXX_STANDARD_REQUIRED=ON \
+		-DCMAKE_C_COMPILER=clang \
+		-DCMAKE_CXX_COMPILER=clang++
+
+build: configure
+	@cd $(BUILD_DIR) && ninja
 
 run:
-	./build/$(TARGET)
+	@./$(BUILD_DIR)/$(TARGET)
 
 clean:
-	@if [ -d "build" ]; then cd build && ninja clean; fi
+	@if [ -d "$(BUILD_DIR)" ]; then cd $(BUILD_DIR) && ninja clean; fi
 
-build_clean:
-	rm -rf build
+rebuild:
+	@rm -rf $(BUILD_DIR)
+	@$(MAKE) build
 
 push:
-	@echo "Pushing source to the connected Android device..."
+	@echo "Pushing build to Android device..."
 	adb shell mkdir -p $(INSTALL_DIR)
-	adb push build/$(TARGET) $(INSTALL_DIR)
+	adb push $(BUILD_DIR)/$(TARGET) $(INSTALL_DIR)
 	adb shell mkdir -p /data/adb/izotrox
 	adb push res /data/adb/izotrox/
 	adb push src /data/adb/izotrox/
 	adb push CMakeLists.txt /data/adb/izotrox/
-	adb push Makefile /data/adb/izotrox/
 	adb push Makefile /data/adb/izotrox/

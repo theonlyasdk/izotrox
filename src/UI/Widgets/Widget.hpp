@@ -1,5 +1,6 @@
 #pragma once
 
+#include <string>
 #include "Geometry/Primitives.hpp"
 #include "Input/KeyCode.hpp"
 #include "Motion/Animator.hpp"
@@ -83,10 +84,14 @@ public:
     void set_layout_index(int index) { m_layout_index = index; }
     int layout_index() const { return m_layout_index; }
 
+    const std::string widget_type() const { return m_widget_type; };
 protected:
     void handle_focus_logic(bool inside, bool down);
     void draw_focus_outline(Painter& painter);
     void draw_debug_info(Painter& painter);
+    void set_widget_type(const std::string type) { m_widget_type = type; };
+
+    std::string m_widget_type;
 
     IntRect m_bounds;
     IntRect m_measured_size;

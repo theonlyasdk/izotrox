@@ -1,6 +1,8 @@
 #include "UI/Widgets/Widget.hpp"
 #include "Core/Application.hpp"
 #include "Core/ThemeDB.hpp"
+#include "Geometry/Primitives.hpp"
+#include "Graphics/Font.hpp"
 #include "Graphics/Painter.hpp"
 #include "Input/Input.hpp"
 #include "Graphics/Painter.hpp"
@@ -25,7 +27,18 @@ void Widget::draw_focus(Painter& painter) {
 void Widget::draw_debug_info(Painter& painter) {
     if (!Application::the().debug_mode()) return;
 
+    Font* app_font = FontManager::the().get("system-ui");
+
     painter.outline_rect(global_bounds(), Color::Red);
+
+    int text_width = app_font->width(widget_type());
+    int text_height = app_font->height();
+    IntPoint txt_widget_type_pos = {
+        global_bounds().x + global_bounds().w - text_width,
+        global_bounds().y + global_bounds().h - text_height,
+    };
+
+    app_font->draw_text(painter, txt_widget_type_pos, widget_type(), Color::Yellow);
 }
 
 void Widget::update() {

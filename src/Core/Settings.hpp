@@ -22,8 +22,12 @@ public:
     T get(const std::string& key) const {
         try {
             return std::any_cast<T>(data->at(key));
-        } catch (...) {
-            LogError("Trying to read settings: Key not found: {}", key);
+        }
+        catch (const std::out_of_range&) {
+            throw std::runtime_error("Settings key not found: " + key);
+        }
+        catch (const std::bad_any_cast&) {
+            throw std::runtime_error("Settings type mismatch for key: " + key);
         }
     }
 
