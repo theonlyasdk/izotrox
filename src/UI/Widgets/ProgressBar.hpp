@@ -22,12 +22,12 @@ public:
     ProgressBar(bool indeterminate);
 
     void set_progress(float v);
-    void set_type(ProgressBar::Type type);
+    void set_type(ProgressBar::Type type) { m_type = type; }
     void set_animation_variant(AnimationVariant variant);
 
-    ProgressBar::Type type() const;
-    float progress() const;
-    AnimationVariant animation_variant() const;
+    ProgressBar::Type type() const { return m_type; }
+    float progress() const { return m_value; }
+    AnimationVariant animation_variant() const { return m_variant; }
 
     void draw_content(Painter& painter) override;
     void measure(int parent_w, int parent_h) override;

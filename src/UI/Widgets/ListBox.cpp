@@ -138,9 +138,6 @@ bool ListBox::on_key(KeyCode key) {
     return false;
 }
 
-int ListBox::content_height() const {
-    return m_total_content_height;
-}
 
 bool ListBox::on_scroll(int y) {
     if (!m_visible) return false;

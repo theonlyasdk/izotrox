@@ -197,16 +197,9 @@ void OptionBox::select(int index) {
     }
 }
 
-std::string OptionBox::selected_value() const {
-    if (m_selected_index >= 0 && m_selected_index < (int)m_options.size()) {
-        return m_options[m_selected_index];
-    }
-    return "";
-}
 
-int OptionBox::selected_index() const {
-    return m_selected_index;
-}
+
+
 
 void OptionBox::measure(int parent_w, int parent_h) {
     int total_text_width = 0;

@@ -34,9 +34,7 @@ void ProgressBar::set_progress(float v) {
     }
 }
 
-void ProgressBar::set_type(ProgressBar::Type type) {
-    m_type = type;
-}
+
 
 void ProgressBar::set_animation_variant(ProgressBar::AnimationVariant variant) {
     m_variant = variant;
@@ -53,17 +51,7 @@ void ProgressBar::set_animation_variant(ProgressBar::AnimationVariant variant) {
     }
 }
 
-ProgressBar::Type ProgressBar::type() const {
-    return m_type;
-}
 
-ProgressBar::AnimationVariant ProgressBar::animation_variant() const {
-    return m_variant;
-}
-
-float ProgressBar::progress() const { 
-    return m_value; 
-}
 
 void ProgressBar::draw_normal(Painter& painter) {
     IntRect b = global_bounds();

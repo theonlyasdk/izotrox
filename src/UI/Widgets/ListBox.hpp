@@ -28,7 +28,7 @@ public:
     void on_item_selected(std::function<void(int)> cb) { m_on_item_selected = cb; }
 
 protected:
-    int content_height() const override;
+    int content_height() const override { return m_total_content_height; }
 
 private:
     int m_item_height = 50; 

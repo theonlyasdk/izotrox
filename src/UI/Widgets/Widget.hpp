@@ -54,14 +54,19 @@ public:
     int measured_width() const { return m_measured_size.w; }
     int measured_height() const { return m_measured_size.h; }
 
-    void show();
-    void hide();
+    void show() { if (!m_visible) m_visible = true; }
+    void hide() { if (m_visible) m_visible = false; }
 
     bool visible() const { return m_visible; }
     bool hovering() const;
 
-    void set_padding(Padding padding);
-    const Padding padding() const;
+    void set_padding(Padding padding) {
+        m_padding_left = padding.left;
+        m_padding_right = padding.right;
+        m_padding_bottom = padding.bottom;
+        m_padding_top = padding.top;
+    }
+    const Padding padding() const { return Padding{m_padding_left, m_padding_right, m_padding_top, m_padding_bottom}; }
 
     void set_height(int h) { m_height = h; }
     void set_height(WidgetSizePolicy p) { m_height = (int)p; }
@@ -75,8 +80,13 @@ public:
     void set_width(int w) { m_width = w; }
     void set_focused(bool focused);
     void set_focusable(bool focusable) { m_focusable = focusable; }
-    void set_padding_ltrb(int left, int top, int right, int bottom);
-    void set_padding(int padding);
+    void set_padding_ltrb(int left, int top, int right, int bottom) {
+        m_padding_left = left;
+        m_padding_top = top;
+        m_padding_right = right;
+        m_padding_bottom = bottom;
+    }
+    void set_padding(int padding) { set_padding_ltrb(padding, padding, padding, padding); }
     void set_show_focus_indicator(bool show) { m_show_focus_indicator = show; }
     void set_parent(Widget* parent) { m_parent = parent; }
     Widget* parent() const { return m_parent; }

@@ -12,7 +12,7 @@ public:
     Slider(float value = 0.0f);
 
     void set_value(float v);
-    float value() const;
+    float value() const { return m_value; }
     void set_on_change(std::function<void(float)> callback) { m_on_change = callback; }
 
     void draw_content(Painter& painter) override;

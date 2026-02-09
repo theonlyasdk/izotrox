@@ -42,7 +42,10 @@ private:
 
 class ToastManager {
 public:
-    static ToastManager& the();
+    static ToastManager& the() {
+        static ToastManager instance;
+        return instance;
+    }
     
     void show(const std::string& message, int duration_ms = 2000);
     void update(float delta);

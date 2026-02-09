@@ -6,7 +6,7 @@ namespace Izo {
 
 class Layout : public Container {
 public:
-    void layout() override;
+    void layout() override { layout_children(); }
     virtual void layout_children() = 0;
 
     void measure(int parent_w, int parent_h) override;
@@ -20,7 +20,7 @@ public:
     IntPoint content_scroll_offset() const override { return {0, (int)m_scroll_y}; }
 
     void smooth_scroll_to(int target_y);
-    virtual void smooth_scroll_to_index(int index);
+    virtual void smooth_scroll_to_index(int index) { (void)index; }
 
 protected:
     virtual int content_height() const = 0;

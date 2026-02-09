@@ -15,11 +15,11 @@ public:
     TextBox(const std::string& placeholder, Font* font);
 
     void set_text(const std::string& t);
-    const std::string& text() const;
-    void set_placeholder(const std::string& placeholder);
+    const std::string& text() const { return m_text_buffer; }
+    void set_placeholder(const std::string& placeholder) { m_placeholder = placeholder; }
     void set_on_change(std::function<void(const std::string&)> callback) { m_on_change = callback; }
     void set_on_submit(std::function<void(const std::string&)> callback) { m_on_submit = callback; }
-    void clear();
+    void clear() { set_text(""); }
 
     void draw_content(Painter& painter) override;
     void update() override;

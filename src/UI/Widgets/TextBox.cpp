@@ -24,11 +24,9 @@ void TextBox::set_text(const std::string& t) {
     }
 }
 
-const std::string& TextBox::text() const { return m_text_buffer; }
 
-void TextBox::set_placeholder(const std::string& placeholder) {
-    m_placeholder = placeholder;
-}
+
+
 
 int TextBox::get_cursor_index(int lx) {
     if (!m_font || m_text_buffer.empty()) return 0;
@@ -357,8 +355,6 @@ void TextBox::measure(int parent_w, int parent_h) {
     m_measured_size = {0, 0, 200, mh};
 }
 
-void TextBox::clear() {
-    set_text("");
-}
+
 
 }

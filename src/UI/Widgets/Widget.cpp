@@ -136,27 +136,9 @@ bool Widget::hovering() const {
     return global_bounds().contains(Input::the().touch_point());
 }
 
-void Widget::set_padding_ltrb(int left, int top, int right, int bottom) {
-    m_padding_left = left;
-    m_padding_top = top;
-    m_padding_right = right;
-    m_padding_bottom = bottom;
-}
 
-void Widget::set_padding(int padding) {
-    set_padding_ltrb(padding, padding, padding, padding);
-}
 
-void Widget::show() {
-    if (!m_visible) {
-        m_visible = true;
-    }
-}
-void Widget::hide() {
-    if (m_visible) {
-        m_visible = false;
-    }
-}
+
 
 const IntRect Widget::global_bounds() const {
     IntRect bounds = m_bounds;
@@ -170,15 +152,6 @@ const IntRect Widget::global_bounds() const {
     return bounds;
 }
 
-void Widget::set_padding(Padding padding) {
-    m_padding_left=padding.left;
-    m_padding_right=padding.right;
-    m_padding_bottom=padding.bottom;
-    m_padding_top=padding.top;
-}
 
-const Padding Widget::padding() const {
-    return Padding{m_padding_left, m_padding_right, m_padding_top, m_padding_bottom};
-}
 
 }  // namespace Izo

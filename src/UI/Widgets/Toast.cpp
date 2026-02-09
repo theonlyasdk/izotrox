@@ -87,10 +87,6 @@ void Toast::draw(Painter& painter, int screen_width, int screen_height) {
     m_font->draw_text_multiline(painter, {tx, ty}, m_message, text_c, max_text_width);
 }
 
-ToastManager& ToastManager::the() {
-    static ToastManager instance;
-    return instance;
-}
 
 void ToastManager::show(const std::string& message, int duration_ms) {
     m_queue.push(std::make_shared<Toast>(message, duration_ms));

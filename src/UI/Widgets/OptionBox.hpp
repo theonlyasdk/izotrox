@@ -24,13 +24,17 @@ public:
     void set_options(const std::vector<std::string>& options);
     
     void select(int index);
-    int selected_index() const;
-    std::string selected_value() const;
+    int selected_index() const { return m_selected_index; }
+    std::string selected_value() const {
+        if (m_selected_index >= 0 && m_selected_index < (int)m_options.size()) {
+            return m_options[m_selected_index];
+        }
+        return "";
+    }
     
     void set_on_change(std::function<void(int, const std::string&)> callback) { m_on_change = callback; }
 
 private:
-    int item_height() const;
 
     Font* m_font;
     std::vector<std::string> m_options;

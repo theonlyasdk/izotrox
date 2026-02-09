@@ -118,8 +118,5 @@ bool Slider::on_touch_event(IntPoint point, bool down) {
     return down && (over_handle || inside_track);
 }
 
-float Slider::value() const { 
-    return m_value; 
-}
 
 } 

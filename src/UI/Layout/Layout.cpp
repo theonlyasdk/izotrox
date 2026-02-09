@@ -13,13 +13,9 @@ void Layout::measure(int parent_w, int parent_h) {
     if (m_height == (int)WidgetSizePolicy::MatchParent) m_measured_size.h = parent_h;
 }
 
-void Layout::layout() {
-    layout_children();
-}
 
-void Layout::smooth_scroll_to_index(int index) {
 
-}
+
 
 void Layout::smooth_scroll_to(int target_y) {
     m_auto_scrolling = true;

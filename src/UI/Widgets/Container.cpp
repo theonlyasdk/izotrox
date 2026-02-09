@@ -4,10 +4,6 @@
 
 namespace Izo {
 
-void Container::add_child(std::shared_ptr<Widget> child) {
-    child->set_parent(this);
-    m_children.push_back(child);
-}
 
 void Container::draw_content(Painter& painter) {
     painter.push_clip(global_bounds());
