@@ -135,55 +135,52 @@ void Font::draw_text(Painter& painter, IntPoint pos, const std::string& text, Co
 void Font::measure_multiline(const std::string& text, int& out_w, int& out_h, int max_width) {
     out_w = 0;
     out_h = 0;
-    if (!validState) return;
+    if (!validState || text.empty()) {
+        if (text.empty()) out_h = height();
+        return;
+    }
 
     int lineHeight = height();
-    int curLineWidth = 0;
-    int curY = lineHeight;
-
-    std::string line;
-    std::stringstream ss(text);
-    std::string segment;
-
     int maxW = 0;
     int totalH = 0;
 
-    auto process_line = [&](std::string l) {
+    auto process_line = [&](const std::string& l) {
         if (max_width <= 0) {
             int w = width(l);
             if (w > maxW) maxW = w;
             totalH += lineHeight;
         } else {
+            std::string currentLine;
+            int currentW = 0;
+            std::string word;
+            
+            auto flush_word = [&]() {
+                if (word.empty()) return;
+                int wordW = width(word);
+                if (!currentLine.empty() && currentW + wordW > max_width) {
+                    if (currentW > maxW) maxW = currentW;
+                    totalH += lineHeight;
+                    currentLine = word;
+                    currentW = wordW;
+                } else {
+                    currentLine += word;
+                    currentW += wordW;
+                }
+                word = "";
+            };
 
-             std::stringstream wordSS(l);
-             std::string word;
-             std::string currentLine;
-             int currentW = 0;
+            for (char c : l) {
+                word += c;
+                if (c == ' ') {
+                    flush_word();
+                }
+            }
+            flush_word();
 
-             while (wordSS >> word) {
-                 int wordW = width(word);
-                 int spaceW = width(" ");
-
-                 if (currentLine.empty()) {
-                     currentLine = word;
-                     currentW = wordW;
-                 } else {
-                     if (currentW + spaceW + wordW <= max_width) {
-                         currentLine += " " + word;
-                         currentW += spaceW + wordW;
-                     } else {
-
-                         if (currentW > maxW) maxW = currentW;
-                         totalH += lineHeight;
-                         currentLine = word;
-                         currentW = wordW;
-                     }
-                 }
-             }
-             if (!currentLine.empty()) {
-                 if (currentW > maxW) maxW = currentW;
-                 totalH += lineHeight;
-             }
+            if (!currentLine.empty() || l.empty()) {
+                if (currentW > maxW) maxW = currentW;
+                totalH += lineHeight;
+            }
         }
     };
 
@@ -196,59 +193,68 @@ void Font::measure_multiline(const std::string& text, int& out_w, int& out_h, in
     }
     process_line(text.substr(start));
 
-    if (totalH == 0 && !text.empty()) totalH = lineHeight;
-
     out_w = maxW;
     out_h = totalH;
 }
 
-void Font::draw_text_multiline(Painter& painter, IntPoint pos, const std::string& text, Color color, int max_width) {
+void Font::draw_text_multiline(Painter& painter, IntPoint pos, const std::string& text, Color color, int wrap_width, int align_width, TextAlign align) {
     if (!validState) return;
 
     int lineHeight = height();
     int curY = pos.y;
 
     auto draw_line_str = [&](const std::string& l) {
-        draw_text(painter, {pos.x, curY}, l, color);
+        int tx = pos.x;
+        if (align_width > 0) {
+            int tw = width(l);
+            if (align == TextAlign::Center) {
+                tx += (align_width - tw) / 2;
+            } else if (align == TextAlign::Right) {
+                tx += align_width - tw;
+            }
+        }
+        draw_text(painter, {tx, curY}, l, color);
         curY += lineHeight;
+    };
+
+    auto process_line = [&](const std::string& l) {
+        if (wrap_width <= 0) {
+            draw_line_str(l);
+        } else {
+            std::string currentLine;
+            int currentW = 0;
+            std::string word;
+
+            auto flush_word = [&]() {
+                if (word.empty()) return;
+                int wordW = width(word);
+                if (!currentLine.empty() && currentW + wordW > wrap_width) {
+                    draw_line_str(currentLine);
+                    currentLine = word;
+                    currentW = wordW;
+                } else {
+                    currentLine += word;
+                    currentW += wordW;
+                }
+                word = "";
+            };
+
+            for (char c : l) {
+                word += c;
+                if (c == ' ') {
+                    flush_word();
+                }
+            }
+            flush_word();
+
+            if (!currentLine.empty() || l.empty()) {
+                draw_line_str(currentLine);
+            }
+        }
     };
 
     size_t start = 0;
     size_t end = text.find('\n');
-
-    auto process_line = [&](std::string l) {
-        if (max_width <= 0) {
-            draw_line_str(l);
-        } else {
-             std::stringstream wordSS(l);
-             std::string word;
-             std::string currentLine;
-             int currentW = 0;
-
-             while (wordSS >> word) {
-                 int wordW = width(word);
-                 int spaceW = width(" ");
-
-                 if (currentLine.empty()) {
-                     currentLine = word;
-                     currentW = wordW;
-                 } else {
-                     if (currentW + spaceW + wordW <= max_width) {
-                         currentLine += " " + word;
-                         currentW += spaceW + wordW;
-                     } else {
-                         draw_line_str(currentLine);
-                         currentLine = word;
-                         currentW = wordW;
-                     }
-                 }
-             }
-             if (!currentLine.empty()) {
-                 draw_line_str(currentLine);
-             }
-        }
-    };
-
     while (end != std::string::npos) {
         process_line(text.substr(start, end - start));
         start = end + 1;

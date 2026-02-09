@@ -4,8 +4,10 @@
 #include "UI/Widgets/Widget.hpp"
 #include "Motion/Animator.hpp"
 
+#include <memory>
 #include <string>
 #include <functional>
+#include "UI/Widgets/Label.hpp"
 
 namespace Izo {
 
@@ -24,15 +26,12 @@ public:
     void set_on_click(std::function<void()> callback) { m_on_click = callback; }
 
 private:
-    std::string m_text_str;
-    Font* m_font;
+    std::unique_ptr<Label> m_label;
     bool m_pressed = false;
     bool m_is_hovered = false;
 
     Animator<Color> m_bg_anim;
-    Animator<float> m_scroll_anim{0.0f};
-    bool m_should_scroll = false;
-
+    
     std::function<void()> m_on_click;
 };
 

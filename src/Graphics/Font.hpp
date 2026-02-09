@@ -8,6 +8,7 @@
 #include "Graphics/Painter.hpp"
 #include "Graphics/Color.hpp"
 #include "Core/ResourceManager.hpp"
+#include "UI/Enums.hpp"
 
 typedef struct stbtt_fontinfo stbtt_fontinfo;
 
@@ -30,7 +31,7 @@ public:
     void draw_text(Painter& painter, IntPoint pos, const std::string& text, Color color);
     int width(const std::string& text);
 
-    void draw_text_multiline(Painter& painter, IntPoint pos, const std::string& text, Color color, int max_width = -1);
+    void draw_text_multiline(Painter& painter, IntPoint pos, const std::string& text, Color color, int wrap_width = -1, int align_width = -1, TextAlign align = TextAlign::Left);
     void measure_multiline(const std::string& text, int& out_w, int& out_h, int max_width = -1);
 
 private:

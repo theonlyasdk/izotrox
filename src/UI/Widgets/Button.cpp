@@ -8,8 +8,11 @@
 namespace Izo {
 
 Button::Button(const std::string& text, Font* font) 
-    : m_text_str(text), m_font(font), 
-      m_bg_anim(ThemeDB::the().get<Color>("Colors", "Button.Background", Color(100))) {}
+    : m_label(std::make_unique<Label>(text, font)),
+      m_bg_anim(ThemeDB::the().get<Color>("Colors", "Button.Background", Color(100))) 
+{
+    m_label->set_alignment(TextAlign::Center);
+}
 
 void Button::draw_content(Painter& painter) {
     int roundness           = ThemeDB::the().get<int>("Looks", "Widget.Roundness", 6);
@@ -30,25 +33,8 @@ void Button::draw_content(Painter& painter) {
     painter.fill_rounded_rect(b, roundness, c); 
     painter.draw_rounded_rect(b, roundness, color_btn_text);
 
-    if (m_font) {
-        int tw = m_font->width(m_text_str);
-        int th = m_font->height();
-        
-        painter.push_clip(b);
-        
-        int tx;
-        if (m_should_scroll) {
-            tx = b.x + (int)m_scroll_anim.value();
-        } else {
-            tx = b.x + (b.w - tw) / 2;
-        }
-        
-        int ty = b.y + (b.h - th) / 2;
-        if (m_pressed) ty += 1;
-
-        m_font->draw_text(painter, {tx, ty}, m_text_str, color_btn_text);
-        
-        painter.pop_clip();
+    if (m_label) {
+        m_label->draw(painter);
     }
 }
 
@@ -57,6 +43,7 @@ void Button::update() {
 
     Color color_btn_hover   = ThemeDB::the().get<Color>("Colors", "Button.Hover", Color(150));
     Color color_btn_bg      = ThemeDB::the().get<Color>("Colors", "Button.Background", Color(100));
+    Color color_btn_text    = ThemeDB::the().get<Color>("Colors", "Button.Text", Color(255));
 
     m_is_hovered = global_bounds().contains(Input::the().touch_point());
 
@@ -66,28 +53,25 @@ void Button::update() {
         m_bg_anim.set_target(color_btn_bg, 200, Easing::EaseOutQuad);
     }
 
-    if (m_font) {
-        int tw = m_font->width(m_text_str);
-        if (tw > m_bounds.w - 10) {
-            if (!m_should_scroll) {
-                m_should_scroll = true;
-                float start_val = 5.0f; 
-                float target_val = -(float)tw;
-                float distance = start_val - target_val;
-                float speed = 50.0f; 
-                float duration = (distance / speed) * 1000.0f;
-                
-                m_scroll_anim = Animator<float>(start_val);
-                m_scroll_anim.set_loop(true);
-                m_scroll_anim.set_target(target_val, duration, Easing::Linear);
-            }
-        } else {
-            m_should_scroll = false;
-        }
-    }
-
-    m_scroll_anim.update(dt);
     m_bg_anim.update(dt);
+
+    if (m_label) {
+        m_label->set_color(color_btn_text);
+        
+        IntRect b = global_bounds();
+        int label_h = m_label->measured_height();
+        
+        int padding_x = 10;
+        int target_w = b.w - padding_x;
+        if (target_w < 0) target_w = 0;
+        
+        int ly = b.y + (b.h - label_h) / 2;
+        if (m_pressed) ly += 1;
+        
+        m_label->set_bounds({b.x + padding_x / 2, ly, target_w, label_h});
+        m_label->update();
+    }
+    
     Widget::update();
 }
 
@@ -101,7 +85,7 @@ bool Button::on_touch_event(IntPoint point, bool down) {
     Color color_btn_pressed = ThemeDB::the().get<Color>("Colors", "Button.Pressed", Color(100));
 
     m_is_hovered = inside; 
-
+    
     if (inside) {
         m_pressed = down;
     } else {
@@ -143,12 +127,13 @@ bool Button::on_key(KeyCode key) {
 }
 
 void Button::measure(int parent_w, int parent_h) {
-     int mw = 50, mh = 20;
-     if (m_font) {
-        mw = m_font->width(m_text_str) + 20;
-        mh = m_font->height() + 10;
+    int mw = 50, mh = 20;
+    if (m_label) {
+        m_label->measure(parent_w, parent_h);
+        mw = m_label->measured_width() + 20;
+        mh = m_label->measured_height() + 10;
     }
     m_measured_size = {0, 0, mw, mh};
 }
 
-} 
+}

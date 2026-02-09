@@ -9,20 +9,37 @@ void LinearLayout::measure(int parent_w, int parent_h) {
     int w = 0;
     int h = 0;
 
+    int available_w = (m_width == (int)WidgetSizePolicy::MatchParent) ? parent_w : 0;
+    int available_h = (m_height == (int)WidgetSizePolicy::MatchParent) ? parent_h : 0;
+
+    // Use parent dims if we don't have constraints yet
+    if (available_w <= 0) available_w = parent_w;
+    if (available_h <= 0) available_h = parent_h;
+
+    int content_w = available_w - m_padding_left - m_padding_right;
+    int content_h = available_h - m_padding_top - m_padding_bottom;
+
+    bool first = true;
     for (auto& child : m_children) {
         if (!child->visible()) continue;
-        child->measure(parent_w, parent_h); 
+        child->measure(content_w, content_h); 
 
         if (m_orientation == Orientation::Vertical) {
-            h += child->measured_height() + m_padding_top + m_padding_bottom; 
+            if (!first) h += 10; // Spacing
+            h += child->measured_height();
             if (child->measured_width() > w) w = child->measured_width();
         } else {
-            w += child->measured_width() + m_padding_left + m_padding_right;
+            if (!first) w += 10; // Spacing
+            w += child->measured_width();
             if (child->measured_height() > h) h = child->measured_height();
         }
+        first = false;
     }
 
-    m_content_height = h + m_padding_top + m_padding_bottom; 
+    w += m_padding_left + m_padding_right;
+    h += m_padding_top + m_padding_bottom;
+
+    m_content_height = h; 
 
     if (m_width == (int)WidgetSizePolicy::MatchParent) 
         w = parent_w;

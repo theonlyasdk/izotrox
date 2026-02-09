@@ -140,6 +140,28 @@ void IzoShell::register_all_commands() {
             LogInfo("Showing toast: {}", message);
             ToastManager::the().show(message);
         });
+
+    register_command("debug", "Toggle debug mode", "debug <on|off>",
+        [](const std::vector<std::string>& args) {
+            if (args.size() < 2) {
+                LogError("Usage: debug <on|off>");
+                return;
+            }
+
+            std::string subcmd = args[1];
+            std::transform(subcmd.begin(), subcmd.end(), subcmd.begin(), ::tolower);
+
+            if (subcmd == "on") {
+                Application::the().set_debug(true);
+                LogInfo("Debug mode enabled");
+            } else if (subcmd == "off") {
+                Application::the().set_debug(false);
+                LogInfo("Debug mode disabled");
+            } else {
+                LogError("Unknown debug argument: {}", subcmd);
+                LogInfo("Usage: debug <on|off>");
+            }
+        });
 }
 
 void IzoShell::register_command(const std::string& name, const std::string& description,
