@@ -2,7 +2,9 @@
  An Experimental GUI Engine for Android and Linux devices.
 
  On Android, it renders all the graphics by sending them to the device framebuffer (located at `/dev/graphics/fb0`). All rendering and rasterisation is done on the CPU itself. On Linux, it uses SDL2 (which probably uses hardware acceleration under the hood so it's slightly faster for operations like alpha blending). To check if your device can run Izotrox, see [Supported Android Devices](docs/supported_android_devices.md).
- 
+
+Also, join the official [Discord server](https://discord.gg/Whr2ceZ4zp) for regular updates and to suggest new ideas!
+
 ## Features
 - (TODO) *Scripting engine powered by AngelScript*
 - INI-based theming engine with hot theme reloading, and a handy Theme Editor
