@@ -3,7 +3,6 @@
 TARGET      = izotrox
 BUILD_DIR   = build
 INSTALL_DIR = /data/adb/$(TARGET).install.dir/
-
 .PHONY: all configure build run clean rebuild push
 
 all: build run
@@ -18,7 +17,7 @@ configure:
 		-DCMAKE_CXX_COMPILER=clang++
 
 build: configure
-	@cd $(BUILD_DIR) && ninja
+	@cd $(BUILD_DIR) && ninja -j $(shell nproc)
 
 run:
 	@./$(BUILD_DIR)/$(TARGET)

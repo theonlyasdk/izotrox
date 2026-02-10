@@ -52,7 +52,7 @@ std::unique_ptr<View> ThemePreviewView::create() {
         item->add_child(std::move(label));
         listbox->add_item(std::move(item));
     }
-    // listbox->set_selected_index(1); // TODO
+    listbox->select(1);
     
     root->add_child(std::move(listbox));
 

@@ -204,15 +204,21 @@ void ViewManager::draw(Painter& painter) {
 
         auto draw_view = [&](View* v, float tx, float ty, float alpha, bool bg) {
             if (!v) return;
+            IntRect view_rect{(int)tx, (int)ty, m_width, m_height};
+            IntRect clip = view_rect.intersection({0, 0, m_width, m_height});
+            if (clip.w <= 0 || clip.h <= 0) return;
             painter.set_global_alpha(alpha);
+            painter.push_clip(clip);
+            if (bg) painter.fill_rect(clip, color_win_bg);
             painter.push_translate({(int)tx, (int)ty});
-            if (bg) painter.fill_rect({0, 0, m_width, m_height}, color_win_bg);
             v->draw(painter);
             painter.pop_translate();
+            painter.pop_clip();
             painter.set_global_alpha(1.0f);
         };
 
         auto draw_shadow = [&](float opacity) {
+            if (opacity <= 0.0f) return;
             painter.fill_rect({0, 0, m_width, m_height}, Color(0, 0, 0, (uint8_t)opacity));
         };
 

@@ -40,7 +40,7 @@ target_include_directories(izotrox PRIVATE
 target_compile_definitions(izotrox PRIVATE LUA_USE_POSIX)
 
 # Fast debug flags
-target_compile_options(izotrox PRIVATE -O0 -g)
+target_compile_options(izotrox PRIVATE -O3)
 
 # Precompiled headers (big win)
 target_precompile_headers(izotrox PRIVATE

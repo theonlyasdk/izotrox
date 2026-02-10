@@ -37,7 +37,7 @@ public:
 private:
     float m_value;
     AnimationVariant m_variant{AnimationVariant::Variant1};
-    ProgressBar::Type m_type;
+    ProgressBar::Type m_type = ProgressBar::Type::Normal;
     Animator<float> m_indeterminate_anim{0.0f};
     void draw_normal(Painter& painter);
     void draw_indeterminate(Painter& painter);

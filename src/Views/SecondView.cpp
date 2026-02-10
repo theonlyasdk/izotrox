@@ -31,13 +31,14 @@ std::unique_ptr<View> SecondView::create() {
 
     auto optionBox = std::make_unique<OptionBox>();
     optionBox->set_width(WidgetSizePolicy::MatchParent);
-    optionBox->add_option("default");
-    optionBox->add_option("catppuccin-mocha");
-    optionBox->add_option("dracula");
-    optionBox->add_option("ios-light");
-    optionBox->add_option("tokyo-night");
+    auto themes = ThemeDB::the().theme_names();
+    if (themes.empty()) {
+        themes.push_back("default");
+    }
+    optionBox->set_options(themes);
     optionBox->select(0);
     optionBox->set_on_change([](int index, const std::string& value) {
+        (void)index;
         ThemeDB::the().load(std::format("theme/{}.ini", value));
     });
 

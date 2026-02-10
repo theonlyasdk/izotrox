@@ -35,6 +35,8 @@ void Button::draw_content(Painter& painter) {
     if (b.y + b.h > app_height) {
         b.h = app_height - b.y;
     }
+    if (b.w < 0) b.w = 0;
+    if (b.h < 0) b.h = 0;
 
     painter.fill_rounded_rect(b, roundness, c); 
     painter.draw_rounded_rect(b, roundness, color_btn_text);
@@ -65,6 +67,17 @@ void Button::update() {
         m_label->set_color(color_btn_text);
         
         IntRect b = global_bounds();
+        int app_width = Application::the().width();
+        int app_height = Application::the().height();
+        if (b.x + b.w > app_width) {
+            b.w = app_width - b.x;
+        }
+        if (b.y + b.h > app_height) {
+            b.h = app_height - b.y;
+        }
+        if (b.w < 0) b.w = 0;
+        if (b.h < 0) b.h = 0;
+
         int label_h = m_label->measured_height();
         
         int padding_x = 10;

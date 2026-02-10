@@ -260,7 +260,6 @@ int main(int argc, const char* argv[]) {
     slider_demo->set_width(WidgetSizePolicy::MatchParent);
     slider_demo->set_on_change([pb_demo_ptr](float v) {
         pb_demo_ptr->set_progress(v);
-        AndroidDevice::set_brightness((v / 100) * 255);
     });
     root->add_child(std::move(slider_demo));
 

@@ -132,6 +132,10 @@ bool SDLApplication::pump_events() {
                      Izo::Input::the().set_key(Izo::KeyCode::Home);
                  } else if (e.key.keysym.sym == SDLK_END) {
                      Izo::Input::the().set_key(Izo::KeyCode::End);
+                 } else if (e.key.keysym.sym == SDLK_PAGEUP) {
+                     Izo::Input::the().set_key(Izo::KeyCode::PageUp);
+                 } else if (e.key.keysym.sym == SDLK_PAGEDOWN) {
+                     Izo::Input::the().set_key(Izo::KeyCode::PageDown);
                  } else if (e.key.keysym.sym == SDLK_ESCAPE) {
                      Izo::Input::the().set_key(Izo::KeyCode::Escape);
                  } else if (e.key.keysym.sym == SDLK_a && (e.key.keysym.mod & KMOD_CTRL)) {

@@ -19,24 +19,31 @@ void Layout::measure(int parent_w, int parent_h) {
 
 
 void Layout::smooth_scroll_to(int target_y) {
+    // Start an animated scroll towards `target_y` (content coordinate).
     m_auto_scrolling = true;
     m_auto_scroll_target = (float)target_y;
 
     int total_content_height = content_height();
-    int max_scroll = (total_content_height > local_bounds().h) ? -(total_content_height - local_bounds().h) : 0;
+    int max_scroll = (total_content_height > global_bounds().h) ? -(total_content_height - global_bounds().h) : 0;
 
-    if (m_auto_scroll_target > 0) m_auto_scroll_target = 0;
-    if (m_auto_scroll_target < max_scroll) m_auto_scroll_target = max_scroll;
+    // Clamp target into valid scroll range [max_scroll, 0]
+    if (m_auto_scroll_target > 0.0f) m_auto_scroll_target = 0.0f;
+    if (m_auto_scroll_target < (float)max_scroll) m_auto_scroll_target = (float)max_scroll;
+
+    // Reset velocity so animation starts cleanly and make scrollbar visible
+    m_velocity_y = 0.0f;
+    m_scrollbar_alpha = 255;
 }
 
 void Layout::update() {
     int total_content_height = content_height();
-    int max_scroll = (total_content_height > local_bounds().h) ? -(total_content_height - local_bounds().h) : 0;
+    int max_scroll = (total_content_height > global_bounds().h) ? -(total_content_height - global_bounds().h) : 0;
 
     if (m_auto_scrolling) {
         float diff = m_auto_scroll_target - m_scroll_y;
 
-        m_velocity_y = diff * AUTO_SCROLL_SPEED * Application::the().delta();
+        float dt = Application::the().delta() * 0.001f;
+        m_velocity_y = diff * AUTO_SCROLL_SPEED * dt;
 
         if (std::abs(diff) < 1.0f && std::abs(m_velocity_y) < 1.0f) {
             m_scroll_y = m_auto_scroll_target;
@@ -66,6 +73,8 @@ void Layout::update() {
                 }
             } else {
                  m_scrollbar_alpha = 255;
+                 if (m_scroll_y > 0.0f) m_scroll_y = 0.0f;
+                 if (m_scroll_y < (float)max_scroll) m_scroll_y = (float)max_scroll;
             }
         } else {
              if (m_scrollbar_alpha > 0) {

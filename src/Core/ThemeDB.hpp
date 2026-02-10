@@ -7,6 +7,7 @@
 #include "Lib/inicpp.hpp"
 #include "Lib/magic_enum.hpp"
 #include <string>
+#include <vector>
 
 namespace Izo {
 
@@ -17,6 +18,7 @@ public:
     bool load(const std::string& path);
     bool reload();
     Color get_variant_color(ColorVariant variant);
+    std::vector<std::string> theme_names(const std::string& directory = "theme") const;
 
     template <typename T>
     T get(const std::string& section, const std::string& name, T default_val) const

@@ -6,6 +6,7 @@
 #include <sstream>
 #include <format>
 #include <filesystem>
+#include <algorithm>
 #include "Core/ResourceManager.hpp"
 
 
@@ -64,6 +65,41 @@ bool ThemeDB::load(const std::string& path) {
 bool ThemeDB::reload() {
     if (current_path.empty()) return false;
     return load(current_path);
+}
+
+std::vector<std::string> ThemeDB::theme_names(const std::string& directory) const {
+    std::filesystem::path root(ResourceManagerBase::resource_root());
+    std::filesystem::path relative(directory);
+    std::string full_path = (root / relative).string();
+
+    if (!File::exists(full_path) || !File::is_directory(full_path)) {
+        LogWarn("Theme directory not found: '{}'", full_path);
+        return {};
+    }
+
+    std::vector<std::string> names;
+
+    auto push_unique = [&](const std::string& name) {
+        if (name.empty()) return;
+        for (const auto& existing : names) {
+            if (existing == name) return;
+        }
+        names.push_back(name);
+    };
+
+    auto entries = File::list_directory(full_path);
+    for (const auto& entry : entries) {
+        if (File::is_directory(entry)) continue;
+        if (File::get_extension(entry) != ".ini") continue;
+        std::string filename = File::get_filename(entry);
+        size_t dot = filename.find_last_of('.');
+        std::string name = (dot == std::string::npos) ? filename : filename.substr(0, dot);
+        push_unique(name);
+    }
+
+    std::sort(names.begin(), names.end());
+
+    return names;
 }
 
 Color ThemeDB::get_variant_color(ColorVariant variant) {
