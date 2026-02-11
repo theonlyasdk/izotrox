@@ -40,12 +40,6 @@ protected:
     bool m_has_intercepted = false;
 
     float m_scrollbar_alpha = 0.0f;
-
-    const float FRICTION = 0.95f;
-    const float MIN_VELOCITY = 0.15f;
-    const float TENSION = 0.15f;
-    const float SCROLLBAR_FADE_SPEED = 1.0f;
-    const float AUTO_SCROLL_SPEED = 10.0f; 
 };
 
-} 
+}

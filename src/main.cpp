@@ -5,9 +5,12 @@
  * See the LICENSE file for more information
  */
 
+#include <sys/types.h>
 #include <unistd.h>
 
 #include <chrono>
+#include <csignal>
+#include <cstdlib>
 #include <format>
 #include <iostream>
 #include <memory>
@@ -114,10 +117,25 @@ const std::string try_parse_arguments(int argc, const char* argv[]) {
     return "";
 }
 
+void on_sigint(int)
+{
+    Application::the().quit(0);
+}
+
+static void register_signal_handlers() {
+    // std::atexit(on_exit);
+    struct sigaction sa{};
+    sa.sa_handler = on_sigint;
+    sigemptyset(&sa.sa_mask);
+    sigaction(SIGINT, &sa, nullptr);
+}
+
 std::unique_ptr<Canvas> canvas;
 std::unique_ptr<Painter> painter;
 
 int main(int argc, const char* argv[]) {
+    register_signal_handlers();
+
     Settings::the().set<std::string>("theme-name", "default");
     Settings::the().set<std::string>("resource-root", "res");
 

@@ -7,7 +7,6 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# Enable ccache if available
 find_program(CCACHE_PROGRAM ccache)
 if(CCACHE_PROGRAM)
     message(STATUS "Using ccache")
@@ -39,11 +38,9 @@ target_include_directories(izotrox PRIVATE
 
 target_compile_definitions(izotrox PRIVATE LUA_USE_POSIX)
 
-# Fast debug flags
 target_compile_options(izotrox PRIVATE -O3)
 
-# Precompiled headers (big win)
-target_precompile_headers(izotrox PRIVATE
+set(PCH_HEADERS
     <vector>
     <string>
     <unordered_map>
@@ -51,8 +48,13 @@ target_precompile_headers(izotrox PRIVATE
     <iostream>
     <algorithm>
     <cmath>
-    <SDL.h>
 )
+
+if(NOT ANDROID)
+    list(APPEND PCH_HEADERS <SDL.h>)
+endif()
+
+target_precompile_headers(izotrox PRIVATE ${PCH_HEADERS})
 
 target_link_libraries(izotrox PRIVATE m)
 

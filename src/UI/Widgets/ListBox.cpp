@@ -236,12 +236,12 @@ void ListBox::draw_content(Painter& painter) {
     Color color_listitem_focus = ThemeDB::the().get<Color>("Colors", "ListItem.Focus", Color(0, 0, 255));
     int widget_roundness = ThemeDB::the().get<int>("Looks", "Widget.Roundness", 6);
 
-    IntRect b = global_bounds();
-    painter.fill_rounded_rect(b, widget_roundness, color_bg);
+    IntRect bounds = global_bounds();
+    painter.fill_rounded_rect(bounds, widget_roundness, color_bg);
 
-    int visible_top = b.y;
-    int visible_bottom = b.y + b.h;
-    painter.push_rounded_clip(b, widget_roundness);
+    int visible_top = bounds.y;
+    int visible_bottom = bounds.y + bounds.h;
+    painter.push_rounded_clip(bounds, widget_roundness);
 
     // Selection background should render below item content.
     for (size_t i = 0; i < m_children.size(); ++i) {
@@ -263,13 +263,14 @@ void ListBox::draw_content(Painter& painter) {
     }
 
     // Draw children (clipped to rounded bounds).
-    int margin = 20;
-    int child_visible_top = b.y - margin;
-    int child_visible_bottom = b.y + b.h + margin;
+    int margin = 10;
+    int child_visible_top = bounds.y - margin;
+    int child_visible_bottom = bounds.y + bounds.h + margin;
     for (auto& child : m_children) {
         if (!child->visible()) continue;
-        IntRect cb = child->global_bounds();
-        if (cb.y + cb.h >= child_visible_top && cb.y <= child_visible_bottom) {
+
+        IntRect child_bounds = child->global_bounds();
+        if (child_bounds.y + child_bounds.h >= child_visible_top && child_bounds.y <= child_visible_bottom) {
             child->draw(painter);
         }
     }
@@ -283,7 +284,7 @@ void ListBox::draw_content(Painter& painter) {
         if (item_y + cb.h >= visible_top && item_y <= visible_bottom) {
             if (i < m_children.size() - 1) {
                 int line_y = item_y + cb.h - 1; 
-                painter.fill_rect({cb.x, line_y, b.w, 1}, color_divider);
+                painter.fill_rect({cb.x, line_y, bounds.w, 1}, color_divider);
             }
         }
     }
@@ -303,24 +304,24 @@ void ListBox::draw_content(Painter& painter) {
                 float size_factor = 1.0f - (overscroll / (float)local_bounds().h);
                 if (size_factor < 0.2f) size_factor = 0.2f;
                 bar_h *= size_factor;
-                bar_y = (float)b.y;
+                bar_y = (float)bounds.y;
             } else if (m_scroll_y < max_scroll) {
                 float overscroll = max_scroll - m_scroll_y;
                 float size_factor = 1.0f - (overscroll / (float)local_bounds().h);
                 if (size_factor < 0.2f) size_factor = 0.2f;
                 bar_h *= size_factor;
-                bar_y = (float)b.y + (float)local_bounds().h - bar_h;
+                bar_y = (float)bounds.y + (float)local_bounds().h - bar_h;
             } else {
-                bar_y = (float)b.y + (-m_scroll_y * view_ratio);
+                bar_y = (float)bounds.y + (-m_scroll_y * view_ratio);
             }
 
             Color thumb(150, 150, 150, (uint8_t)m_scrollbar_alpha);
-            painter.fill_rect({b.x + b.w - 6, (int)bar_y, 4, (int)bar_h}, thumb);
+            painter.fill_rect({bounds.x + bounds.w - 6, (int)bar_y, 4, (int)bar_h}, thumb);
         }
     }
 
     painter.pop_clip();
-    painter.draw_rounded_rect(b, widget_roundness, color_border);
+    painter.draw_rounded_rect(bounds, widget_roundness, color_border);
 }
 
 }
