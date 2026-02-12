@@ -8,7 +8,6 @@
 #include "Geometry/Primitives.hpp"
 #include "Graphics/Dialog.hpp"
 #include "Graphics/Font.hpp"
-#include "Input/Input.hpp"
 #include "UI/Widgets/OptionItem.hpp"
 
 namespace Izo {
@@ -19,14 +18,19 @@ constexpr int MARGIN_FROM_EDGE = 40;
 
 class OptionsDialog : public Dialog {
 public:
-    OptionsDialog(const IntRect& start, const std::vector<std::string>& options, int current_idx, std::function<void(int)> callback)
-        : m_start(start), m_options(options), m_selected(current_idx), m_callback(callback) {
-        
+    OptionsDialog(OptionBox* parent, const IntRect& start, int current_idx, std::function<void(int)> callback)
+        : m_start(start), m_selected(current_idx), m_callback(callback) {
+        m_options = parent->options();
+        m_parent = parent;
         m_focusable = true;
+
+        auto animation_variant = ThemeDB::the().get<OptionBox::AnimationVariant>("Look", "OptionBox.AnimationVariant", OptionBox::AnimationVariant::ExpandVertical);
+        parent->set_anim_variant(animation_variant);
+
         set_padding(DIALOG_PADDING);
 
-        for (int i = 0; i < (int)m_options.size(); ++i) {
-            auto item = std::make_unique<OptionItem>(m_options[i], i, [this](int idx) {
+        for (int i = 0; i < (int)m_options->size(); ++i) {
+            auto item = std::make_unique<OptionItem>(m_options->at(i), i, [this](int idx) {
                 m_callback(idx);
                 close();
             });
@@ -45,7 +49,15 @@ public:
         
         int dialog_h = std::min(win_h - MARGIN_FROM_EDGE, m_measured_size.h);
 
-        m_target = {(win_w - dialog_w) / 2, (win_h - dialog_h) / 2, dialog_w, dialog_h};
+        switch (parent->anim_variant()) {
+            case OptionBox::AnimationVariant::ExpandCenter:
+                m_target = {(win_w - dialog_w) / 2, (win_h - dialog_h) / 2, dialog_w, dialog_h};
+                break;
+            case OptionBox::AnimationVariant::ExpandVertical:
+                m_target = {start.x, (win_h - dialog_h) / 2, start.w, dialog_h};
+                break;
+        }
+
         set_bounds(m_target);
         
         // Setup animation
@@ -86,7 +98,8 @@ public:
         auto color_bg = ThemeDB::the().get<Color>("Colors", "OptionBox.Background", Color(100));
         auto color_border = ThemeDB::the().get<Color>("Colors", "OptionBox.Border", Color(200));
 
-        int outer_radius = roundness + DIALOG_PADDING;
+        int outer_radius = roundness < DIALOG_PADDING - roundness ? roundness : roundness + DIALOG_PADDING;
+
         painter.fill_rounded_rect(current, outer_radius, color_bg);
         painter.draw_rounded_rect(current, outer_radius, color_border);
 
@@ -125,7 +138,8 @@ public:
 
 private:
     IntRect m_start, m_target;
-    std::vector<std::string> m_options;
+    std::vector<std::string>* m_options;
+    OptionBox* m_parent;
     int m_selected;
     bool m_closing = false;
     bool m_touch_started_outside = false;
@@ -210,7 +224,7 @@ bool OptionBox::on_touch_event(IntPoint point, bool down) {
             m_pressed = false;
             m_bg_anim.set_target(color_bg, 200);
 
-            auto dialog = std::make_unique<OptionsDialog>(global_bounds(), m_options, m_selected_index, [this](int idx) {
+            auto dialog = std::make_unique<OptionsDialog>(this, global_bounds(), m_selected_index, [this](int idx) {
                 select(idx);
                 if (m_on_change) 
                     m_on_change(idx, m_options[idx]);

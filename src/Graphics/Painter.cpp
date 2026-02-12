@@ -11,7 +11,7 @@
 
 namespace Izo {
 
-Painter::Painter(Canvas& canvas) : m_canvas(&canvas) {
+Painter::Painter(std::unique_ptr<Canvas> canvas) : m_canvas(std::move(canvas)) {
     m_current_clip = {{0, 0, m_canvas->width(), m_canvas->height()}, 0};
 }
 
@@ -23,13 +23,17 @@ void Painter::set_global_alpha(float alpha)  {
     m_global_alpha = std::clamp(alpha, 0.0f, 1.0f);
 }
 
-void Painter::set_canvas(Canvas& canvas) {
-    m_canvas = &canvas;
+void Painter::reset_clips_and_transform() {
     m_current_clip = {{0, 0, m_canvas->width(), m_canvas->height()}, 0};
     m_clip_stack.clear();
     m_translate_stack.clear();
     m_translate_x = 0;
     m_translate_y = 0;
+}
+
+void Painter::set_canvas(std::unique_ptr<Canvas> canvas) {
+    m_canvas = std::move(canvas);
+    reset_clips_and_transform();
 }
 
 void Painter::push_rounded_clip(const IntRect& rect, int radius) {

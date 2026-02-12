@@ -18,13 +18,13 @@ public:
     bool load(const std::string& path);
     bool reload();
     Color get_variant_color(ColorVariant variant);
-    std::vector<std::string> theme_names(const std::string& directory = "theme") const;
+    std::vector<std::string> theme_names(const std::string& directory = "themes") const;
 
     template <typename T>
     T get(const std::string& section, const std::string& name, T default_val) const
     {
         auto fail = [&](const std::string& reason) -> T {
-            LogWarn("While trying to find theme key '{}/{}': {}", section, name, reason);
+            LogWarn("Failed to find theme key '{}/{}': {}", section, name, reason);
             return default_val;
         };
 

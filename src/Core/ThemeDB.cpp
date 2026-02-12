@@ -2,6 +2,7 @@
 #include "Debug/Logger.hpp"
 #include "Core/File.hpp"
 #include "Graphics/ColorVariant.hpp"
+#include "Graphics/Font.hpp"
 #include "ViewManager.hpp"
 #include <sstream>
 #include <format>
@@ -57,6 +58,10 @@ bool ThemeDB::load(const std::string& path) {
     LogInfo("  Name: {}", get<std::string>("ThemeManifest", "Name", "Unknown"));
     LogInfo("  Author: {}", get<std::string>("ThemeManifest", "Author", "Unknown"));
     LogInfo("  Version: {}", get<std::string>("ThemeManifest", "Version", "0.0.0"));
+
+    auto fontFamily = ThemeDB::the().get<std::string>("System", "FontFamily", "fonts/Roboto-Regular.ttf");
+    auto fontSize = ThemeDB::the().get<float>("System", "FontSize", 32.0);
+    auto systemFont = FontManager::the().reload("system-ui", fontFamily, fontSize);
 
     current_path = path;
     return true;

@@ -32,3 +32,4 @@ compile_commands.json
 logs
 *.log
 __pycache__
+res/fonts/SegoeUI.ttf

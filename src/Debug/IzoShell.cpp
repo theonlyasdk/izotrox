@@ -154,12 +154,15 @@ void IzoShell::register_all_commands() {
             if (subcmd == "on") {
                 Application::the().set_debug(true);
                 LogInfo("Debug mode enabled");
+                ToastManager::the().show("Debug mode enabled");
             } else if (subcmd == "off") {
                 Application::the().set_debug(false);
                 LogInfo("Debug mode disabled");
+                ToastManager::the().show("Debug mode disabled");
             } else {
                 LogError("Unknown debug argument: {}", subcmd);
                 LogInfo("Usage: debug <on|off>");
+                ToastManager::the().show("Usage: debug <on|off>");
             }
         });
 }

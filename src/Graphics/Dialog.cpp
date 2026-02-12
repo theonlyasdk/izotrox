@@ -1,6 +1,7 @@
 #include "Graphics/Dialog.hpp"
 #include "Core/Application.hpp"
 #include "Core/ThemeDB.hpp"
+#include "UI/Layout/LinearLayout.hpp"
 
 namespace Izo {
 
@@ -13,7 +14,7 @@ void Dialog::draw_content(Painter& painter) {
 }
 
 void Dialog::update() {
-    Widget::update();
+    LinearLayout::update();
     m_dialog_anim.update(Application::the().delta());
 }
 

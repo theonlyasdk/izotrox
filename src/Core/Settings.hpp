@@ -15,7 +15,7 @@ public:
     
     template<typename T>
     void set(const std::string& key, const T& value) {
-        data->emplace(key, std::any(value));
+        data->insert_or_assign(key, std::any(value));
     }
     
     template<typename T>

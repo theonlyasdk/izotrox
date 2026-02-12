@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <functional>
+#include <memory>
 
 #include "Geometry/Primitives.hpp"
 
@@ -24,19 +25,21 @@ public:
 
     const uint32_t width() const;
     const uint32_t height() const;
-    const IntRect screen_rect() const;
+    const IntRect screen_rect() const {
+        return IntRect{0, 0, static_cast<int>(width()), static_cast<int>(height())};
+    }
 
     void set_debug(bool flag) { m_debug = flag; }
     const bool debug_mode() const { return m_debug; }
 
-    float delta() const { return _delta; }
-    void set_delta(float dt) { _delta = dt; }
+    float delta() const { return m_delta; }
+    void set_delta(float dt) { m_delta = dt; }
 
     void quit(int exit_code);
     void show();
     void on_resize(std::function<void(int, int)> callback);
 private:
-    float _delta{0.f};
+    float m_delta{0.f};
     bool m_debug;
 
     struct Impl;

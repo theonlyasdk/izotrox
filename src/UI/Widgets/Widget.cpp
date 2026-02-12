@@ -29,22 +29,20 @@ void Widget::draw_focus(Painter& painter) {
 void Widget::draw_debug_info(Painter& painter) {
     if (!Application::the().debug_mode()) return;
 
-    Font* app_font = FontManager::the().get("system-ui");
-
     painter.outline_rect(global_bounds(), Color::Red);
 
-    int text_width = app_font->width(widget_type());
-    int text_height = app_font->height();
+    int text_width = m_font->width(widget_type());
+    int text_height = m_font->height();
     IntPoint txt_widget_type_pos = {
         global_bounds().x + global_bounds().w - text_width,
         global_bounds().y + global_bounds().h - text_height,
     };
 
-    app_font->draw_text(painter, txt_widget_type_pos, widget_type(), Color::Yellow);
+    m_font->draw_text(painter, txt_widget_type_pos, widget_type(), Color::Yellow);
 }
 
 void Widget::on_theme_reload() {
-    m_font = FontManager::the().get("system-ui");
+    m_font = FontManager::the().get_or_crash("system-ui");
 }
 
 void Widget::update() {
@@ -141,9 +139,6 @@ void Widget::set_focused(bool focused) {
 bool Widget::hovering() const {
     return global_bounds().contains(Input::the().touch_point());
 }
-
-
-
 
 
 const IntRect Widget::global_bounds() const {

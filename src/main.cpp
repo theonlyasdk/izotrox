@@ -96,22 +96,32 @@ const std::string try_parse_arguments(int argc, const char* argv[]) {
         std::exit(0);
     }
 
-    if (auto theme = parser.value("theme")) {
-        Settings::the().set<std::string>("theme-name", theme.value());
+    if (auto result = parser.value("theme")) {
+        auto theme = result.value();
+        Settings::the().set<std::string>("theme-name", theme);
     }
 
-    if (auto root = parser.value("resource-root")) {
-        ResourceManagerBase::set_resource_root(root.value());
-        Settings::the().set<std::string>("resource-root", root.value());
+    if (auto result = parser.value("resource-root")) {
+        auto root = result.value();
+
+        if (!ResourceManagerBase::is_valid_resource_dir(root)) {
+            return "Invalid resource path: " + root;
+        }
+
+        ResourceManagerBase::set_resource_root(root);
+        Settings::the().set<std::string>("resource-root", root);
     }
 
-    if (auto preview = parser.value("save-theme-preview")) {
-        Settings::the().set<std::string>("preview-path", preview.value());
+    if (auto result = parser.value("save-theme-preview")) {
+        auto value = result.value();
+        Settings::the().set<std::string>("preview-path", value);
     }
 
-    if (auto preview = parser.value("debug")) {
-        bool enable_debug = preview.value() == "true" || preview.value() == "t";
-        Settings::the().set<bool>("debug", enable_debug);
+    if (auto result = parser.value("debug")) {
+        auto value = result.value();
+
+        bool enable = value == "true" || value == "t";
+        Settings::the().set<bool>("debug", enable);
     }
 
     return "";
@@ -130,7 +140,6 @@ static void register_signal_handlers() {
     sigaction(SIGINT, &sa, nullptr);
 }
 
-std::unique_ptr<Canvas> canvas;
 std::unique_ptr<Painter> painter;
 
 int main(int argc, const char* argv[]) {
@@ -153,13 +162,13 @@ int main(int argc, const char* argv[]) {
 
     bool headless = Settings::the().has("preview-path");
     LogTrace("Headless mode: {}", headless);
-    std::string theme_name = Settings::the().get<std::string>("theme-name");
-    std::string theme_path = "theme/" + theme_name + ".ini";
+    auto theme_name = Settings::the().get<std::string>("theme-name");
+    std::string theme_path = "themes/" + theme_name + ".ini";
 
     if (!ThemeDB::the().load(theme_path)) {
         LogWarn("Failed to load theme '{}', falling back to 'default.ini'", theme_path);
 
-        if (!ThemeDB::the().load("theme/default.ini")) {
+        if (!ThemeDB::the().load("themes/default.ini")) {
             LogError("Unable to load the default theme! Izotrox might behave unexpectedly, and some colors might be missing!");
         }
     }
@@ -179,35 +188,33 @@ int main(int argc, const char* argv[]) {
 
     app.set_debug(Settings::the().get_or<bool>("debug", true));
 
-    canvas = std::make_unique<Canvas>(width, height);
-    painter = std::make_unique<Painter>(*canvas);
+    auto canvas = std::make_unique<Canvas>(width, height);
+    painter = std::make_unique<Painter>(std::move(canvas));
 
-    std::string fontFamily = ThemeDB::the().get<std::string>("System", "FontFamily", "fonts/Inter-Bold.ttf");
-    float fontSize = ThemeDB::the().get<float>("System", "FontSize", 64.0);
-    auto systemFont = FontManager::the().load("system-ui", fontFamily, fontSize).get();
+    auto systemFont = FontManager::the().get_or_crash("system-ui");
 
     if (!systemFont) {
         LogFatal("Could not load system font!");
         return 1;
     }
 
-    ImageManager::the().load("slider-handle", "icons/slider-handle.png").get();
-    ImageManager::the().load("slider-handle-focus", "icons/slider-handle-focus.png").get();
+    ImageManager::the().load("slider-handle", "icons/slider-handle.png");
+    ImageManager::the().load("slider-handle-focus", "icons/slider-handle-focus.png");
 
     if (headless) {
         auto preview_path = Settings::the().get<std::string>("preview-path");
         auto preview_view = ThemePreviewView::create();
-        canvas->clear(ThemeDB::the().get<Color>("Colors", "Window.Background", Color(255)));
+        painter->canvas()->clear(ThemeDB::the().get<Color>("Colors", "Window.Background", Color(255)));
 
-        int w = canvas->width();
-        int h = canvas->height();
+        int w = painter->canvas()->width();
+        int h = painter->canvas()->height();
         ViewManager::the().resize(w, h);
         ViewManager::the().push(std::move(preview_view), ViewTransition::None);
         ViewManager::the().update();
         ViewManager::the().draw(*painter);
 
         // Save to file
-        if (canvas->save_to_file(preview_path)) {
+        if (painter->canvas()->save_to_file(preview_path)) {
             LogInfo("Theme preview saved to {}", preview_path);
             return 0;
         } else {
@@ -216,7 +223,7 @@ int main(int argc, const char* argv[]) {
         }
     }
 
-    SplashScreen splash(app, *painter, *canvas, *systemFont);
+    SplashScreen splash(app, *painter, *painter->canvas(), *systemFont);
 
     splash.set_total_steps(5);
 
@@ -227,9 +234,9 @@ int main(int argc, const char* argv[]) {
 
     splash.next_step("Loading Fonts...");
 
-    auto toast_font = FontManager::the().load("toast", fontFamily, fontSize / 1.5).get();
-    auto inconsolata = FontManager::the().load("inconsolata", "fonts/Inconsolata-Regular.ttf", 18.0f).get();
-    ToastManager::the().set_font(toast_font);
+    auto inconsolata = FontManager::the().load("inconsolata", "fonts/Inconsolata-Regular.ttf", 18.0f);
+
+    ToastManager::the().set_font(FontManager::the().get("system-ui"));
 
     splash.next_step("Building UI...");
 
@@ -333,8 +340,8 @@ int main(int argc, const char* argv[]) {
     app.on_resize([&](int w, int h) {
         width = w;
         height = h;
-        canvas->resize(w, h);
-        painter->set_canvas(*canvas);
+        painter->canvas()->resize(w, h);
+        painter->reset_clips_and_transform();
         ViewManager::the().resize(w, h);
     });
 
@@ -372,18 +379,18 @@ int main(int argc, const char* argv[]) {
         ViewManager::the().update();
         ToastManager::the().update();
 
-        canvas->clear(ThemeDB::the().get<Color>("Colors", "Window.Background", Color(255)));
+        painter->canvas()->clear(ThemeDB::the().get<Color>("Colors", "Window.Background", Color(255)));
         ViewManager::the().draw(*painter);
         ToastManager::the().draw(*painter, width, height);
 
         draw_debug_panel(*painter, *inconsolata, current_fps);
 
-        app.present(*canvas);
+        app.present(*painter->canvas());
     }
 
     LogInfo("Bye!");
-    canvas->clear(Color::Black);
-    app.present(*canvas);
+    painter->canvas()->clear(Color::Black);
+    app.present(*painter->canvas());
 
     return 0;
 }

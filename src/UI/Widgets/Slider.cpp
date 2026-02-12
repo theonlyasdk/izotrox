@@ -10,9 +10,8 @@
 namespace Izo {
 
 Slider::Slider(float value) : m_value(value) {
-    // TODO: assert the if the images are valid or not
-    m_handle = ImageManager::the().get("slider-handle");
-    m_handle_focus = ImageManager::the().get("slider-handle-focus");
+    m_handle        = ImageManager::the().get_or_crash("slider-handle");
+    m_handle_focus  = ImageManager::the().get_or_crash("slider-handle-focus");
 
     set_focusable(true);
     set_show_focus_indicator(false);
@@ -30,8 +29,8 @@ void Slider::set_value(float value) {
 }
 
 void Slider::draw_content(Painter& painter) {
-    int roundness = ThemeDB::the().get<int>("Looks", "Widget.Roundness", 6);
-    Color color_slider_track = ThemeDB::the().get<Color>("Colors", "Slider.Track", Color(90));
+    int roundness                   = ThemeDB::the().get<int>("Looks", "Widget.Roundness", 6);
+    Color color_slider_track        = ThemeDB::the().get<Color>("Colors", "Slider.Track", Color(90));
     Color color_slider_track_active = ThemeDB::the().get<Color>("Colors", "Slider.Active", Color(90));
 
     IntRect bounds = global_bounds();

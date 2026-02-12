@@ -121,9 +121,5 @@ const uint32_t Application::width() const {
 const uint32_t Application::height() const { 
     return impl->height; 
 }
-const IntRect Application::screen_rect() const {
-    return IntRect{0, 0, static_cast<int>(width()), static_cast<int>(height())};
-}
-
 
 }

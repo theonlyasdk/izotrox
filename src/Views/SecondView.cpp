@@ -39,7 +39,7 @@ std::unique_ptr<View> SecondView::create() {
     optionBox->select(0);
     optionBox->set_on_change([](int index, const std::string& value) {
         (void)index;
-        ThemeDB::the().load(std::format("theme/{}.ini", value));
+        ThemeDB::the().load(std::format("themes/{}.ini", value));
     });
 
     root->add_child(std::move(optionBox));

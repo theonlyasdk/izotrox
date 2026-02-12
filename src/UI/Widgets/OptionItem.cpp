@@ -2,15 +2,14 @@
 #include "Graphics/Painter.hpp"
 #include "Graphics/Font.hpp"
 #include "Core/ThemeDB.hpp"
-#include "Input/Input.hpp"
 #include "Core/Application.hpp"
 
 namespace Izo {
 
 OptionItem::OptionItem(const std::string& text, int index, std::function<void(int)> callback)
     : m_text(text), m_index(index), m_callback(callback),
-      m_bg_anim(Color(0, 0, 0, 0)) {
-    m_focusable = true;
+      m_bg_anim(Color(0)) {
+    m_focusable = false;
     set_padding_ltrb(20, 10, 20, 10);
     set_width(WidgetSizePolicy::MatchParent);
 }

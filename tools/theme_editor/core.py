@@ -141,7 +141,7 @@ class ThemeEditor:
 
 
 def get_theme_dir():
-    return Path(__file__).parent.parent.parent / "res" / "theme"
+    return Path(__file__).parent.parent.parent / "res" / "themes"
 
 def load_enums():
     enum_file = Path(__file__).parent / "data" / "enums.json"
