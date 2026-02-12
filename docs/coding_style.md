@@ -24,8 +24,7 @@ Code should be simple, explicit, and readable. Avoid over-engineering.
 
 6. Formatting & Style
 * Indentation: 4 spaces.
-* Braces: Open braces on the same line (K&R/OTBS style) for control structures and functions.
 * Comments: Minimal. Code should be self-documenting.
-* License Header: All files must start with the standard Mozilla Public License version 2.0. (c) theonlyasdk 2026 license header.
+* License Header: All files must start with the standard Mozilla Public License version 2.0. license header.
 
 Do not run cmake or ninja directly. To compile the project, run make on the root of the project.
