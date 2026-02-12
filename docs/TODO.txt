@@ -27,7 +27,3 @@ so no need to add an open file item for schema editor.
 the schema is just a suggestion of what are the officially supported keys by izotrox and their types for the type checker.
 
 11. Add an update<all|file> command to the theme editor cli to batch update files
-
-Rules:
-- Do not add comments. Use code as documentation itself. 
-- Variable names should be descriptive
