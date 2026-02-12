@@ -2,6 +2,7 @@
 This is where all the assets, theme files and scripts for Izotrox live.
 
 ## Structure
+```
 res (Resource Root)
 ├── fonts (System fonts)
 │ ├── Inconsolata-Regular.ttf
@@ -27,5 +28,6 @@ res (Resource Root)
     ├── ios-dark.ini
     ├── ios-light.ini
     └── windows-10.ini
+```
 
 6 directories, 22 files
