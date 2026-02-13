@@ -1,6 +1,5 @@
 #include "Core/ResourceManager.hpp"
 #include "Core/File.hpp"
-#include "Debug/Logger.hpp"
 
 namespace Izo {
 
@@ -31,7 +30,10 @@ bool ResourceManagerBase::is_valid_resource_dir(const std::string &path) {
     };
 
     for (auto& dir : res_directories) {
-        if (!File::is_directory(dir)) {
+        std::filesystem::path res_path = path;
+        std::filesystem::path dir_path = dir;
+
+        if (!File::is_directory(res_path / dir_path)) {
             return false;
         }
     }

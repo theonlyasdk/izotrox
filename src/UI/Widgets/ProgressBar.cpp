@@ -51,7 +51,7 @@ void ProgressBar::set_animation_variant(ProgressBar::AnimationVariant variant) {
 
 void ProgressBar::draw_normal(Painter& painter) {
     IntRect b = global_bounds();
-    int roundness = ThemeDB::the().get<int>("Looks", "Widget.Roundness", 6);
+    int roundness = ThemeDB::the().get<int>("WidgetParams", "Widget.Roundness", 6);
     Color color_bg = ThemeDB::the().get<Color>("Colors", "ProgressBar.Background", Color(100));
     Color color_fill = ThemeDB::the().get<Color>("Colors", "ProgressBar.Fill", Color(0, 255, 100));
     Color color_border = ThemeDB::the().get<Color>("Colors", "ProgressBar.Border", Color(200));
@@ -79,7 +79,7 @@ void ProgressBar::draw_indeterminate(Painter& painter) {
     Color color_fill = ThemeDB::the().get<Color>("Colors", "ProgressBar.Fill", Color(0, 255, 100));
     Color color_bg = ThemeDB::the().get<Color>("Colors", "ProgressBar.Background", Color(100));
     Color color_border = ThemeDB::the().get<Color>("Colors", "ProgressBar.Border", Color(200));
-    int roundness = ThemeDB::the().get<int>("Looks", "Widget.Roundness", 6);
+    int roundness = ThemeDB::the().get<int>("WidgetParams", "Widget.Roundness", 6);
 
     anim_swap = m_indeterminate_anim.loop_count() % 2 == 0;
 
@@ -94,25 +94,26 @@ void ProgressBar::draw_indeterminate(Painter& painter) {
     }
     
     IntRect ind_anim_rect  = {};
-    ind_anim_rect.w = fill_bar_width;
     ind_anim_rect.h = bounds.h;
     ind_anim_rect.y = bounds.y;
 
     switch (m_variant) {
         case AnimationVariant::Variant1:
-            ind_anim_rect.x = (int)(bounds.x + ((bounds.w - fill_bar_width) * m_indeterminate_anim.value()));
+            ind_anim_rect.w = 100;
+            ind_anim_rect.x = (int)(bounds.x + ((bounds.w - ind_anim_rect.w) * m_indeterminate_anim.value()));
             break;
         case AnimationVariant::Variant2:
-            ind_anim_rect.x = (int)(bounds.x - fill_bar_width + ((bounds.w + fill_bar_width) * m_indeterminate_anim.value()));
+            ind_anim_rect.w = fill_bar_width;
+            ind_anim_rect.x = (int)(bounds.x - ind_anim_rect.w + ((bounds.w + ind_anim_rect.w) * m_indeterminate_anim.value()));
             break;
     }
 
     painter.fill_rounded_rect(bounds, roundness, color_bg);
+    painter.draw_rounded_rect(bounds, roundness, color_border);
     // We use clipping to ensure the fill respects the rounded corners of the background
     painter.push_rounded_clip({bounds.x, bounds.y, bounds.w, bounds.h}, roundness);
     painter.fill_rect(ind_anim_rect, color_fill);
     painter.pop_clip();
-    painter.draw_rounded_rect(bounds, roundness, color_border);
 }
 
 void ProgressBar::draw_content(Painter& painter) {

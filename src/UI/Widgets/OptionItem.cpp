@@ -21,7 +21,7 @@ void OptionItem::measure(int parent_w, int parent_h) {
 }
 
 void OptionItem::draw_content(Painter& painter) {
-    auto roundness = ThemeDB::the().get<int>("Looks", "Widget.Roundness", 12);
+    auto roundness = ThemeDB::the().get<int>("WidgetParams", "Widget.Roundness", 12);
     auto color_highlight = ThemeDB::the().get<Color>("Colors", "OptionBox.Highlight", Color(255, 255, 255, 40));
     auto color_text = ThemeDB::the().get<Color>("Colors", "OptionBox.Text", Color(255));
     

@@ -52,17 +52,15 @@
     "ViewTransitionDuration": "int",
     "ViewTransitionEasing": "string"
   },
-  "Looks": {
+  "WidgetParams": {
     "Widget.Roundness": "int",
     "Widget.FocusThickness": "int",
     "Toast.Roundness": "int",
-    "Toast.BorderThickness": "int"
-  },
-  "Feel": {
+    "Toast.BorderThickness": "int",
     "Widget.FocusAnimDuration": "int",
     "OptionBox.AnimationDuration": "int",
     "OptionBox.AnimationEasing": "string",
     "Dialog.AnimationDuration": "int",
-    "Dialog.AnimationEasing": "string"
-  }
+    "Dialog.AnimationEasing": "string",
+  },
 }

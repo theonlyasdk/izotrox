@@ -29,7 +29,7 @@ void Slider::set_value(float value) {
 }
 
 void Slider::draw_content(Painter& painter) {
-    int roundness                   = ThemeDB::the().get<int>("Looks", "Widget.Roundness", 6);
+    int roundness                   = ThemeDB::the().get<int>("WidgetParams", "Widget.Roundness", 6);
     Color color_slider_track        = ThemeDB::the().get<Color>("Colors", "Slider.Track", Color(90));
     Color color_slider_track_active = ThemeDB::the().get<Color>("Colors", "Slider.Active", Color(90));
 

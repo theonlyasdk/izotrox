@@ -15,16 +15,15 @@ public:
     virtual ~Dialog() = default;
 
     void draw_content(Painter& painter) override;
-    virtual void draw_dialog_content(Painter& painter) { (void)painter; }
     void update() override;
     
+    virtual void draw_dialog_content(Painter& painter) {};
     virtual void open();
     virtual void close();
-    bool is_dialog_visible() const { return m_dialog_visible; }
 
+    bool visible() const { return m_dialog_visible; }
     void set_dialog_bounds(const IntRect& bounds) { m_dialog_bounds = bounds; }
     IntRect dialog_bounds() const { return m_dialog_bounds; }
-    
     void set_on_dismiss(std::function<void()> callback) { m_on_dismiss = callback; }
 
 protected:

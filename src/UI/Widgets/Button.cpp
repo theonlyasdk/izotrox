@@ -21,7 +21,7 @@ void Button::on_theme_reload() {
 }
 
 void Button::draw_content(Painter& painter) {
-    int roundness           = ThemeDB::the().get<int>("Looks", "Widget.Roundness", 6);
+    int roundness           = ThemeDB::the().get<int>("WidgetParams", "Widget.Roundness", 6);
     Color color_btn_text    = ThemeDB::the().get<Color>("Colors", "Button.Text", Color(255));
     IntRect b = global_bounds();
     Color c = m_bg_anim.value();

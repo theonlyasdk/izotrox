@@ -1,8 +1,11 @@
 #include "Core/ArgsParser.hpp"
+
+#include <expected>
 #include <iostream>
+#include <optional>
 #include <sstream>
-#include <algorithm>
-#include "Debug/Logger.hpp"
+#include <string>
+#include <utility>
 
 namespace Izo {
 
@@ -11,36 +14,100 @@ ArgsParser::ArgsParser(const std::string& description)
 
 void ArgsParser::add_argument(const std::string& name, const std::string& short_name,
                               const std::string& description, bool required) {
-    m_arguments.push_back({name, short_name, description, required, {}});
+    Argument argument = {
+        name,
+        short_name,
+        description,
+        required,
+        {},
+    };
+    m_arguments.push_back(std::move(argument));
+}
+
+void ArgsParser::add_argument(const std::string& name, const std::string& short_name,
+                              const std::string& description, bool required, 
+                              std::function<std::expected<bool, std::string>(std::string)> apply_value) {
+    Argument argument = {
+        name,
+        short_name,
+        description,
+        required,
+        {},
+        apply_value,
+    };
+    m_arguments.push_back(std::move(argument));
+}
+
+void ArgsParser::add_argument(std::string& value, const std::string& name, const std::string& short_name,
+                              const std::string& description, bool required) {
+    Argument argument = {
+        name,
+        short_name,
+        description,
+        required,
+        {},
+        [&value](std::string s) {
+            value = s;
+            return true;
+        },
+    };
+    m_arguments.push_back(std::move(argument));
+}
+
+void ArgsParser::add_argument(bool& value, const std::string& name, const std::string& short_name,
+                              const std::string& description, bool required) {
+    Argument argument = {
+        name,
+        short_name,
+        description,
+        required,
+        {},
+        [&value](std::string s) -> std::expected<bool, std::string> {
+            if (s == "yes" || s == "y" || s == "true" || s == "t")
+                value = true;
+            else if (s == "no" || s == "n" || s == "false" || s == "f")
+                value = false;
+            else
+                return std::unexpected(std::format("Invalid boolean: {}", s));
+
+            return true;
+        },
+    };
+    m_arguments.push_back(std::move(argument));
 }
 
 void ArgsParser::add_flag(const std::string& name, const std::string& short_name,
                           const std::string& description) {
-    m_flags.push_back({name, short_name, description, false});
+    Flag flag = {
+        name,
+        short_name,
+        description,
+        false,
+    };
+    m_flags.push_back(std::move(flag));
 }
 
-template<typename T>
+template <typename T>
 void ArgsParser::add_argument(const std::string& name, const std::string& short_name,
                               const std::string& description, bool required) {
     static_assert(std::is_same_v<T, int> || std::is_same_v<T, float> || std::is_same_v<T, std::string>);
     m_arguments.push_back({name, short_name, description, required, {}});
 }
 
-bool ArgsParser::parse(int argc, const char* argv[]) {
+ArgsParser::ParseResult ArgsParser::parse(int argc, const char* argv[]) {
     m_error.clear();
     m_positional.clear();
 
-    for (auto& f : m_flags) f.set = false;
-    for (auto& a : m_arguments) a.values.clear();
+    for (auto& flag : m_flags) flag.set = false;
+    for (auto& arg : m_arguments) arg.values.clear();
 
     for (int i = 1; i < argc; ++i) {
         std::string token = argv[i];
-        
+
         if (token == "--help" || token == "-h") {
-            m_help_requested = true;
-            return true;
+            return ParseResult::HelpRequested;
         }
-        
+
         bool matched = false;
 
         for (auto& f : m_flags) {
@@ -52,13 +119,28 @@ bool ArgsParser::parse(int argc, const char* argv[]) {
         }
         if (matched) continue;
 
-        for (auto& a : m_arguments) {
-            if (token == "--" + a.name || token == "-" + a.short_name) {
+        for (auto& arg : m_arguments) {
+            if (token == "--" + arg.name || token == "-" + arg.short_name) {
                 if (i + 1 >= argc) {
-                    m_error = "Missing value for argument: " + a.name;
-                    return false;
+                    m_error = "Missing value for argument: " + arg.name;
+                    return ParseResult::ParseError;
                 }
-                a.values.push_back(argv[++i]);
+                std::string value = argv[++i];
+
+                if (!arg.accept_value) {
+                    matched = true;
+                    break;
+                }
+
+                auto result = arg.accept_value(value);
+
+                if (result.has_value()) {
+                    arg.values.push_back(value);
+                } else {
+                    m_error = result.error();
+                    return ParseResult::ParseError;
+                }
+
                 matched = true;
                 break;
             }
@@ -71,11 +153,11 @@ bool ArgsParser::parse(int argc, const char* argv[]) {
     for (const auto& a : m_arguments) {
         if (a.required && a.values.empty()) {
             m_error = "Missing required argument: " + a.name;
-            return false;
+            return ParseResult::ParseError;
         }
     }
 
-    return true;
+    return ParseResult::ParseOK;
 }
 
 std::optional<std::string> ArgsParser::value(const std::string& name) const {
@@ -87,7 +169,7 @@ std::optional<std::string> ArgsParser::value(const std::string& name) const {
     return std::nullopt;
 }
 
-template<typename T>
+template <typename T>
 std::optional<T> ArgsParser::typed_value(const std::string& name) const {
     static_assert(std::is_same_v<T, int> || std::is_same_v<T, float> || std::is_same_v<T, std::string>);
     for (const auto& a : m_arguments) {
@@ -104,7 +186,7 @@ std::optional<T> ArgsParser::typed_value(const std::string& name) const {
     return std::nullopt;
 }
 
-template<typename T>
+template <typename T>
 std::vector<T> ArgsParser::vector(const std::string& name) const {
     static_assert(std::is_same_v<T, int> || std::is_same_v<T, float> || std::is_same_v<T, std::string>);
     std::vector<T> result;
@@ -147,12 +229,8 @@ const std::string ArgsParser::help_str() const {
     return help_string.str();
 }
 
-std::string ArgsParser::get_error() const {
+std::string ArgsParser::last_error() const {
     return m_error;
-}
-
-bool ArgsParser::help_requested() const {
-    return m_help_requested;
 }
 
 template void ArgsParser::add_argument<int>(const std::string&, const std::string&, const std::string&, bool);
@@ -167,4 +245,4 @@ template std::vector<int> ArgsParser::vector<int>(const std::string&) const;
 template std::vector<float> ArgsParser::vector<float>(const std::string&) const;
 template std::vector<std::string> ArgsParser::vector<std::string>(const std::string&) const;
 
-} 
+}  // namespace Izo

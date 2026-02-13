@@ -13,7 +13,6 @@ configure:
 		-DCMAKE_BUILD_TYPE=Debug \
 		-DCMAKE_CXX_STANDARD=23 \
 		-DCMAKE_CXX_STANDARD_REQUIRED=ON \
-		-DCMAKE_C_COMPILER=clang \
 		-DCMAKE_CXX_COMPILER=clang++
 
 build: configure

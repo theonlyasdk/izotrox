@@ -17,14 +17,14 @@ constexpr int DIALOG_PADDING = 10;
 constexpr int MARGIN_FROM_EDGE = 40;
 
 class OptionsDialog : public Dialog {
-public:
+   public:
     OptionsDialog(OptionBox* parent, const IntRect& start, int current_idx, std::function<void(int)> callback)
         : m_start(start), m_selected(current_idx), m_callback(callback) {
         m_options = parent->options();
         m_parent = parent;
         m_focusable = true;
 
-        auto animation_variant = ThemeDB::the().get<OptionBox::AnimationVariant>("Look", "OptionBox.AnimationVariant", OptionBox::AnimationVariant::ExpandVertical);
+        auto animation_variant = ThemeDB::the().get<OptionBox::AnimationVariant>("WidgetParams", "OptionBox.AnimationVariant", OptionBox::AnimationVariant::ExpandVertical);
         parent->set_anim_variant(animation_variant);
 
         set_padding(DIALOG_PADDING);
@@ -46,7 +46,7 @@ public:
         // Measure children to determine height
         // We subtract padding from both sides
         measure(dialog_w - (DIALOG_PADDING * 2), win_h - MARGIN_FROM_EDGE);
-        
+
         int dialog_h = std::min(win_h - MARGIN_FROM_EDGE, m_measured_size.h);
 
         switch (parent->anim_variant()) {
@@ -59,16 +59,16 @@ public:
         }
 
         set_bounds(m_target);
-        
+
         // Setup animation
-        auto duration = ThemeDB::the().get<int>("Feel", "OptionBox.AnimationDuration", 300);
-        auto easing = ThemeDB::the().get<Easing>("Feel", "OptionBox.AnimationEasing", Easing::EaseOutQuart);
+        auto duration = ThemeDB::the().get<int>("WidgetParams", "OptionBox.AnimationDuration", 300);
+        auto easing = ThemeDB::the().get<Easing>("WidgetParams", "OptionBox.AnimationEasing", Easing::EaseOutQuart);
         m_dialog_anim.set_target(1.0f, duration, easing);
     }
 
     void update() override {
         Dialog::update();
-        
+
         if (m_closing && !m_dialog_anim.running()) {
             ViewManager::the().dismiss_dialog();
         }
@@ -80,7 +80,7 @@ public:
 
         float old_alpha = painter.global_alpha();
         painter.set_global_alpha(old_alpha * anim_progress);
-        
+
         // Interpolate bounds
         IntRect current{
             m_start.x + (int)((m_target.x - m_start.x) * anim_progress),
@@ -88,13 +88,13 @@ public:
             m_start.w + (int)((m_target.w - m_start.w) * anim_progress),
             m_start.h + (int)((m_target.h - m_start.h) * anim_progress),
         };
-        
+
         set_bounds(current);
         // We must remeasure and layout children since bounds are changing every frame
         measure(current.w - (DIALOG_PADDING * 2), current.h - (DIALOG_PADDING * 2));
         layout();
 
-        auto roundness = ThemeDB::the().get<int>("Looks", "Widget.Roundness", 12);
+        auto roundness = ThemeDB::the().get<int>("WidgetParams", "Widget.Roundness", 12);
         auto color_bg = ThemeDB::the().get<Color>("Colors", "OptionBox.Background", Color(100));
         auto color_border = ThemeDB::the().get<Color>("Colors", "OptionBox.Border", Color(200));
 
@@ -110,7 +110,7 @@ public:
 
     bool on_touch(IntPoint point, bool down, bool captured) override {
         if (m_closing) return true;
-        
+
         bool inside = global_bounds().contains(point);
 
         if (down && !m_prev_touch_down) {
@@ -123,7 +123,7 @@ public:
                 return true;
             }
         }
-        
+
         return Dialog::on_touch(point, down, captured);
     }
 
@@ -131,12 +131,12 @@ public:
         if (m_closing) return;
         m_closing = true;
 
-        auto duration = ThemeDB::the().get<int>("Feel", "OptionBox.AnimationDuration", 300);
-        auto easing = ThemeDB::the().get<Easing>("Feel", "OptionBox.AnimationEasing", Easing::EaseOutQuart);
+        auto duration = ThemeDB::the().get<int>("WidgetParams", "OptionBox.AnimationDuration", 300);
+        auto easing = ThemeDB::the().get<Easing>("WidgetParams", "OptionBox.AnimationEasing", Easing::EaseOutQuart);
         m_dialog_anim.set_target(0.0f, duration, easing);
     }
 
-private:
+   private:
     IntRect m_start, m_target;
     std::vector<std::string>* m_options;
     OptionBox* m_parent;
@@ -179,7 +179,7 @@ void OptionBox::measure(int parent_w, int parent_h) {
         if (m_font) total_text_width = std::max(total_text_width, m_font->width(option));
     }
 
-    m_measured_size.w = total_text_width + m_padding_left + m_padding_right + 40; // +40 for arrow
+    m_measured_size.w = total_text_width + m_padding_left + m_padding_right + 40;  // +40 for arrow
     m_measured_size.h = total_text_height + m_padding_top + m_padding_bottom;
 }
 
@@ -189,7 +189,7 @@ void OptionBox::update() {
 }
 
 void OptionBox::draw_content(Painter& painter) {
-    auto roundness = ThemeDB::the().get<int>("Looks", "Widget.Roundness", 12);
+    auto roundness = ThemeDB::the().get<int>("WidgetParams", "Widget.Roundness", 12);
     auto color_border = ThemeDB::the().get<Color>("Colors", "OptionBox.Border", Color(200));
     auto color_text = ThemeDB::the().get<Color>("Colors", "OptionBox.Text", Color(255));
     auto color_arrow = ThemeDB::the().get<Color>("Colors", "OptionBox.Arrow", Color(200));
@@ -226,7 +226,7 @@ bool OptionBox::on_touch_event(IntPoint point, bool down) {
 
             auto dialog = std::make_unique<OptionsDialog>(this, global_bounds(), m_selected_index, [this](int idx) {
                 select(idx);
-                if (m_on_change) 
+                if (m_on_change)
                     m_on_change(idx, m_options[idx]);
             });
             ViewManager::the().open_dialog(std::move(dialog));

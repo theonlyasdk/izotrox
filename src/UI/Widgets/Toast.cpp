@@ -68,8 +68,8 @@ void Toast::draw(Painter& painter, int screen_width, int screen_height) {
     Color bg = ThemeDB::the().get<Color>("Colors", "Toast.Background", Color(100));
     bg.a = (uint8_t)(bg.a * m_alpha);
     
-    int roundness = ThemeDB::the().get<int>("Looks", "Toast.Roundness", 12);
-    int border_thickness = ThemeDB::the().get<int>("Looks", "Toast.BorderThickness", 12);
+    int roundness = ThemeDB::the().get<int>("WidgetParams", "Toast.Roundness", 12);
+    int border_thickness = ThemeDB::the().get<int>("WidgetParams", "Toast.BorderThickness", 12);
 
     painter.fill_rounded_rect({x, y, m_width, m_height}, roundness, bg);
     

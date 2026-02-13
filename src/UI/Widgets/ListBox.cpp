@@ -234,7 +234,7 @@ void ListBox::draw_content(Painter& painter) {
     Color color_divider = ThemeDB::the().get<Color>("Colors", "ListBox.Divider", Color(200));
     Color color_border = ThemeDB::the().get<Color>("Colors", "ListBox.Border", Color(200));
     Color color_listitem_focus = ThemeDB::the().get<Color>("Colors", "ListItem.Focus", Color(0, 0, 255));
-    int widget_roundness = ThemeDB::the().get<int>("Looks", "Widget.Roundness", 6);
+    int widget_roundness = ThemeDB::the().get<int>("WidgetParams", "Widget.Roundness", 6);
 
     IntRect bounds = global_bounds();
     painter.fill_rounded_rect(bounds, widget_roundness, color_bg);

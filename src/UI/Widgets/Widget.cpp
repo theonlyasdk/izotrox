@@ -107,8 +107,8 @@ bool Widget::on_touch(IntPoint point, bool down, bool captured) {
 void Widget::draw_focus_outline(Painter& painter) {
     float t = m_focus_anim.value();
     if (t > 0) {
-        int max_thickness = ThemeDB::the().get<int>("Looks", "Widget.FocusThickness", 12);
-        int roundness = ThemeDB::the().get<int>("Looks", "Widget.Roundness", 6);
+        int max_thickness = ThemeDB::the().get<int>("WidgetParams", "Widget.FocusThickness", 12);
+        int roundness = ThemeDB::the().get<int>("WidgetParams", "Widget.Roundness", 6);
         float expansion = max_thickness * (1.0f - t);
         uint8_t alpha = (uint8_t)(255 * t);
         Color theme_focus = ThemeDB::the().get<Color>("Colors", "Widget.Focus", Color(0, 0, 255));
@@ -131,7 +131,7 @@ void Widget::draw_focus_outline(Painter& painter) {
 void Widget::set_focused(bool focused) {
     if (m_focused != focused) {
         m_focused = focused;
-        int anim_duration = ThemeDB::the().get<int>("Feel", "Widget.FocusAnimDuration", 300);
+        int anim_duration = ThemeDB::the().get<int>("WidgetParams", "Widget.FocusAnimDuration", 300);
         m_focus_anim.set_target(m_focused ? 1.0f : 0.0f, anim_duration, Easing::EaseOutCubic);
     }
 }

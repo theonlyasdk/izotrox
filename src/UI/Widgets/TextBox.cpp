@@ -88,7 +88,7 @@ void TextBox::ensure_cursor_visible() {
 void TextBox::draw_content(Painter& painter) {
     IntRect bounds = global_bounds();
 
-    int roundness = ThemeDB::the().get<int>("Looks", "Widget.Roundness", 6);
+    int roundness = ThemeDB::the().get<int>("WidgetParams", "Widget.Roundness", 6);
 
     Color color_bg = ThemeDB::the().get<Color>("Colors", "TextBox.Background", Color(100));
     Color color_selection = ThemeDB::the().get<Color>("Colors", "TextBox.Selection", Color(100));

@@ -81,48 +81,94 @@ void draw_debug_panel(Painter& painter, Font& font, float fps) {
 }
 
 /* @returns Error message if parsing failed, empty string otherwise */
+// const std::string try_parse_arguments(int argc, const char* argv[]) {
+//     ArgsParser parser("Izotrox - Experimental GUI engine for Android and Linux");
+//     parser.add_argument("theme", "t", "Name of the theme to load", false);
+//     parser.add_argument("resource-root", "r", "Resource root directory", false);
+//     parser.add_argument("save-theme-preview", "p", "Save theme preview to file. Specify a custom theme using --theme", false);
+
+//     if (!parser.parse(argc, argv)) {
+//         return parser.get_error();
+//     }
+
+//     if (parser.help_requested()) {
+//         std::cout << parser.help_str();
+//         std::exit(0);
+//     }
+
+//     if (auto result = parser.value("theme")) {
+//         auto theme = result.value();
+//         Settings::the().set<std::string>("theme-name", theme);
+//     }
+
+//     if (auto result = parser.value("resource-root")) {
+//         auto root = result.value();
+
+//         if (!ResourceManagerBase::is_valid_resource_dir(root)) {
+//             return "Invalid resource path: " + root;
+//         }
+
+//         ResourceManagerBase::set_resource_root(root);
+//         Settings::the().set<std::string>("resource-root", root);
+//     }
+
+//     if (auto result = parser.value("save-theme-preview")) {
+//         auto value = result.value();
+//         Settings::the().set<std::string>("preview-path", value);
+//     }
+
+//     if (auto result = parser.value("debug")) {
+//         auto value = result.value();
+
+//         bool enable;
+
+//         if (value == "true" || value == "t") enable = true;
+//         else if (value == "false" || value == "f") enable = false;
+
+//         Settings::the().set<bool>("debug", enable);
+//     }
+
+//     return "";
+// }
+
 const std::string try_parse_arguments(int argc, const char* argv[]) {
+    // These variables will always be non-empty after parsing
+    // The parser is guaranteed to populate these variables
+    std::string theme_name = "default";
+    std::string resource_root = "res";
+    std::string save_theme_preview;
+    bool debug_mode = false;
+
     ArgsParser parser("Izotrox - Experimental GUI engine for Android and Linux");
-    parser.add_argument("theme", "t", "Name of the theme to load", false);
-    parser.add_argument("resource-root", "r", "Resource root directory", false);
-    parser.add_argument("save-theme-preview", "p", "Save theme preview to file. Specify a custom theme using --theme", false);
+    parser.add_argument(theme_name, "theme", "t", "Name of the theme to load", false);
+    parser.add_argument(resource_root, "resource-root", "r", "Resource root directory", false);
+    parser.add_argument(save_theme_preview, "save-theme-preview", "p", "Save theme preview to file. Specify a custom theme using --theme", false);
+    parser.add_argument(debug_mode, "debug", "d", "Enables debug mode", false);
 
-    if (!parser.parse(argc, argv)) {
-        return parser.get_error();
-    }
+    ArgsParser::ParseResult result = parser.parse(argc, argv);
 
-    if (parser.help_requested()) {
+    if (result == ArgsParser::ParseResult::ParseError) {
+        return parser.last_error();
+    } else if (result == ArgsParser::ParseResult::HelpRequested) {
         std::cout << parser.help_str();
         std::exit(0);
+    } else {
+        // Otherwise, it's always ParseResult::ParseOK
     }
 
-    if (auto result = parser.value("theme")) {
-        auto theme = result.value();
-        Settings::the().set<std::string>("theme-name", theme);
+    Settings::the().set<std::string>("theme-name", theme_name);
+
+    if (!ResourceManagerBase::is_valid_resource_dir(resource_root)) {
+        return "Invalid resource path: " + resource_root;
     }
 
-    if (auto result = parser.value("resource-root")) {
-        auto root = result.value();
+    ResourceManagerBase::set_resource_root(resource_root);
+    Settings::the().set<std::string>("resource-root", resource_root);
 
-        if (!ResourceManagerBase::is_valid_resource_dir(root)) {
-            return "Invalid resource path: " + root;
-        }
+    if (!save_theme_preview.empty())
+        Settings::the().set<std::string>("preview-path", save_theme_preview);
 
-        ResourceManagerBase::set_resource_root(root);
-        Settings::the().set<std::string>("resource-root", root);
-    }
-
-    if (auto result = parser.value("save-theme-preview")) {
-        auto value = result.value();
-        Settings::the().set<std::string>("preview-path", value);
-    }
-
-    if (auto result = parser.value("debug")) {
-        auto value = result.value();
-
-        bool enable = value == "true" || value == "t";
-        Settings::the().set<bool>("debug", enable);
-    }
+    Settings::the().set<bool>("debug", debug_mode);
 
     return "";
 }
