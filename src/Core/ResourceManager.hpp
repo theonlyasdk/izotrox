@@ -29,9 +29,10 @@ class ResourceManagerBase {
 template <typename T>
 class ResourceManager : public ResourceManagerBase {
    public:
+    // Global Instance
     static ResourceManager& the() {
-        static ResourceManager instance;
-        return instance;
+        static ResourceManager s_instance;
+        return s_instance;
     }
 
     ~ResourceManager() = default;
@@ -48,8 +49,10 @@ class ResourceManager : public ResourceManagerBase {
         auto res = std::make_unique<T>(full_path.string(), std::forward<Args>(args)...);
 
         if (!res || !res->valid()) {
-            LogError("ResourceManager: Failed to load resource '{}' from '{}'", name, full_path.string());
-            return {};
+            LogFatal("ResourceManager: Failed to load resource '{}' from '{}'", name, full_path.string());
+            // VERIFY_UNREACHED()
+            // Let's crash if the resource fails to load!
+            // TODO: Return std::expected<T, E> to allow caller to handle errors nicely
         }
 
         auto res_ptr = res.get();
@@ -81,6 +84,8 @@ class ResourceManager : public ResourceManagerBase {
 
         if (it == resources.end()) {
             LogFatal("Tried using unloaded resource: {}", name);
+            // VERIFY_UNREACHED()
+            // LogFatal should terminate the app here
         }
 
         return it->second.get();
@@ -117,7 +122,6 @@ class ResourceManager : public ResourceManagerBase {
     ResourceManager() = default;
     ResourceManager(const ResourceManager&) = delete;
     ResourceManager& operator=(const ResourceManager&) = delete;
-
     std::map<std::string, std::unique_ptr<T>> resources;
 };
 
