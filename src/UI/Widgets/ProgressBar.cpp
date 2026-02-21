@@ -13,11 +13,13 @@ namespace Izo {
 ProgressBar::ProgressBar(float progress) : m_value(progress) {
     set_focusable(true);
     set_height(20);
+    on_theme_update();
 }
 
 ProgressBar::ProgressBar(bool indeterminate) : m_value(0) {
     set_height(20);
     set_focusable(true);
+    on_theme_update();
 
     if (indeterminate) {
         m_type = ProgressBar::Type::Indeterminate;
@@ -25,6 +27,14 @@ ProgressBar::ProgressBar(bool indeterminate) : m_value(0) {
         set_animation_variant(AnimationVariant::Variant2);
     }
     else m_type = ProgressBar::Type::Normal;
+}
+
+void ProgressBar::on_theme_update() {
+    Widget::on_theme_update();
+    m_roundness = ThemeDB::the().get<int>("WidgetParams", "Widget.Roundness", 6);
+    m_color_bg = ThemeDB::the().get<Color>("Colors", "ProgressBar.Background", Color(100));
+    m_color_fill = ThemeDB::the().get<Color>("Colors", "ProgressBar.Fill", Color(0, 255, 100));
+    m_color_border = ThemeDB::the().get<Color>("Colors", "ProgressBar.Border", Color(200));
 }
 
 void ProgressBar::set_progress(float v) { 
@@ -51,35 +61,26 @@ void ProgressBar::set_animation_variant(ProgressBar::AnimationVariant variant) {
 
 void ProgressBar::draw_normal(Painter& painter) {
     IntRect b = global_bounds();
-    int roundness = ThemeDB::the().get<int>("WidgetParams", "Widget.Roundness", 6);
-    Color color_bg = ThemeDB::the().get<Color>("Colors", "ProgressBar.Background", Color(100));
-    Color color_fill = ThemeDB::the().get<Color>("Colors", "ProgressBar.Fill", Color(0, 255, 100));
-    Color color_border = ThemeDB::the().get<Color>("Colors", "ProgressBar.Border", Color(200));
     
-    painter.fill_rounded_rect(b, roundness, color_bg);
+    painter.fill_rounded_rect(b, m_roundness, m_color_bg);
 
     if (m_value > 0.0f) {
         int fill_w = static_cast<int>(b.w * m_value);
         if (fill_w > 0) {
             // We use clipping to ensure the fill respects the rounded corners of the background
             painter.push_clip({b.x, b.y, fill_w, b.h});
-            painter.fill_rounded_rect(b, roundness, color_fill);
+            painter.fill_rounded_rect(b, m_roundness, m_color_fill);
             painter.pop_clip();
         }
     }
 
-    painter.draw_rounded_rect(b, roundness, color_border);
+    painter.draw_rounded_rect(b, m_roundness, m_color_border);
 }
 
 void ProgressBar::draw_indeterminate(Painter& painter) {
     static bool anim_swap = false;
 
     IntRect bounds = global_bounds();
-
-    Color color_fill = ThemeDB::the().get<Color>("Colors", "ProgressBar.Fill", Color(0, 255, 100));
-    Color color_bg = ThemeDB::the().get<Color>("Colors", "ProgressBar.Background", Color(100));
-    Color color_border = ThemeDB::the().get<Color>("Colors", "ProgressBar.Border", Color(200));
-    int roundness = ThemeDB::the().get<int>("WidgetParams", "Widget.Roundness", 6);
 
     anim_swap = m_indeterminate_anim.loop_count() % 2 == 0;
 
@@ -108,11 +109,11 @@ void ProgressBar::draw_indeterminate(Painter& painter) {
             break;
     }
 
-    painter.fill_rounded_rect(bounds, roundness, color_bg);
-    painter.draw_rounded_rect(bounds, roundness, color_border);
+    painter.fill_rounded_rect(bounds, m_roundness, m_color_bg);
+    painter.draw_rounded_rect(bounds, m_roundness, m_color_border);
     // We use clipping to ensure the fill respects the rounded corners of the background
-    painter.push_rounded_clip({bounds.x, bounds.y, bounds.w, bounds.h}, roundness);
-    painter.fill_rect(ind_anim_rect, color_fill);
+    painter.push_rounded_clip({bounds.x, bounds.y, bounds.w, bounds.h}, m_roundness);
+    painter.fill_rect(ind_anim_rect, m_color_fill);
     painter.pop_clip();
 }
 

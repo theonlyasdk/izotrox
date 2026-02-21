@@ -3,7 +3,9 @@
 namespace Izo {
 
 LinearLayout::LinearLayout(Orientation orientation)
-    : m_orientation(orientation) {}
+    : m_orientation(orientation) {
+    on_theme_update();
+}
 
 void LinearLayout::measure(int parent_w, int parent_h) {
     int w = 0;

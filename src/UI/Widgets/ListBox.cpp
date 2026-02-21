@@ -9,6 +9,16 @@ namespace Izo {
 
 ListBox::ListBox() {
     set_focusable(true);
+    on_theme_update();
+}
+
+void ListBox::on_theme_update() {
+    Layout::on_theme_update();
+    m_color_bg = ThemeDB::the().get<Color>("Colors", "ListBox.Background", Color(10));
+    m_color_divider = ThemeDB::the().get<Color>("Colors", "ListBox.Divider", Color(200));
+    m_color_border = ThemeDB::the().get<Color>("Colors", "ListBox.Border", Color(200));
+    m_color_listitem_focus = ThemeDB::the().get<Color>("Colors", "ListItem.Focus", Color(0, 0, 255));
+    m_widget_roundness = ThemeDB::the().get<int>("WidgetParams", "Widget.Roundness", 6);
 }
 
 void ListBox::add_item(std::unique_ptr<Widget> item) {
@@ -230,18 +240,12 @@ bool ListBox::on_scroll(int y) {
 }
 
 void ListBox::draw_content(Painter& painter) {
-    Color color_bg = ThemeDB::the().get<Color>("Colors", "ListBox.Background", Color(10));
-    Color color_divider = ThemeDB::the().get<Color>("Colors", "ListBox.Divider", Color(200));
-    Color color_border = ThemeDB::the().get<Color>("Colors", "ListBox.Border", Color(200));
-    Color color_listitem_focus = ThemeDB::the().get<Color>("Colors", "ListItem.Focus", Color(0, 0, 255));
-    int widget_roundness = ThemeDB::the().get<int>("WidgetParams", "Widget.Roundness", 6);
-
     IntRect bounds = global_bounds();
-    painter.fill_rounded_rect(bounds, widget_roundness, color_bg);
+    painter.fill_rounded_rect(bounds, m_widget_roundness, m_color_bg);
 
     int visible_top = bounds.y;
     int visible_bottom = bounds.y + bounds.h;
-    painter.push_rounded_clip(bounds, widget_roundness);
+    painter.push_rounded_clip(bounds, m_widget_roundness);
 
     // Selection background should render below item content.
     for (size_t i = 0; i < m_children.size(); ++i) {
@@ -258,7 +262,7 @@ void ListBox::draw_content(Painter& painter) {
             if (i == 0) corners |= Painter::TopLeft | Painter::TopRight;
             if (i == m_children.size() - 1) corners |= Painter::BottomLeft | Painter::BottomRight;
             if (m_children.size() == 1) corners = Painter::AllCorners;
-            painter.fill_rounded_rect(cb, widget_roundness, color_listitem_focus, corners);
+            painter.fill_rounded_rect(cb, m_widget_roundness, m_color_listitem_focus, corners);
         }
     }
 
@@ -284,7 +288,7 @@ void ListBox::draw_content(Painter& painter) {
         if (item_y + cb.h >= visible_top && item_y <= visible_bottom) {
             if (i < m_children.size() - 1) {
                 int line_y = item_y + cb.h - 1; 
-                painter.fill_rect({cb.x, line_y, bounds.w, 1}, color_divider);
+                painter.fill_rect({cb.x, line_y, bounds.w, 1}, m_color_divider);
             }
         }
     }
@@ -321,7 +325,7 @@ void ListBox::draw_content(Painter& painter) {
     }
 
     painter.pop_clip();
-    painter.draw_rounded_rect(bounds, widget_roundness, color_border);
+    painter.draw_rounded_rect(bounds, m_widget_roundness, m_color_border);
 }
 
 }

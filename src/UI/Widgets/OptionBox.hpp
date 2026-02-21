@@ -29,6 +29,7 @@ public:
     void update() override;
     bool on_touch_event(IntPoint point, bool down) override;
     void measure(int parent_w, int parent_h) override;
+    void on_theme_update() override;
 
     void add_option(const std::string& option);
     void set_options(const std::vector<std::string>& options);
@@ -58,6 +59,15 @@ private:
     bool m_pressed = false;
     
     Animator<Color> m_bg_anim;
+
+    int m_roundness = 12;
+    Color m_color_background{100, 100, 100};
+    Color m_color_active{100, 100, 100};
+    Color m_color_border{200, 200, 200};
+    Color m_color_text{255, 255, 255};
+    Color m_color_arrow{200, 200, 200};
+    int m_animation_duration_ms = 300;
+    Easing m_animation_easing = Easing::EaseOutQuart;
     
     std::function<void(int, const std::string&)> m_on_change;
 };

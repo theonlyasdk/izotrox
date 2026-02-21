@@ -1,6 +1,7 @@
 #pragma once
 
 #include "UI/Layout/Layout.hpp"
+#include "Graphics/Color.hpp"
 #include <functional>
 
 namespace Izo {
@@ -21,6 +22,7 @@ public:
     bool on_key(KeyCode key) override;
     void smooth_scroll_to_index(int index) override;
     bool on_scroll(int y) override;
+    void on_theme_update() override;
 
     void select(int index);
     int selected_index() const { return m_selected_index; }
@@ -35,6 +37,11 @@ private:
     int m_total_content_height = 0;
     int m_selected_index = -1;
     std::function<void(int)> m_on_item_selected;
+    Color m_color_bg{10, 10, 10};
+    Color m_color_divider{200, 200, 200};
+    Color m_color_border{200, 200, 200};
+    Color m_color_listitem_focus{0, 0, 255};
+    int m_widget_roundness = 6;
 };
 
 } 

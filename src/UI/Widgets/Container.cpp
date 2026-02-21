@@ -106,11 +106,8 @@ void Container::draw_focus(Painter& painter) {
     Widget::draw_focus(painter);
 }
 
-void Container::on_theme_reload() {
-    Widget::on_theme_reload();
-    for (auto& child : m_children) {
-        child->on_theme_reload();
-    }
+void Container::on_theme_update() {
+    Widget::on_theme_update();
 }
 
 } 

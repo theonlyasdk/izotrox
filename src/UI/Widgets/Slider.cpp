@@ -15,6 +15,14 @@ Slider::Slider(float value) : m_value(value) {
 
     set_focusable(true);
     set_show_focus_indicator(false);
+    on_theme_update();
+}
+
+void Slider::on_theme_update() {
+    Widget::on_theme_update();
+    m_roundness = ThemeDB::the().get<int>("WidgetParams", "Widget.Roundness", 6);
+    m_color_track = ThemeDB::the().get<Color>("Colors", "Slider.Track", Color(90));
+    m_color_active = ThemeDB::the().get<Color>("Colors", "Slider.Active", Color(90));
 }
 
 void Slider::set_value(float value) {
@@ -29,10 +37,6 @@ void Slider::set_value(float value) {
 }
 
 void Slider::draw_content(Painter& painter) {
-    int roundness                   = ThemeDB::the().get<int>("WidgetParams", "Widget.Roundness", 6);
-    Color color_slider_track        = ThemeDB::the().get<Color>("Colors", "Slider.Track", Color(90));
-    Color color_slider_track_active = ThemeDB::the().get<Color>("Colors", "Slider.Active", Color(90));
-
     IntRect bounds = global_bounds();
     int track_h = 4;
     int ty = bounds.y + (bounds.h - track_h) / 2;
@@ -51,11 +55,11 @@ void Slider::draw_content(Painter& painter) {
 
     // Track height is small, so we clamp radius to half height automatically in logic
     // If track is thin, it becomes a stadium shape.
-    painter.fill_rounded_rect({bounds.x, ty, bounds.w, track_h}, roundness, color_slider_track);
+    painter.fill_rounded_rect({bounds.x, ty, bounds.w, track_h}, m_roundness, m_color_track);
 
     if (m_value > 0.0f) {
         int fillW = h_offset;
-        painter.fill_rounded_rect({bounds.x, ty, fillW, track_h}, roundness, color_slider_track_active);
+        painter.fill_rounded_rect({bounds.x, ty, fillW, track_h}, m_roundness, m_color_active);
     }
 
     if (imgToDraw && imgToDraw->valid()) {

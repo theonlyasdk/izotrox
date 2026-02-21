@@ -6,11 +6,33 @@
 #include "Graphics/Painter.hpp"
 #include "Input/Input.hpp"
 #include "Graphics/Painter.hpp"
+#include <algorithm>
+#include <vector>
 
 namespace Izo {
 
+static std::vector<Widget*>& widget_registry() {
+    static std::vector<Widget*> s_widgets;
+    return s_widgets;
+}
+
 Widget::Widget() : m_bounds{0, 0, 0, 0}, m_measured_size{0, 0, 0, 0}, m_focus_anim(0.0f), m_prev_touch_down(false), m_touch_started_inside(false), m_focusable(true) {
-    on_theme_reload();
+    widget_registry().push_back(this);
+    on_theme_update();
+}
+
+Widget::~Widget() {
+    auto& widgets = widget_registry();
+    widgets.erase(std::remove(widgets.begin(), widgets.end(), this), widgets.end());
+}
+
+void Widget::notify_theme_update_all() {
+    auto widgets = widget_registry();
+    for (auto* widget : widgets) {
+        if (widget) {
+            widget->on_theme_update();
+        }
+    }
 }
 
 void Widget::draw(Painter& painter) {
@@ -41,8 +63,12 @@ void Widget::draw_debug_info(Painter& painter) {
     m_font->draw_text(painter, txt_widget_type_pos, widget_type(), Color::Yellow);
 }
 
-void Widget::on_theme_reload() {
+void Widget::on_theme_update() {
     m_font = FontManager::the().get_or_crash("system-ui");
+    m_focus_outline_thickness = ThemeDB::the().get<int>("WidgetParams", "Widget.FocusThickness", 12);
+    m_focus_roundness = ThemeDB::the().get<int>("WidgetParams", "Widget.Roundness", 6);
+    m_focus_color = ThemeDB::the().get<Color>("Colors", "Widget.Focus", Color(0, 0, 255));
+    m_focus_anim_duration = ThemeDB::the().get<int>("WidgetParams", "Widget.FocusAnimDuration", 300);
 }
 
 void Widget::update() {
@@ -107,16 +133,13 @@ bool Widget::on_touch(IntPoint point, bool down, bool captured) {
 void Widget::draw_focus_outline(Painter& painter) {
     float t = m_focus_anim.value();
     if (t > 0) {
-        int max_thickness = ThemeDB::the().get<int>("WidgetParams", "Widget.FocusThickness", 12);
-        int roundness = ThemeDB::the().get<int>("WidgetParams", "Widget.Roundness", 6);
-        float expansion = max_thickness * (1.0f - t);
+        float expansion = m_focus_outline_thickness * (1.0f - t);
         uint8_t alpha = (uint8_t)(255 * t);
-        Color theme_focus = ThemeDB::the().get<Color>("Colors", "Widget.Focus", Color(0, 0, 255));
-        Color color(theme_focus.r, theme_focus.g, theme_focus.b, alpha);
+        Color color(m_focus_color.r, m_focus_color.g, m_focus_color.b, alpha);
 
         IntRect b = global_bounds();
 
-        int draw_thickness = (int)(max_thickness * (1.0f - t)) + 1;
+        int draw_thickness = (int)(m_focus_outline_thickness * (1.0f - t)) + 1;
         if (draw_thickness < 1) draw_thickness = 1;
         int exp_int = (int)expansion;
 
@@ -124,15 +147,14 @@ void Widget::draw_focus_outline(Painter& painter) {
                                    b.y - exp_int,
                                    b.w + exp_int * 2,
                                    b.h + exp_int * 2},
-                                  roundness, color, draw_thickness);
+                                  m_focus_roundness, color, draw_thickness);
     }
 }
 
 void Widget::set_focused(bool focused) {
     if (m_focused != focused) {
         m_focused = focused;
-        int anim_duration = ThemeDB::the().get<int>("WidgetParams", "Widget.FocusAnimDuration", 300);
-        m_focus_anim.set_target(m_focused ? 1.0f : 0.0f, anim_duration, Easing::EaseOutCubic);
+        m_focus_anim.set_target(m_focused ? 1.0f : 0.0f, m_focus_anim_duration, Easing::EaseOutCubic);
     }
 }
 

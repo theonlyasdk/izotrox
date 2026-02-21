@@ -1,6 +1,7 @@
 #include "UI/Widgets/OptionBox.hpp"
 
 #include <algorithm>
+#include <utility>
 
 #include "Core/Application.hpp"
 #include "Core/ThemeDB.hpp"
@@ -12,25 +13,24 @@
 
 namespace Izo {
 
-constexpr int DIALOG_MIN_WIDTH = 400;
 constexpr int DIALOG_PADDING = 10;
 constexpr int MARGIN_FROM_EDGE = 40;
 
 class OptionsDialog : public Dialog {
    public:
     OptionsDialog(OptionBox* parent, const IntRect& start, int current_idx, std::function<void(int)> callback)
-        : m_start(start), m_selected(current_idx), m_callback(callback) {
-        m_options = parent->options();
-        m_parent = parent;
+        : m_start(start), m_selected(current_idx), m_callback(std::move(callback)) {
         m_focusable = true;
 
-        auto animation_variant = ThemeDB::the().get<OptionBox::AnimationVariant>("WidgetParams", "OptionBox.AnimationVariant", OptionBox::AnimationVariant::ExpandVertical);
-        parent->set_anim_variant(animation_variant);
+        m_variant = ThemeDB::the().get<OptionBox::AnimationVariant>(
+            "WidgetParams", "OptionBox.AnimationVariant", OptionBox::AnimationVariant::ExpandVertical);
+        parent->set_anim_variant(m_variant);
 
         set_padding(DIALOG_PADDING);
 
-        for (int i = 0; i < (int)m_options->size(); ++i) {
-            auto item = std::make_unique<OptionItem>(m_options->at(i), i, [this](int idx) {
+        const auto& options = *parent->options();
+        for (int i = 0; i < (int)options.size(); ++i) {
+            auto item = std::make_unique<OptionItem>(options[i], i, [this](int idx) {
                 m_callback(idx);
                 close();
             });
@@ -41,10 +41,10 @@ class OptionsDialog : public Dialog {
         // Initial layout constants
         int win_w = Application::the().width();
         int win_h = Application::the().height();
-        int dialog_w = std::min(win_w - MARGIN_FROM_EDGE, DIALOG_MIN_WIDTH);
+        int dialog_w = std::min(win_w - MARGIN_FROM_EDGE, 400);
         int content_w_for_measure = dialog_w - (DIALOG_PADDING * 2);
-        if (parent->anim_variant() == OptionBox::AnimationVariant::ExpandVertical ||
-            parent->anim_variant() == OptionBox::AnimationVariant::ExpandDropdown) {
+        if (m_variant == OptionBox::AnimationVariant::ExpandVertical ||
+            m_variant == OptionBox::AnimationVariant::ExpandDropdown) {
             content_w_for_measure = std::max(1, start.w - (DIALOG_PADDING * 2));
         }
 
@@ -53,7 +53,7 @@ class OptionsDialog : public Dialog {
 
         int dialog_h = std::min(win_h - MARGIN_FROM_EDGE, m_measured_size.h);
 
-        switch (parent->anim_variant()) {
+        switch (m_variant) {
             case OptionBox::AnimationVariant::ExpandCenter:
                 m_target = {(win_w - dialog_w) / 2, (win_h - dialog_h) / 2, dialog_w, dialog_h};
                 break;
@@ -77,10 +77,8 @@ class OptionsDialog : public Dialog {
         measure(std::max(1, m_target.w - (DIALOG_PADDING * 2)), std::max(1, m_target.h - (DIALOG_PADDING * 2)));
         layout();
 
-        // Setup animation
-        auto duration = ThemeDB::the().get<int>("WidgetParams", "OptionBox.AnimationDuration", 300);
-        auto easing = ThemeDB::the().get<Easing>("WidgetParams", "OptionBox.AnimationEasing", Easing::EaseOutQuart);
-        m_dialog_anim.set_target(1.0f, duration, easing);
+        on_theme_update();
+        m_dialog_anim.set_target(1.0f, m_animation_duration_ms, m_animation_easing);
     }
 
     void update() override {
@@ -96,12 +94,10 @@ class OptionsDialog : public Dialog {
         if (anim_progress <= 0.0f) return;
 
         float old_alpha = painter.global_alpha();
-        if (m_parent->anim_variant() != OptionBox::AnimationVariant::ExpandDropdown) {
-            painter.set_global_alpha(old_alpha * anim_progress);
-        }
+        painter.set_global_alpha(old_alpha * anim_progress);
 
         IntRect current = m_target;
-        if (m_parent->anim_variant() == OptionBox::AnimationVariant::ExpandDropdown) {
+        if (m_variant == OptionBox::AnimationVariant::ExpandDropdown) {
             current.h = std::max(1, static_cast<int>(m_target.h * anim_progress));
         } else {
             current = {
@@ -112,24 +108,27 @@ class OptionsDialog : public Dialog {
             };
         }
 
-        set_bounds(current);
-        if (m_parent->anim_variant() != OptionBox::AnimationVariant::ExpandDropdown) {
-            // Legacy variants animate geometry and relayout with bounds.
-            measure(current.w - (DIALOG_PADDING * 2), current.h - (DIALOG_PADDING * 2));
-            layout();
+        // Keep original animation untouched; only after open animation completes,
+        // move dialog to center of screen.
+        if (!m_closing && !m_dialog_anim.running() && anim_progress >= 1.0f) {
+            int win_w = Application::the().width();
+            int win_h = Application::the().height();
+            current.x = (win_w - current.w) / 2;
+            if (m_variant != OptionBox::AnimationVariant::ExpandDropdown) {
+                current.y = (win_h - current.h) / 2;
+            }
         }
 
-        auto roundness = ThemeDB::the().get<int>("WidgetParams", "Widget.Roundness", 12);
-        auto color_bg = ThemeDB::the().get<Color>("Colors", "OptionBox.Background", Color(100));
-        auto color_border = ThemeDB::the().get<Color>("Colors", "OptionBox.Border", Color(200));
-        const int popup_radius = std::max(0, roundness);
+        set_bounds(current);
+        measure(std::max(1, current.w - (DIALOG_PADDING * 2)), std::max(1, current.h - (DIALOG_PADDING * 2)));
+        layout();
 
-        painter.fill_rounded_rect(current, popup_radius, color_bg);
-        painter.draw_rounded_rect(current, popup_radius, color_border);
+        int outer_radius = m_roundness < DIALOG_PADDING - m_roundness ? m_roundness : m_roundness + DIALOG_PADDING;
 
-        // For dropdown variant, reveal content through expanding clip while keeping
-        // child layout fixed at full-size target bounds (Android-like behavior).
-        painter.push_rounded_clip(current, popup_radius);
+        painter.fill_rounded_rect(current, outer_radius, m_color_bg);
+        painter.draw_rounded_rect(current, outer_radius, m_color_border);
+
+        painter.push_rounded_clip(current, outer_radius);
         Dialog::draw_content(painter);
         painter.pop_clip();
 
@@ -158,28 +157,51 @@ class OptionsDialog : public Dialog {
     void close() override {
         if (m_closing) return;
         m_closing = true;
+        m_dialog_anim.set_target(0.0f, m_animation_duration_ms, m_animation_easing);
+    }
 
-        auto duration = ThemeDB::the().get<int>("WidgetParams", "OptionBox.AnimationDuration", 300);
-        auto easing = ThemeDB::the().get<Easing>("WidgetParams", "OptionBox.AnimationEasing", Easing::EaseOutQuart);
-        m_dialog_anim.set_target(0.0f, duration, easing);
+    void on_theme_update() override {
+        Dialog::on_theme_update();
+        m_roundness = ThemeDB::the().get<int>("WidgetParams", "Widget.Roundness", 12);
+        m_color_bg = ThemeDB::the().get<Color>("Colors", "OptionBox.Background", Color(100));
+        m_color_border = ThemeDB::the().get<Color>("Colors", "OptionBox.Border", Color(200));
+        m_animation_duration_ms = ThemeDB::the().get<int>("WidgetParams", "OptionBox.AnimationDuration", 300);
+        m_animation_easing = ThemeDB::the().get<Easing>("WidgetParams", "OptionBox.AnimationEasing", Easing::EaseOutQuart);
     }
 
    private:
     IntRect m_start, m_target;
-    std::vector<std::string>* m_options;
-    OptionBox* m_parent;
+    OptionBox::AnimationVariant m_variant{OptionBox::AnimationVariant::ExpandVertical};
     int m_selected;
     bool m_closing = false;
     bool m_touch_started_outside = false;
-    bool m_dimmer_touch = false;
     std::function<void(int)> m_callback;
+    int m_roundness = 12;
+    Color m_color_bg{100, 100, 100};
+    Color m_color_border{200, 200, 200};
+    int m_animation_duration_ms = 300;
+    Easing m_animation_easing = Easing::EaseOutQuart;
 };
 
 OptionBox::OptionBox()
     : m_selected_index(0),
-      m_bg_anim(ThemeDB::the().get<Color>("Colors", "OptionBox.Background", Color(200))) {
+      m_bg_anim(Color(200)) {
     m_focusable = true;
     set_padding_ltrb(12, 8, 12, 8);
+    on_theme_update();
+}
+
+void OptionBox::on_theme_update() {
+    Widget::on_theme_update();
+    m_roundness = ThemeDB::the().get<int>("WidgetParams", "Widget.Roundness", 12);
+    m_color_background = ThemeDB::the().get<Color>("Colors", "OptionBox.Background", Color(100));
+    m_color_active = ThemeDB::the().get<Color>("Colors", "OptionBox.Active", Color(100));
+    m_color_border = ThemeDB::the().get<Color>("Colors", "OptionBox.Border", Color(200));
+    m_color_text = ThemeDB::the().get<Color>("Colors", "OptionBox.Text", Color(255));
+    m_color_arrow = ThemeDB::the().get<Color>("Colors", "OptionBox.Arrow", Color(200));
+    m_animation_duration_ms = ThemeDB::the().get<int>("WidgetParams", "OptionBox.AnimationDuration", 300);
+    m_animation_easing = ThemeDB::the().get<Easing>("WidgetParams", "OptionBox.AnimationEasing", Easing::EaseOutQuart);
+    m_bg_anim.snap_to(m_color_background);
 }
 
 void OptionBox::add_option(const std::string& option) {
@@ -217,54 +239,49 @@ void OptionBox::update() {
 }
 
 void OptionBox::draw_content(Painter& painter) {
-    auto roundness = ThemeDB::the().get<int>("WidgetParams", "Widget.Roundness", 12);
-    auto color_border = ThemeDB::the().get<Color>("Colors", "OptionBox.Border", Color(200));
-    auto color_text = ThemeDB::the().get<Color>("Colors", "OptionBox.Text", Color(255));
-    auto color_arrow = ThemeDB::the().get<Color>("Colors", "OptionBox.Arrow", Color(200));
-
     IntRect bounds = global_bounds();
-    painter.fill_rounded_rect(bounds, roundness, m_bg_anim.value());
-    painter.draw_rounded_rect(bounds, roundness, color_border);
+    painter.fill_rounded_rect(bounds, m_roundness, m_bg_anim.value());
+    painter.draw_rounded_rect(bounds, m_roundness, m_color_border);
 
-    painter.push_rounded_clip(bounds, roundness);
+    painter.push_rounded_clip(bounds, m_roundness);
 
     if (m_font && m_selected_index >= 0 && m_selected_index < (int)m_options.size()) {
         int ty = bounds.y + (bounds.h - m_font->height()) / 2;
-        m_font->draw_text(painter, {bounds.x + m_padding_left, ty}, m_options[m_selected_index], color_text);
+        m_font->draw_text(painter, {bounds.x + m_padding_left, ty}, m_options[m_selected_index], m_color_text);
     }
     painter.pop_clip();
 
     int ax = bounds.x + bounds.w - 20;
     int ay = bounds.y + bounds.h / 2;
-    painter.draw_line({ax - 4, ay - 2}, {ax, ay + 2}, color_arrow);
-    painter.draw_line({ax, ay + 2}, {ax + 4, ay - 2}, color_arrow);
+    painter.draw_line({ax - 4, ay - 2}, {ax, ay + 2}, m_color_arrow);
+    painter.draw_line({ax, ay + 2}, {ax + 4, ay - 2}, m_color_arrow);
 }
 
 bool OptionBox::on_touch_event(IntPoint point, bool down) {
-    auto color_bg = ThemeDB::the().get<Color>("Colors", "OptionBox.Background", Color(100));
-    auto color_active = ThemeDB::the().get<Color>("Colors", "OptionBox.Active", Color(100));
+    if (!content_box().contains(point)) {
+        m_pressed = false;
+        m_bg_anim.set_target(m_color_background, 200);
+        return false;
+    }
 
-    if (content_box().contains(point)) {
-        if (down) {
-            m_pressed = true;
-            m_bg_anim.set_target(color_active, 100);
-        } else if (m_pressed) {
-            m_pressed = false;
-            m_bg_anim.set_target(color_bg, 200);
-
-            auto dialog = std::make_unique<OptionsDialog>(this, global_bounds(), m_selected_index, [this](int idx) {
-                select(idx);
-                if (m_on_change)
-                    m_on_change(idx, m_options[idx]);
-            });
-            ViewManager::the().open_dialog(std::move(dialog));
-        }
+    if (down) {
+        m_pressed = true;
+        m_bg_anim.set_target(m_color_active, 100);
         return true;
     }
 
+    if (!m_pressed) return true;
+
     m_pressed = false;
-    m_bg_anim.set_target(color_bg, 200);
-    return false;
+    m_bg_anim.set_target(m_color_background, 200);
+
+    auto dialog = std::make_unique<OptionsDialog>(this, global_bounds(), m_selected_index, [this](int idx) {
+        select(idx);
+        if (m_on_change)
+            m_on_change(idx, m_options[idx]);
+    });
+    ViewManager::the().open_dialog(std::move(dialog));
+    return true;
 }
 
 }  // namespace Izo

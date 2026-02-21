@@ -1,7 +1,9 @@
 #pragma once
 
 #include <string>
+#include <vector>
 #include "Geometry/Primitives.hpp"
+#include "Graphics/Color.hpp"
 #include "Input/KeyCode.hpp"
 #include "Motion/Animator.hpp"
 
@@ -20,14 +22,16 @@ class Font;
 class Widget {
 public:
     Widget();
-    virtual ~Widget() = default;
+    virtual ~Widget();
 
     virtual void draw_content(Painter& painter) = 0;
     virtual void draw_focus(Painter& painter); 
 
     virtual void update();
 
-    virtual void on_theme_reload();
+    virtual void on_theme_update();
+    virtual void on_theme_reload() { on_theme_update(); }
+    static void notify_theme_update_all();
     void set_font(Font* font) { m_font = font; }
     Font* font() const { return m_font; }
 
@@ -106,6 +110,7 @@ protected:
     void draw_focus_outline(Painter& painter);
     void draw_debug_info(Painter& painter);
     void set_widget_type(const std::string type) { m_widget_type = type; };
+    void finalize_widget_construction() { on_theme_update(); }
 
     std::string m_widget_type;
 
@@ -131,6 +136,11 @@ protected:
     Animator<float> m_focus_anim;
     Widget* m_parent = nullptr;
     Font* m_font = nullptr;
+
+    int m_focus_outline_thickness = 12;
+    int m_focus_roundness = 6;
+    Color m_focus_color = Color(0, 0, 255);
+    int m_focus_anim_duration = 300;
 };
 
 } 

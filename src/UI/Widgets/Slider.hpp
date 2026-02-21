@@ -18,6 +18,7 @@ public:
     void draw_content(Painter& painter) override;
     void measure(int parent_w, int parent_h) override;
     bool on_touch_event(IntPoint point, bool down) override;
+    void on_theme_update() override;
 
 private:
     float m_value;
@@ -25,6 +26,9 @@ private:
     Image* m_handle_focus;
     bool m_pressed = false;
     std::function<void(float)> m_on_change;
+    int m_roundness = 6;
+    Color m_color_track{90, 90, 90};
+    Color m_color_active{90, 90, 90};
 };
 
 } 

@@ -27,6 +27,7 @@ public:
     bool on_touch_event(IntPoint point, bool down) override;
     bool on_key(KeyCode key) override;
     void measure(int parent_w, int parent_h) override;
+    void on_theme_update() override;
 
 private:
     int get_cursor_index(int lx);
@@ -47,6 +48,14 @@ private:
     bool m_cursor_visible = true;
     std::function<void(const std::string&)> m_on_change;
     std::function<void(const std::string&)> m_on_submit;
+
+    int m_roundness = 6;
+    Color m_color_bg{100, 100, 100};
+    Color m_color_selection{100, 100, 100};
+    Color m_color_placeholder{100, 100, 100};
+    Color m_color_text{0, 0, 0};
+    Color m_color_cursor{255, 255, 255};
+    int m_cursor_blink_speed_ms = 500;
 
     static std::string s_clipboard;
 };

@@ -17,7 +17,7 @@ class Button : public Widget {
 public:
     Button(const std::string& text);
 
-    void on_theme_reload() override;
+    void on_theme_update() override;
 
     void draw_content(Painter& painter) override;
     void update() override;
@@ -33,6 +33,12 @@ private:
     bool m_is_hovered = false;
 
     Animator<Color> m_bg_anim;
+
+    int m_roundness = 6;
+    Color m_color_text{255, 255, 255};
+    Color m_color_bg{100, 100, 100};
+    Color m_color_hover{150, 150, 150};
+    Color m_color_pressed{100, 100, 100};
     
     std::function<void()> m_on_click;
 };

@@ -12,7 +12,20 @@ namespace Izo {
 std::string TextBox::s_clipboard;
 
 TextBox::TextBox(const std::string& placeholder)
-    : m_text_buffer(""), m_placeholder(placeholder) {}
+    : m_text_buffer(""), m_placeholder(placeholder) {
+    on_theme_update();
+}
+
+void TextBox::on_theme_update() {
+    Widget::on_theme_update();
+    m_roundness = ThemeDB::the().get<int>("WidgetParams", "Widget.Roundness", 6);
+    m_color_bg = ThemeDB::the().get<Color>("Colors", "TextBox.Background", Color(100));
+    m_color_selection = ThemeDB::the().get<Color>("Colors", "TextBox.Selection", Color(100));
+    m_color_placeholder = ThemeDB::the().get<Color>("Colors", "TextBox.Placeholder", Color(100));
+    m_color_text = ThemeDB::the().get<Color>("Colors", "TextBox.Text", Color(0));
+    m_color_cursor = ThemeDB::the().get<Color>("Colors", "TextBox.Cursor", Color(255));
+    m_cursor_blink_speed_ms = ThemeDB::the().get<int>("System", "CursorBlinkSpeed", 500);
+}
 
 void TextBox::set_text(const std::string& t) {
     if (m_text_buffer != t) {
@@ -87,18 +100,10 @@ void TextBox::ensure_cursor_visible() {
 
 void TextBox::draw_content(Painter& painter) {
     IntRect bounds = global_bounds();
-
-    int roundness = ThemeDB::the().get<int>("WidgetParams", "Widget.Roundness", 6);
-
-    Color color_bg = ThemeDB::the().get<Color>("Colors", "TextBox.Background", Color(100));
-    Color color_selection = ThemeDB::the().get<Color>("Colors", "TextBox.Selection", Color(100));
-    Color color_placeholder = ThemeDB::the().get<Color>("Colors", "TextBox.Placeholder", Color(100));
-    Color color_text = ThemeDB::the().get<Color>("Colors", "TextBox.Text", Color(0));
-    Color color_cursor = ThemeDB::the().get<Color>("Colors", "TextBox.Cursor", Color(255));
     Color color_border = m_border_anim.value();
 
-    painter.fill_rounded_rect(bounds, roundness, color_bg);
-    painter.draw_rounded_rect(bounds, roundness, color_border);
+    painter.fill_rounded_rect(bounds, m_roundness, m_color_bg);
+    painter.draw_rounded_rect(bounds, m_roundness, color_border);
 
     if (m_font) {
         int padding = 5;
@@ -109,7 +114,7 @@ void TextBox::draw_content(Painter& painter) {
         int draw_y = bounds.y + padding;
 
         if (m_text_buffer.empty()) {
-            m_font->draw_text(painter, {draw_x, draw_y}, m_placeholder, color_placeholder);
+            m_font->draw_text(painter, {draw_x, draw_y}, m_placeholder, m_color_placeholder);
         } else {
             int visible_w = bounds.w - 2 * padding;
             int start_idx = 0;
@@ -135,18 +140,18 @@ void TextBox::draw_content(Painter& painter) {
                 int x1 = m_font->width(m_text_buffer.substr(0, s));
                 int sw = m_font->width(m_text_buffer.substr(s, e - s));
 
-                painter.fill_rect({draw_x + x1, draw_y, sw, m_font->height()}, color_selection);
+                painter.fill_rect({draw_x + x1, draw_y, sw, m_font->height()}, m_color_selection);
             }
 
             std::string visible_text = m_text_buffer.substr(start_idx, end_idx - start_idx);
             int offset_x = m_font->width(m_text_buffer.substr(0, start_idx));
-            m_font->draw_text(painter, {draw_x + offset_x, draw_y}, visible_text, color_text);
+            m_font->draw_text(painter, {draw_x + offset_x, draw_y}, visible_text, m_color_text);
         }
 
         if (m_focused && m_cursor_visible) {
              std::string pre_cursor = m_text_buffer.substr(0, m_sel_end);
              int cx = m_font->width(pre_cursor);
-             painter.fill_rect({draw_x + cx, draw_y, 2, m_font->height()}, color_cursor);
+             painter.fill_rect({draw_x + cx, draw_y, 2, m_font->height()}, m_color_cursor);
         }
 
         painter.pop_clip();
@@ -159,8 +164,7 @@ void TextBox::update() {
 
     if (m_focused) {
         m_cursor_timer += Application::the().delta();
-        int blink_speed = ThemeDB::the().get<int>("System", "CursorBlinkSpeed", 500);
-        if (m_cursor_timer >= (float)blink_speed) {
+        if (m_cursor_timer >= (float)m_cursor_blink_speed_ms) {
             m_cursor_visible = !m_cursor_visible;
             m_cursor_timer = 0.0f;
         }

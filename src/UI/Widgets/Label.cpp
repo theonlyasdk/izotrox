@@ -7,7 +7,9 @@
 
 namespace Izo {
 
-Label::Label(const std::string& text) : m_text(text) {}
+Label::Label(const std::string& text) : m_text(text) {
+    on_theme_update();
+}
 
 void Label::set_color(const Color& color) {
     m_has_custom_color = true;

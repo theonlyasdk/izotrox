@@ -12,6 +12,14 @@ OptionItem::OptionItem(const std::string& text, int index, std::function<void(in
     m_focusable = false;
     set_padding_ltrb(20, 10, 20, 10);
     set_width(WidgetSizePolicy::MatchParent);
+    on_theme_update();
+}
+
+void OptionItem::on_theme_update() {
+    Widget::on_theme_update();
+    m_roundness = ThemeDB::the().get<int>("WidgetParams", "Widget.Roundness", 12);
+    m_color_highlight = ThemeDB::the().get<Color>("Colors", "OptionBox.Highlight", Color(255, 255, 255, 40));
+    m_color_text = ThemeDB::the().get<Color>("Colors", "OptionBox.Text", Color(255));
 }
 
 void OptionItem::measure(int parent_w, int parent_h) {
@@ -21,23 +29,19 @@ void OptionItem::measure(int parent_w, int parent_h) {
 }
 
 void OptionItem::draw_content(Painter& painter) {
-    auto roundness = ThemeDB::the().get<int>("WidgetParams", "Widget.Roundness", 12);
-    auto color_highlight = ThemeDB::the().get<Color>("Colors", "OptionBox.Highlight", Color(255, 255, 255, 40));
-    auto color_text = ThemeDB::the().get<Color>("Colors", "OptionBox.Text", Color(255));
-    
     IntRect bounds = global_bounds();
     
     m_bg_anim.update(Application::the().delta());
     
     if (m_selected || m_pressed || hovering()) {
-        Color highlight = color_highlight;
+        Color highlight = m_color_highlight;
         if (!m_pressed && !m_selected) highlight.a /= 2;
-        painter.fill_rounded_rect(bounds, roundness, highlight);
+        painter.fill_rounded_rect(bounds, m_roundness, highlight);
     }
 
     if (m_font) {
         int ty = bounds.y + (bounds.h - m_font->height()) / 2;
-        m_font->draw_text(painter, {bounds.x + m_padding_left, ty}, m_text, color_text);
+        m_font->draw_text(painter, {bounds.x + m_padding_left, ty}, m_text, m_color_text);
     }
 }
 

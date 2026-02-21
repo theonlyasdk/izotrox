@@ -9,6 +9,7 @@
 #include <filesystem>
 #include <algorithm>
 #include "Core/ResourceManager.hpp"
+#include "UI/Widgets/Widget.hpp"
 
 
 namespace Izo {
@@ -61,7 +62,8 @@ bool ThemeDB::load(const std::string& path) {
 
     auto fontFamily = ThemeDB::the().get<std::string>("System", "FontFamily", "fonts/Roboto-Regular.ttf");
     auto fontSize = ThemeDB::the().get<float>("System", "FontSize", 32.0);
-    auto systemFont = FontManager::the().reload("system-ui", fontFamily, fontSize);
+    FontManager::the().reload("system-ui", fontFamily, fontSize);
+    Widget::notify_theme_update_all();
 
     current_path = path;
     return true;

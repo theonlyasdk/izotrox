@@ -16,6 +16,7 @@ public:
 
     void draw_content(Painter& painter) override;
     void update() override;
+    void on_theme_update() override;
     
     virtual void draw_dialog_content(Painter& painter) {};
     virtual void open();
@@ -31,6 +32,8 @@ protected:
     bool m_dialog_visible = false;
     Animator<float> m_dialog_anim{0.0f};
     std::function<void()> m_on_dismiss;
+    int m_animation_duration_ms = 300;
+    Easing m_animation_easing = Easing::EaseOutQuart;
 };
 
 } 
