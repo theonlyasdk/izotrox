@@ -1,107 +1,76 @@
 #include "Core/Application.hpp"
-#include "Graphics/Canvas.hpp"
-#include "Platform/PlatformMacros.hpp"
-#include <cstdint>
 
 #ifdef __ANDROID__
-    #include "HAL/Framebuffer.hpp"
-    #include "Platform/Android/AndroidDevice.hpp"
+#include "Platform/Android/AndroidApp.hpp"
 #else
-    #include "Platform/Linux/SDLApplication.hpp"
+#include "Platform/Linux/DesktopApp.hpp"
 #endif
+
+#include <utility>
+
+#include "Graphics/Canvas.hpp"
 
 namespace Izo {
 
 Application* Application::_instance = nullptr;
 
 Application::Application(int width, int height, const char* title)
-    : impl(std::make_unique<Impl>(width, height, title)) {
+    : m_width(static_cast<uint32_t>(width)),
+      m_height(static_cast<uint32_t>(height)) {
+#ifdef __ANDROID__
+    m_backend = std::make_unique<AndroidApp>(width, height, title);
+#else
+    m_backend = std::make_unique<DesktopApp>(title, width, height);
+#endif
     _instance = this;
 }
 
-Application::~Application() {
-    IF_ANDROID(
-        AndroidDevice::set_brightness(0);
-    )
-}
+Application::~Application() = default;
 
 bool Application::init() {
-    IF_ANDROID(
-        system("stop");
-        if (!impl->fb.init())
-            return false;
-        impl->width = impl->fb.width();
-        impl->height = impl->fb.height();
-    )
-    IF_DESKTOP(
-        if (impl->sdl_app) {
-            impl->sdl_app->set_on_resize([this](int w, int h) {
-                impl->width = w;
-                impl->height = h;
-                if (impl->on_resize) {
-                    impl->on_resize(w, h);
-                }
-            });
+    if (!m_backend) return false;
+
+    m_backend->set_on_resize([this](int w, int h) {
+        m_width = static_cast<uint32_t>(w);
+        m_height = static_cast<uint32_t>(h);
+        if (m_on_resize) {
+            m_on_resize(w, h);
         }
-    )
+    });
+
+    if (!m_backend->init()) {
+        return false;
+    }
+
+    m_width = m_backend->width();
+    m_height = m_backend->height();
     return true;
 }
 
 bool Application::pump_events() {
-    IF_ANDROID(
-
-        return true;
-    )
-    IF_DESKTOP(
-        if (impl->sdl_app) {
-            return impl->sdl_app->pump_events();
-        }
-        return false;
-    )
+    return m_backend ? m_backend->pump_events() : false;
 }
 
 void Application::present(Canvas& canvas) {
-    IF_ANDROID(
-        if (impl->fb.valid())
-            impl->fb.swap_buffers(canvas);
-    )
-    IF_DESKTOP(
-        if (impl->sdl_app) {
-            impl->sdl_app->present(canvas.pixels(), canvas.width(), canvas.height());
-        }
-    )
+    if (m_backend) {
+        m_backend->present(canvas);
+    }
 }
 
 void Application::on_resize(std::function<void(int, int)> callback) {
-    impl->on_resize = callback;
+    m_on_resize = std::move(callback);
 }
 
 void Application::quit(int exit_code) {
-    IF_DESKTOP(
-        if (impl->sdl_app) {
-            impl->sdl_app->quit(exit_code);
-        }
-    )
-    IF_ANDROID(
-        AndroidDevice::set_brightness(0);
-        system("start");
-        exit(exit_code);
-    )
+    if (m_backend) {
+        m_backend->quit(exit_code);
+    }
 }
 
 void Application::show() {
-    IF_DESKTOP(
-        if (impl->sdl_app) {
-            impl->sdl_app->show();
-        }
-    )
-}
-
-const uint32_t Application::width() const { 
-    return impl->width; 
-}
-const uint32_t Application::height() const { 
-    return impl->height; 
+    if (m_backend) {
+        m_backend->show();
+    }
 }
 
 }

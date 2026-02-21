@@ -18,7 +18,9 @@ public:
         ExpandCenter,
         // Dialog expands it's height to screen height
         // But keeps it's width the same as it's owning OptionBox width
-        ExpandVertical
+        ExpandVertical,
+        // Android-like dropdown: popup expands downward and reveals content unscaled.
+        ExpandDropdown
     };
 
     OptionBox();

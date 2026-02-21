@@ -7,7 +7,7 @@
 namespace Izo {
 template <typename T>
 Animator<T>::Animator(T startVal)
-    : current(startVal), start(startVal), target(startVal), m_running(true) {}
+    : current(startVal), start(startVal), target(startVal), m_running(false) {}
 
 template <typename T> Animator<T>::Animator() : current(), start(), target() {}
 
@@ -15,10 +15,15 @@ template <typename T>
 void Animator<T>::set_target(T targetVal, float durationMs, Easing ease) {
   start = current;
   target = targetVal;
-  m_duration = durationMs;
+  m_duration = std::max(0.0f, durationMs);
   elapsed = 0.0f;
   easing = ease;
-  m_running = true;
+  m_reversing = false;
+  m_running = (m_duration > 0.0f);
+
+  if (!m_running) {
+    current = target;
+  }
 }
 
 template <typename T> void Animator<T>::snap_to(T targetVal) {
@@ -57,8 +62,10 @@ template <typename T> void Animator<T>::set_loop_mode(AnimationLoopMode loop_mod
 }
 
 template <typename T> bool Animator<T>::update(float dtMs) {
-  if (!m_running)
+  if (!m_running || m_duration <= 0.0f)
     return false;
+
+  if (dtMs < 0.0f) dtMs = 0.0f;
 
   if (elapsed <= 0) {
     m_reversing = false;
@@ -73,6 +80,7 @@ template <typename T> bool Animator<T>::update(float dtMs) {
   if (elapsed >= m_duration) {
     if (m_loop) {
         if (m_loop_mode == AnimationLoopMode::ReverseOnLoop) {
+            elapsed = m_duration;
             m_reversing = true;
         } else {
             elapsed = std::fmod(elapsed, m_duration);            
@@ -80,6 +88,18 @@ template <typename T> bool Animator<T>::update(float dtMs) {
         m_loop_count++;
     } else {
         current = target;
+        m_running = false;
+        return true;
+    }
+  }
+
+  if (m_reversing && elapsed <= 0.0f) {
+    if (m_loop) {
+        elapsed = 0.0f;
+        m_reversing = false;
+        m_loop_count++;
+    } else {
+        current = start;
         m_running = false;
         return true;
     }
@@ -181,11 +201,14 @@ float Animator<T>::apply_easing(float t) const {
 
 template <typename T>
 inline T Animator<T>::interpolate(const T& a, const T &b, float t) {
+  t = std::clamp(t, 0.0f, 1.0f);
   return a + (b - a) * t;
 }
 
 template <>
 inline Color Animator<Color>::interpolate(Color const &a, Color const &b, float t) {
+  t = std::clamp(t, 0.0f, 1.0f);
+
   return Color(
       (uint8_t)(a.r + (b.r - a.r) * t), (uint8_t)(a.g + (b.g - a.g) * t),
       (uint8_t)(a.b + (b.b - a.b) * t), (uint8_t)(a.a + (b.a - a.a) * t)

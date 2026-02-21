@@ -38,7 +38,13 @@ target_include_directories(izotrox PRIVATE
 
 target_compile_definitions(izotrox PRIVATE LUA_USE_POSIX)
 
-target_compile_options(izotrox PRIVATE -fsanitize=address,undefined -O0)
+target_compile_options(izotrox PRIVATE -O3)
+
+option(IZO_ENABLE_SANITIZERS "Enable Address/UB sanitizers" OFF)
+if(IZO_ENABLE_SANITIZERS)
+    target_compile_options(izotrox PRIVATE -fsanitize=address,undefined -O0)
+    target_link_libraries(izotrox PRIVATE -fsanitize=address,undefined)
+endif()
 
 set(PCH_HEADERS
     <vector>
@@ -56,7 +62,7 @@ endif()
 
 target_precompile_headers(izotrox PRIVATE ${PCH_HEADERS})
 
-target_link_libraries(izotrox PRIVATE m -fsanitize=address,undefined)
+target_link_libraries(izotrox PRIVATE m)
 
 if(NOT ANDROID)
     target_link_libraries(izotrox PRIVATE SDL2::SDL2)

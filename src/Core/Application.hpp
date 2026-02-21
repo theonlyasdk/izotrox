@@ -4,12 +4,8 @@
 #include <functional>
 #include <memory>
 
+#include "Core/AppImplementation.hpp"
 #include "Geometry/Primitives.hpp"
-#include "Platform/Linux/SDLApplication.hpp"
-
-#ifdef __ANDROID__
-#include "HAL/Framebuffer.hpp"
-#endif
 
 namespace Izo {
 
@@ -17,23 +13,6 @@ class Canvas;
 
 class Application {
 public:
-    struct Impl {
-        int width, height;
-        std::function<void(int, int)> on_resize;
-
-#ifdef __ANDROID__
-            Framebuffer fb;
-#else
-            std::unique_ptr<SDLApplication> sdl_app = nullptr;
-#endif
-
-        Impl(int w, int h, const char* title) : width(w), height(h) {
-#ifdef __ANDROID__
-                sdl_app = std::make_unique<SDLApplication>(title, w, h);
-#endif
-        }
-    };
-
     static Application& the() noexcept { return *_instance; }
 
     Application(int width, int height, const char* title);
@@ -45,8 +24,8 @@ public:
 
     void present(Canvas& canvas);
 
-    const uint32_t width() const;
-    const uint32_t height() const;
+    uint32_t width() const { return m_width; }
+    uint32_t height() const { return m_height; }
     const IntRect screen_rect() const {
         return IntRect{0, 0, static_cast<int>(width()), static_cast<int>(height())};
     }
@@ -60,13 +39,14 @@ public:
     void quit(int exit_code);
     void show();
     void on_resize(std::function<void(int, int)> callback);
+
 private:
-    friend class Painter;
-
     float m_delta{0.f};
-    bool m_debug;
-
-    std::unique_ptr<Impl> impl = nullptr;
+    bool m_debug{false};
+    uint32_t m_width{0};
+    uint32_t m_height{0};
+    std::function<void(int, int)> m_on_resize;
+    std::unique_ptr<AppImplementation> m_backend{nullptr};
     static Application* _instance;
 };
 

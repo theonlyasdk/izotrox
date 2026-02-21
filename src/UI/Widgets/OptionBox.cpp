@@ -42,10 +42,14 @@ class OptionsDialog : public Dialog {
         int win_w = Application::the().width();
         int win_h = Application::the().height();
         int dialog_w = std::min(win_w - MARGIN_FROM_EDGE, DIALOG_MIN_WIDTH);
+        int content_w_for_measure = dialog_w - (DIALOG_PADDING * 2);
+        if (parent->anim_variant() == OptionBox::AnimationVariant::ExpandVertical ||
+            parent->anim_variant() == OptionBox::AnimationVariant::ExpandDropdown) {
+            content_w_for_measure = std::max(1, start.w - (DIALOG_PADDING * 2));
+        }
 
-        // Measure children to determine height
-        // We subtract padding from both sides
-        measure(dialog_w - (DIALOG_PADDING * 2), win_h - MARGIN_FROM_EDGE);
+        // Measure children to determine desired popup height.
+        measure(content_w_for_measure, win_h - MARGIN_FROM_EDGE);
 
         int dialog_h = std::min(win_h - MARGIN_FROM_EDGE, m_measured_size.h);
 
@@ -56,9 +60,22 @@ class OptionsDialog : public Dialog {
             case OptionBox::AnimationVariant::ExpandVertical:
                 m_target = {start.x, (win_h - dialog_h) / 2, start.w, dialog_h};
                 break;
+            case OptionBox::AnimationVariant::ExpandDropdown: {
+                int dropdown_w = start.w;
+                int margin = MARGIN_FROM_EDGE / 2;
+                int x = std::clamp(start.x, margin, std::max(margin, win_w - margin - dropdown_w));
+                int max_h_below = std::max(1, win_h - margin - start.bottom());
+                int dropdown_h = std::min(dialog_h, max_h_below);
+
+                m_target = {x, start.bottom(), dropdown_w, dropdown_h};
+                m_start = {x, start.bottom(), dropdown_w, 0};
+                break;
+            }
         }
 
         set_bounds(m_target);
+        measure(std::max(1, m_target.w - (DIALOG_PADDING * 2)), std::max(1, m_target.h - (DIALOG_PADDING * 2)));
+        layout();
 
         // Setup animation
         auto duration = ThemeDB::the().get<int>("WidgetParams", "OptionBox.AnimationDuration", 300);
@@ -79,31 +96,42 @@ class OptionsDialog : public Dialog {
         if (anim_progress <= 0.0f) return;
 
         float old_alpha = painter.global_alpha();
-        painter.set_global_alpha(old_alpha * anim_progress);
+        if (m_parent->anim_variant() != OptionBox::AnimationVariant::ExpandDropdown) {
+            painter.set_global_alpha(old_alpha * anim_progress);
+        }
 
-        // Interpolate bounds
-        IntRect current{
-            m_start.x + (int)((m_target.x - m_start.x) * anim_progress),
-            m_start.y + (int)((m_target.y - m_start.y) * anim_progress),
-            m_start.w + (int)((m_target.w - m_start.w) * anim_progress),
-            m_start.h + (int)((m_target.h - m_start.h) * anim_progress),
-        };
+        IntRect current = m_target;
+        if (m_parent->anim_variant() == OptionBox::AnimationVariant::ExpandDropdown) {
+            current.h = std::max(1, static_cast<int>(m_target.h * anim_progress));
+        } else {
+            current = {
+                m_start.x + (int)((m_target.x - m_start.x) * anim_progress),
+                m_start.y + (int)((m_target.y - m_start.y) * anim_progress),
+                m_start.w + (int)((m_target.w - m_start.w) * anim_progress),
+                m_start.h + (int)((m_target.h - m_start.h) * anim_progress),
+            };
+        }
 
         set_bounds(current);
-        // We must remeasure and layout children since bounds are changing every frame
-        measure(current.w - (DIALOG_PADDING * 2), current.h - (DIALOG_PADDING * 2));
-        layout();
+        if (m_parent->anim_variant() != OptionBox::AnimationVariant::ExpandDropdown) {
+            // Legacy variants animate geometry and relayout with bounds.
+            measure(current.w - (DIALOG_PADDING * 2), current.h - (DIALOG_PADDING * 2));
+            layout();
+        }
 
         auto roundness = ThemeDB::the().get<int>("WidgetParams", "Widget.Roundness", 12);
         auto color_bg = ThemeDB::the().get<Color>("Colors", "OptionBox.Background", Color(100));
         auto color_border = ThemeDB::the().get<Color>("Colors", "OptionBox.Border", Color(200));
+        const int popup_radius = std::max(0, roundness);
 
-        int outer_radius = roundness < DIALOG_PADDING - roundness ? roundness : roundness + DIALOG_PADDING;
+        painter.fill_rounded_rect(current, popup_radius, color_bg);
+        painter.draw_rounded_rect(current, popup_radius, color_border);
 
-        painter.fill_rounded_rect(current, outer_radius, color_bg);
-        painter.draw_rounded_rect(current, outer_radius, color_border);
-
+        // For dropdown variant, reveal content through expanding clip while keeping
+        // child layout fixed at full-size target bounds (Android-like behavior).
+        painter.push_rounded_clip(current, popup_radius);
         Dialog::draw_content(painter);
+        painter.pop_clip();
 
         painter.set_global_alpha(old_alpha);
     }
