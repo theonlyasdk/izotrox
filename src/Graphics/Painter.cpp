@@ -140,13 +140,14 @@ void Painter::draw_pixel(IntPoint point, Color color) {
             uint32_t b = (color.b * a + bg_color.b * inv_a) >> 8;
             m_canvas->set_pixel({dx, dy}, Color((uint8_t)r, (uint8_t)g, (uint8_t)b).as_argb());
 #else
-            uint32_t rb = bg & 0xFF00FF;
-            uint32_t g = bg & 0x00FF00;
-            uint32_t color_rb = color.as_argb() & 0xFF00FF;
-            uint32_t color_g = color.as_argb() & 0x00FF00;
-            uint32_t res_rb = ((color_rb * a + rb * inv_a) >> 8) & 0xFF00FF;
-            uint32_t res_g = ((color_g * a + g * inv_a) >> 8) & 0x00FF00;
-            m_canvas->set_pixel({dx, dy}, 0xFF000000 | res_rb | res_g);
+            // uint32_t rb = bg & 0xFF00FF;
+            // uint32_t g = bg & 0x00FF00;
+            // uint32_t color_rb = color.as_argb() & 0xFF00FF;
+            // uint32_t color_g = color.as_argb() & 0x00FF00;
+            // uint32_t res_rb = ((color_rb * a + rb * inv_a) >> 8) & 0xFF00FF;
+            // uint32_t res_g = ((color_g * a + g * inv_a) >> 8) & 0x00FF00;
+            // m_canvas->set_pixel({dx, dy}, 0xFF000000 | res_rb | res_g);
+            Application::the().impl.get()->sdl_app.get()->draw_pixel({dx, dy}, color);
 #endif
         }
     }
@@ -364,6 +365,102 @@ void Painter::draw_rounded_rect(const IntRect& rect, int radius, Color color, in
     draw_corner(*this, {rect.x + rect.w - radius, rect.y + radius}, radius, 1, color, false, thickness);
     draw_corner(*this, {rect.x + radius, rect.y + rect.h - radius}, radius, 2, color, false, thickness);
     draw_corner(*this, {rect.x + rect.w - radius, rect.y + rect.h - radius}, radius, 3, color, false, thickness);
+}
+
+void Painter::draw_blur_rect(const IntRect& rect, int blur_level)
+{
+    if (blur_level <= 0)
+        return;
+
+    constexpr float PI = 3.14159265358979323846f;
+
+    const int width  = rect.width();
+    const int height = rect.height();
+
+    const float sigma  = static_cast<float>(blur_level);
+    const int radius   = static_cast<int>(std::ceil(3.0f * sigma));
+    const int ksize    = 2 * radius + 1;
+
+    // --- Build normalized 1D Gaussian kernel ---
+    std::vector<float> kernel(ksize);
+    float sum = 0.0f;
+
+    for (int i = -radius; i <= radius; ++i) {
+        float value = std::exp(-(i * i) / (2.0f * sigma * sigma))
+                    / (std::sqrt(2.0f * PI) * sigma);
+        kernel[i + radius] = value;
+        sum += value;
+    }
+
+    for (float& v : kernel)
+        v /= sum;
+
+    // --- Copy original pixels ---
+    std::vector<Color> original(width * height);
+
+    for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
+            original[y * width + x] =
+                canvas()->pixel({ rect.x + x, rect.y + y });
+        }
+    }
+
+    // --- Horizontal pass ---
+    std::vector<Color> temp(width * height);
+
+    for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
+
+            float r = 0.f, g = 0.f, b = 0.f, a = 0.f;
+
+            for (int k = -radius; k <= radius; ++k) {
+                int sx = std::clamp(x + k, 0, width - 1);
+                const Color& c = original[y * width + sx];
+                float w = kernel[k + radius];
+
+                r += c.r * w;
+                g += c.g * w;
+                b += c.b * w;
+                a += c.a * w;
+            }
+
+            temp[y * width + x] = Color(
+                static_cast<uint8_t>(std::clamp(r, 0.f, 255.f)),
+                static_cast<uint8_t>(std::clamp(g, 0.f, 255.f)),
+                static_cast<uint8_t>(std::clamp(b, 0.f, 255.f)),
+                static_cast<uint8_t>(std::clamp(a, 0.f, 255.f))
+            );
+        }
+    }
+
+    // --- Vertical pass ---
+    for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
+
+            float r = 0.f, g = 0.f, b = 0.f, a = 0.f;
+
+            for (int k = -radius; k <= radius; ++k) {
+                int sy = std::clamp(y + k, 0, height - 1);
+                const Color& c = temp[sy * width + x];
+                float w = kernel[k + radius];
+
+                r += c.r * w;
+                g += c.g * w;
+                b += c.b * w;
+                a += c.a * w;
+            }
+
+            draw_pixel(
+                { rect.x + x, rect.y + y },
+                Color(
+                    static_cast<uint8_t>(std::clamp(r, 0.f, 255.f)),
+                    static_cast<uint8_t>(std::clamp(g, 0.f, 255.f)),
+                    static_cast<uint8_t>(std::clamp(b, 0.f, 255.f)),
+                    static_cast<uint8_t>(std::clamp(a, 0.f, 255.f))
+                )
+            );
+        }
+    }
 }
 
 }  // namespace Izo

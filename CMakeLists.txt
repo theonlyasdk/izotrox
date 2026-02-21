@@ -38,7 +38,7 @@ target_include_directories(izotrox PRIVATE
 
 target_compile_definitions(izotrox PRIVATE LUA_USE_POSIX)
 
-target_compile_options(izotrox PRIVATE -O3)
+target_compile_options(izotrox PRIVATE -fsanitize=address,undefined -O0)
 
 set(PCH_HEADERS
     <vector>
@@ -56,7 +56,7 @@ endif()
 
 target_precompile_headers(izotrox PRIVATE ${PCH_HEADERS})
 
-target_link_libraries(izotrox PRIVATE m)
+target_link_libraries(izotrox PRIVATE m -fsanitize=address,undefined)
 
 if(NOT ANDROID)
     target_link_libraries(izotrox PRIVATE SDL2::SDL2)

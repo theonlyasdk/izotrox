@@ -26,32 +26,32 @@
 #include "Debug/IzoShell.hpp"
 #include "Debug/Izometa.hpp"
 #include "Debug/Logger.hpp"
-#include "UI/Widgets/Button.hpp"
 #include "Graphics/Canvas.hpp"
 #include "Graphics/Color.hpp"
 #include "Graphics/Font.hpp"
 #include "Graphics/Image.hpp"
-#include "UI/Widgets/Label.hpp"
 #include "Graphics/Painter.hpp"
+#include "Input/Input.hpp"
+#include "Platform/Android/AndroidDevice.hpp"
+#include "UI/Layout/LinearLayout.hpp"
+#include "UI/View/View.hpp"
+#include "UI/Widgets/Button.hpp"
+#include "UI/Widgets/Label.hpp"
+#include "UI/Widgets/ListBox.hpp"
+#include "UI/Widgets/ListItem.hpp"
 #include "UI/Widgets/ProgressBar.hpp"
 #include "UI/Widgets/Slider.hpp"
 #include "UI/Widgets/TextBox.hpp"
 #include "UI/Widgets/Toast.hpp"
-#include "UI/View/View.hpp"
-#include "Input/Input.hpp"
-#include "Platform/Android/AndroidDevice.hpp"
+#include "UI/Widgets/Widget.hpp"
 #include "Views/SecondView.hpp"
 #include "Views/SplashScreen.hpp"
 #include "Views/ThemePreviewView.hpp"
-#include "UI/Layout/LinearLayout.hpp"
-#include "UI/Widgets/ListBox.hpp"
-#include "UI/Widgets/ListItem.hpp"
-#include "UI/Widgets/Widget.hpp"
 
 using namespace Izo;
 
 void draw_debug_panel(Painter& painter, Font& font, float fps) {
-    constexpr float UPDATE_FREQUENCY = 1.5f; // every 1.5 seconds
+    constexpr float UPDATE_FREQUENCY = 1.5f;  // every 1.5 seconds
     constexpr int PANEL_ROUNDNESS = 20;
     constexpr int PANEL_PADDING = 10;
 
@@ -79,57 +79,6 @@ void draw_debug_panel(Painter& painter, Font& font, float fps) {
     painter.fill_rounded_rect({pos_x, 10, cached_w, cached_h}, PANEL_ROUNDNESS, Color(0, 0, 0, 128));
     font.draw_text(painter, {PANEL_PADDING + pos_x, 15}, cached_text, Color::White);
 }
-
-/* @returns Error message if parsing failed, empty string otherwise */
-// const std::string try_parse_arguments(int argc, const char* argv[]) {
-//     ArgsParser parser("Izotrox - Experimental GUI engine for Android and Linux");
-//     parser.add_argument("theme", "t", "Name of the theme to load", false);
-//     parser.add_argument("resource-root", "r", "Resource root directory", false);
-//     parser.add_argument("save-theme-preview", "p", "Save theme preview to file. Specify a custom theme using --theme", false);
-
-//     if (!parser.parse(argc, argv)) {
-//         return parser.get_error();
-//     }
-
-//     if (parser.help_requested()) {
-//         std::cout << parser.help_str();
-//         std::exit(0);
-//     }
-
-//     if (auto result = parser.value("theme")) {
-//         auto theme = result.value();
-//         Settings::the().set<std::string>("theme-name", theme);
-//     }
-
-//     if (auto result = parser.value("resource-root")) {
-//         auto root = result.value();
-
-//         if (!ResourceManagerBase::is_valid_resource_dir(root)) {
-//             return "Invalid resource path: " + root;
-//         }
-
-//         ResourceManagerBase::set_resource_root(root);
-//         Settings::the().set<std::string>("resource-root", root);
-//     }
-
-//     if (auto result = parser.value("save-theme-preview")) {
-//         auto value = result.value();
-//         Settings::the().set<std::string>("preview-path", value);
-//     }
-
-//     if (auto result = parser.value("debug")) {
-//         auto value = result.value();
-
-//         bool enable;
-
-//         if (value == "true" || value == "t") enable = true;
-//         else if (value == "false" || value == "f") enable = false;
-
-//         Settings::the().set<bool>("debug", enable);
-//     }
-
-//     return "";
-// }
 
 const std::string try_parse_arguments(int argc, const char* argv[]) {
     // These variables will always be non-empty after parsing
@@ -173,8 +122,7 @@ const std::string try_parse_arguments(int argc, const char* argv[]) {
     return "";
 }
 
-void on_sigint(int)
-{
+void on_sigint(int) {
     Application::the().quit(0);
 }
 
@@ -185,8 +133,6 @@ static void register_signal_handlers() {
     sigemptyset(&sa.sa_mask);
     sigaction(SIGINT, &sa, nullptr);
 }
-
-std::unique_ptr<Painter> painter;
 
 int main(int argc, const char* argv[]) {
     register_signal_handlers();
@@ -202,9 +148,9 @@ int main(int argc, const char* argv[]) {
 
     // Logger::the().enable_logging_to_file();
 
-    LogInfo("Izotrox v{}.{}.{} Booting... (compiled on {}, {})", 
-        IZO_VERSION_MAJOR, IZO_VERSION_MINOR, IZO_VERSION_REVISION, 
-        IZO_BUILD_DATE, IZO_BUILD_TIME);
+    LogInfo("Izotrox v{}.{}.{} Booting... (compiled on {}, {})",
+            IZO_VERSION_MAJOR, IZO_VERSION_MINOR, IZO_VERSION_REVISION,
+            IZO_BUILD_DATE, IZO_BUILD_TIME);
 
     bool headless = Settings::the().has("preview-path");
     LogTrace("Headless mode: {}", headless);
@@ -235,7 +181,7 @@ int main(int argc, const char* argv[]) {
     app.set_debug(Settings::the().get_or<bool>("debug", true));
 
     auto canvas = std::make_unique<Canvas>(width, height);
-    painter = std::make_unique<Painter>(std::move(canvas));
+    Painter painter(std::move(canvas));
 
     auto systemFont = FontManager::the().get_or_crash("system-ui");
 
@@ -250,17 +196,17 @@ int main(int argc, const char* argv[]) {
     if (headless) {
         auto preview_path = Settings::the().get<std::string>("preview-path");
         auto preview_view = ThemePreviewView::create();
-        painter->canvas()->clear(ThemeDB::the().get<Color>("Colors", "Window.Background", Color(255)));
+        painter.canvas()->clear(ThemeDB::the().get<Color>("Colors", "Window.Background", Color(255)));
 
-        int w = painter->canvas()->width();
-        int h = painter->canvas()->height();
+        int w = painter.canvas()->width();
+        int h = painter.canvas()->height();
         ViewManager::the().resize(w, h);
         ViewManager::the().push(std::move(preview_view), ViewTransition::None);
         ViewManager::the().update();
-        ViewManager::the().draw(*painter);
+        ViewManager::the().draw(painter);
 
         // Save to file
-        if (painter->canvas()->save_to_file(preview_path)) {
+        if (painter.canvas()->save_to_file(preview_path)) {
             LogInfo("Theme preview saved to {}", preview_path);
             return 0;
         } else {
@@ -269,7 +215,7 @@ int main(int argc, const char* argv[]) {
         }
     }
 
-    SplashScreen splash(app, *painter, *painter->canvas(), *systemFont);
+    SplashScreen splash(app, painter, *painter.canvas(), *systemFont);
 
     splash.set_total_steps(5);
 
@@ -386,8 +332,8 @@ int main(int argc, const char* argv[]) {
     app.on_resize([&](int w, int h) {
         width = w;
         height = h;
-        painter->canvas()->resize(w, h);
-        painter->reset_clips_and_transform();
+        painter.canvas()->resize(w, h);
+        painter.reset_clips_and_transform();
         ViewManager::the().resize(w, h);
     });
 
@@ -425,18 +371,18 @@ int main(int argc, const char* argv[]) {
         ViewManager::the().update();
         ToastManager::the().update();
 
-        painter->canvas()->clear(ThemeDB::the().get<Color>("Colors", "Window.Background", Color(255)));
-        ViewManager::the().draw(*painter);
-        ToastManager::the().draw(*painter, width, height);
+        painter.canvas()->clear(ThemeDB::the().get<Color>("Colors", "Window.Background", Color(255)));
+        ViewManager::the().draw(painter);
+        ToastManager::the().draw(painter, width, height);
 
-        draw_debug_panel(*painter, *inconsolata, current_fps);
+        draw_debug_panel(painter, *inconsolata, current_fps);
 
-        app.present(*painter->canvas());
+        app.present(*painter.canvas());
     }
 
     LogInfo("Bye!");
-    painter->canvas()->clear(Color::Black);
-    app.present(*painter->canvas());
+    painter.canvas()->clear(Color::Black);
+    app.present(*painter.canvas());
 
     return 0;
 }

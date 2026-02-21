@@ -1,6 +1,9 @@
 #include "Platform/Linux/SDLApplication.hpp"
 #include <SDL.h>
+#include <SDL_render.h>
 #include "Debug/Logger.hpp"
+#include "Geometry/Primitives.hpp"
+#include "Graphics/Color.hpp"
 #include "Input/Input.hpp"
 
 using namespace Izo;
@@ -152,6 +155,23 @@ bool SDLApplication::pump_events() {
     }
     return m_running;
 }
+
+void SDLApplication::draw_pixel(const IntPoint& point, Color color)
+{
+    // Set the drawing colour for the renderer.
+    // SDL expects the components in the order RGBA, each as an 8‑bit value.
+    SDL_SetRenderDrawColor(
+        m_renderer,
+        static_cast<uint8_t>(color.r),   // red
+        static_cast<uint8_t>(color.g),   // green
+        static_cast<uint8_t>(color.b),   // blue
+        static_cast<uint8_t>(color.a)    // alpha (0 = transparent, 255 = opaque)
+    );
+
+    // Actually draw the pixel at the requested coordinates.
+    SDL_RenderDrawPoint(m_renderer, point.x, point.y);
+}
+
 
 void SDLApplication::present(const uint32_t* pixels, int width, int height) {
     if (!m_texture || !m_renderer || !pixels) return;

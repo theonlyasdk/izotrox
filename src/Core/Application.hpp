@@ -5,6 +5,11 @@
 #include <memory>
 
 #include "Geometry/Primitives.hpp"
+#include "Platform/Linux/SDLApplication.hpp"
+
+#ifdef __ANDROID__
+#include "HAL/Framebuffer.hpp"
+#endif
 
 namespace Izo {
 
@@ -12,6 +17,23 @@ class Canvas;
 
 class Application {
 public:
+    struct Impl {
+        int width, height;
+        std::function<void(int, int)> on_resize;
+
+#ifdef __ANDROID__
+            Framebuffer fb;
+#else
+            std::unique_ptr<SDLApplication> sdl_app = nullptr;
+#endif
+
+        Impl(int w, int h, const char* title) : width(w), height(h) {
+#ifdef __ANDROID__
+                sdl_app = std::make_unique<SDLApplication>(title, w, h);
+#endif
+        }
+    };
+
     static Application& the() noexcept { return *_instance; }
 
     Application(int width, int height, const char* title);
@@ -39,11 +61,12 @@ public:
     void show();
     void on_resize(std::function<void(int, int)> callback);
 private:
+    friend class Painter;
+
     float m_delta{0.f};
     bool m_debug;
 
-    struct Impl;
-    std::unique_ptr<Impl> impl;
+    std::unique_ptr<Impl> impl = nullptr;
     static Application* _instance;
 };
 

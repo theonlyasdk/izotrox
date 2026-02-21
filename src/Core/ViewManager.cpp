@@ -295,9 +295,10 @@ void ViewManager::draw(Painter& painter) {
     }
 
     if (m_dialog) {
-        constexpr uint8_t max_dialog_bg_alpha = 150;
+        constexpr uint8_t max_dialog_bg_alpha = 3;
         int dialog_bg_alpha = (uint8_t)(m_dialog->m_dialog_anim.value() * max_dialog_bg_alpha);
-        painter.fill_rect({0, 0, m_width, m_height}, Color(0, 0, 0, dialog_bg_alpha));
+        // painter.fill_rect(Application::the().screen_rect(), Color(0, 0, 0, dialog_bg_alpha));
+        painter.draw_blur_rect(Application::the().screen_rect(), dialog_bg_alpha);
         m_dialog->draw(painter);
         m_dialog->draw_focus(painter);
     }

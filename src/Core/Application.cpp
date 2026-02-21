@@ -14,24 +14,6 @@ namespace Izo {
 
 Application* Application::_instance = nullptr;
 
-struct Application::Impl {
-    int width, height;
-    std::function<void(int, int)> on_resize;
-
-    IF_ANDROID(
-        Framebuffer fb;
-    )
-    IF_DESKTOP(
-        std::unique_ptr<SDLApplication> sdl_app;
-    )
-
-    Impl(int w, int h, const char* title) : width(w), height(h) {
-        IF_DESKTOP(
-            sdl_app = std::make_unique<SDLApplication>(title, w, h);
-        )
-    }
-};
-
 Application::Application(int width, int height, const char* title)
     : impl(std::make_unique<Impl>(width, height, title)) {
     _instance = this;

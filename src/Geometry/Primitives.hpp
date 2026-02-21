@@ -34,6 +34,9 @@ struct Point {
     
     /* If both the coordinates of the point are negative */
     constexpr bool negative() { return x < 0 && y < 0; }
+
+    /* Returns the X and Y coordinates of a Rect<T> as a Point<T>*/ 
+    static Point<T> from_rect(const Rect<T>& rect) { return Point<T> { rect.x, rect.y }; }
 };
 
 using IntPoint = Point<int>;
@@ -49,6 +52,9 @@ struct Rect {
     T right() const;
     T top() const;
     T bottom() const;
+
+    T width() const { return w; }
+    T height() const { return h; }
 
     bool contains(T px, T py) const;
     bool contains(const Point<T>& point) const;

@@ -6,12 +6,15 @@
 #include <cstdint>
 #include <string>
 #include <functional>
+#include "Geometry/Primitives.hpp"
+#include "Graphics/Color.hpp"
 
 class SDLApplication {
 public:
     SDLApplication(std::string caption, int width = 800, int height = 600);
     ~SDLApplication();
 
+    void draw_pixel(const Izo::IntPoint& point, Izo::Color color);
     bool pump_events();
     void present(const uint32_t* pixels, int width, int height);
     void quit(int exit_code);

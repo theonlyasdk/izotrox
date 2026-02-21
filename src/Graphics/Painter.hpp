@@ -36,6 +36,7 @@ class Painter {
     void fill_rounded_rect(const IntRect& rect, int radius, Color color, int corners = AllCorners);
     void draw_rounded_rect(const IntRect& rect, int radius, Color color, int thickness = 1);
     void reset_clips_and_transform();
+    void draw_blur_rect(const IntRect& rect, int blur_level);
 
     float global_alpha() const { return m_global_alpha; }
     Canvas* canvas() { return m_canvas.get(); }
