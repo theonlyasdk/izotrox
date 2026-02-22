@@ -35,6 +35,7 @@ void Button::on_theme_update() {
         target = m_color_hover;
     }
     m_bg_anim.snap_to(target);
+    invalidate_layout();
 }
 
 void Button::draw_content(Painter& painter) {
@@ -63,13 +64,18 @@ void Button::draw_content(Painter& painter) {
 
 void Button::update() {
     float dt = Application::the().delta();
+    bool old_hovered = m_is_hovered;
+    Color old_bg = m_bg_anim.value();
+    bool was_anim_running = m_bg_anim.running();
 
     m_is_hovered = global_bounds().contains(Input::the().touch_point());
 
-    if (m_is_hovered) {
-        m_bg_anim.set_target(m_color_hover, 200, Easing::EaseOutQuad);
-    } else {
-        m_bg_anim.set_target(m_color_bg, 200, Easing::EaseOutQuad);
+    if (!m_pressed && old_hovered != m_is_hovered) {
+        if (m_is_hovered) {
+            m_bg_anim.set_target(m_color_hover, 200, Easing::EaseOutQuad);
+        } else {
+            m_bg_anim.set_target(m_color_bg, 200, Easing::EaseOutQuad);
+        }
     }
 
     m_bg_anim.update(dt);
@@ -103,6 +109,13 @@ void Button::update() {
     }
     
     Widget::update();
+
+    if (old_hovered != m_is_hovered ||
+        was_anim_running ||
+        m_bg_anim.running() ||
+        old_bg.as_argb() != m_bg_anim.value().as_argb()) {
+        invalidate_visual();
+    }
 }
 
 bool Button::on_touch_event(IntPoint point, bool down) {
@@ -130,6 +143,7 @@ bool Button::on_touch_event(IntPoint point, bool down) {
             target = m_color_hover;
 
         m_bg_anim.set_target(target, 200, Easing::EaseOutQuad);
+        invalidate_visual();
     }
 
     return true; 
@@ -143,6 +157,7 @@ bool Button::on_key(KeyCode key) {
         
         m_bg_anim.snap_to(m_color_pressed);
         m_bg_anim.set_target(m_color_hover, 300, Easing::EaseOutQuad);
+        invalidate_visual();
         
         return true;
     }
@@ -157,6 +172,11 @@ void Button::measure(int parent_w, int parent_h) {
         mh = m_label->measured_height() + 10;
     }
     m_measured_size = {0, 0, mw, mh};
+}
+
+bool Button::has_running_animations() const {
+    return Widget::has_running_animations() || m_bg_anim.running() ||
+           (m_label && m_label->has_running_animations());
 }
 
 }

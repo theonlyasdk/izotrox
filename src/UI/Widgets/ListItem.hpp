@@ -16,7 +16,7 @@ public:
 
     bool on_touch_event(IntPoint point, bool down) override;
 
-    void set_selected(bool sel) { m_selected = sel; }
+    void set_selected(bool sel);
     bool is_selected() const { return m_selected; }
 
 private:

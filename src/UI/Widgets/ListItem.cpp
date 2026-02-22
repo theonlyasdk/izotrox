@@ -22,6 +22,12 @@ void ListItem::update() {
     Container::update();
 }
 
+void ListItem::set_selected(bool sel) {
+    if (m_selected == sel) return;
+    m_selected = sel;
+    invalidate_visual();
+}
+
 bool ListItem::on_touch(IntPoint point, bool down, bool captured) {
     bool inside = global_bounds().contains(point);
 

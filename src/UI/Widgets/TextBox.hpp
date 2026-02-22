@@ -17,7 +17,7 @@ public:
 
     void set_text(const std::string& t);
     const std::string& text() const { return m_text_buffer; }
-    void set_placeholder(const std::string& placeholder) { m_placeholder = placeholder; }
+    void set_placeholder(const std::string& placeholder);
     void set_on_change(std::function<void(const std::string&)> callback) { m_on_change = callback; }
     void set_on_submit(std::function<void(const std::string&)> callback) { m_on_submit = callback; }
     void clear() { set_text(""); }
@@ -28,6 +28,7 @@ public:
     bool on_key(KeyCode key) override;
     void measure(int parent_w, int parent_h) override;
     void on_theme_update() override;
+    bool has_running_animations() const override;
 
 private:
     int get_cursor_index(int lx);

@@ -18,6 +18,7 @@ public:
     bool on_scroll(int y) override;
     bool is_scrollable() const override { return true; }
     IntPoint content_scroll_offset() const override { return {0, (int)m_scroll_y}; }
+    bool has_running_animations() const override;
 
     void smooth_scroll_to(int target_y);
     virtual void smooth_scroll_to_index(int index) { (void)index; }

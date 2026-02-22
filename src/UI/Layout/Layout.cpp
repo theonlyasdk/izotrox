@@ -9,11 +9,11 @@
 namespace Izo {
 
 constexpr float SCROLL_FRICTION = 0.96f;
-constexpr float SCROLL_MIN_VELOCITY = 0.06f;
+constexpr float SCROLL_MIN_VELOCITY = 3.6f; // px/sec
 constexpr float SCROLL_TENSION = 0.10f;
-constexpr float SCROLLBAR_FADE_SPEED = 0.7f;
+constexpr float SCROLLBAR_FADE_SPEED = 42.0f; // alpha/sec
 constexpr float AUTO_SCROLL_SPEED = 7.5f;
-constexpr float MOUSE_SCROLL_VELOCITY_SCALE = 7.5f;
+constexpr float MOUSE_SCROLL_VELOCITY_SCALE = 450.0f; // px/sec per wheel step
 constexpr int   TOUCH_SLOP_PX = 12;
 constexpr int   SCROLLBAR_WIDTH_PX = 4;
 constexpr int   SCROLLBAR_INSET_PX = 6;
@@ -44,14 +44,21 @@ void Layout::smooth_scroll_to(int target_y) {
 }
 
 void Layout::update() {
+    const float prev_scroll_y = m_scroll_y;
+    const float prev_velocity_y = m_velocity_y;
+    const float prev_scrollbar_alpha = m_scrollbar_alpha;
+    const bool prev_auto_scrolling = m_auto_scrolling;
+    const bool prev_is_dragging = m_is_dragging;
+
     int total_content_height = content_height();
     int max_scroll = (total_content_height > global_bounds().h) ? -(total_content_height - global_bounds().h) : 0;
+    float dt_sec = Application::the().delta() * 0.001f;
+    dt_sec = std::clamp(dt_sec, 0.0f, 0.1f);
+    const float dt60 = dt_sec * 60.0f;
 
     if (m_auto_scrolling) {
         float diff = m_auto_scroll_target - m_scroll_y;
-
-        float dt = Application::the().delta() * 0.001f;
-        m_velocity_y = diff * AUTO_SCROLL_SPEED * dt;
+        m_velocity_y = diff * AUTO_SCROLL_SPEED;
 
         if (std::abs(diff) < AUTO_SCROLL_SNAP_EPSILON && std::abs(m_velocity_y) < AUTO_SCROLL_VELOCITY_EPS) {
             m_scroll_y = m_auto_scroll_target;
@@ -62,19 +69,19 @@ void Layout::update() {
 
     if (!m_is_dragging) {
         if (std::abs(m_velocity_y) > 0.001f || m_scroll_y > 0 || m_scroll_y < max_scroll || m_auto_scrolling) {
-            m_scroll_y += m_velocity_y;
+            m_scroll_y += m_velocity_y * dt_sec;
 
             if (!m_auto_scrolling) {
                 if (m_scroll_y > 0) {
-                    m_velocity_y = (0 - m_scroll_y) * SCROLL_TENSION;
+                    m_velocity_y = (0 - m_scroll_y) * SCROLL_TENSION * 60.0f;
                     m_scrollbar_alpha = 255;
                     if (std::abs(m_scroll_y) < 0.5f) { m_scroll_y = 0; m_velocity_y = 0; }
                 } else if (m_scroll_y < max_scroll) {
-                    m_velocity_y = (max_scroll - m_scroll_y) * SCROLL_TENSION;
+                    m_velocity_y = (max_scroll - m_scroll_y) * SCROLL_TENSION * 60.0f;
                     m_scrollbar_alpha = 255;
                     if (std::abs(m_scroll_y - max_scroll) < 0.5f) { m_scroll_y = max_scroll; m_velocity_y = 0; }
                 } else if (std::abs(m_velocity_y) > SCROLL_MIN_VELOCITY) {
-                    m_velocity_y *= SCROLL_FRICTION;
+                    m_velocity_y *= std::pow(SCROLL_FRICTION, dt60);
                     m_scrollbar_alpha = 255;
                 } else {
                     m_velocity_y = 0;
@@ -86,7 +93,7 @@ void Layout::update() {
             }
         } else {
              if (m_scrollbar_alpha > 0) {
-                m_scrollbar_alpha -= SCROLLBAR_FADE_SPEED;
+                m_scrollbar_alpha -= SCROLLBAR_FADE_SPEED * dt_sec;
                 if (m_scrollbar_alpha < 0) m_scrollbar_alpha = 0;
             }
         }
@@ -96,6 +103,14 @@ void Layout::update() {
     }
 
     Container::update();
+
+    if (std::abs(m_scroll_y - prev_scroll_y) > 0.01f ||
+        std::abs(m_velocity_y - prev_velocity_y) > 0.01f ||
+        std::abs(m_scrollbar_alpha - prev_scrollbar_alpha) > 0.01f ||
+        m_auto_scrolling != prev_auto_scrolling ||
+        m_is_dragging != prev_is_dragging) {
+        invalidate_visual();
+    }
 }
 
 bool Layout::on_scroll(int y) {
@@ -111,6 +126,7 @@ bool Layout::on_scroll(int y) {
         if (y != 0) {
             m_velocity_y += (float)y * MOUSE_SCROLL_VELOCITY_SCALE;
             m_scrollbar_alpha = 255;
+            invalidate_visual();
             return true;
         }
     }
@@ -219,7 +235,6 @@ bool Layout::on_touch(IntPoint point, bool down, bool captured) {
             int dy = std::abs(point.y - m_initial_touch_y);
 
             if (dy > TOUCH_SLOP_PX && dy > dx) {
-
                 m_has_intercepted = true;
                 if (m_captured_child) {
                     m_captured_child->cancel_gesture();
@@ -268,17 +283,29 @@ bool Layout::on_touch_event(IntPoint point, bool down) {
             if (m_scroll_y > 0 || m_scroll_y < max_scroll) {
                 diff *= OVERSCROLL_DAMPING; 
             }
-            m_velocity_y = diff;
-            m_scroll_y += m_velocity_y;
+            float dt_sec = Application::the().delta() * 0.001f;
+            dt_sec = std::clamp(dt_sec, 0.001f, 0.1f);
+            m_velocity_y = diff / dt_sec;
+            m_scroll_y += diff;
         }
         m_last_touch_y = ty;
+        invalidate_visual();
         return true; 
     } else {
         if (m_is_dragging) {
             m_is_dragging = false;
+            invalidate_visual();
         }
         return false;
     }
+}
+
+bool Layout::has_running_animations() const {
+    if (Container::has_running_animations()) return true;
+
+    return m_is_dragging || m_auto_scrolling ||
+           std::abs(m_velocity_y) > 0.01f ||
+           std::abs(m_scrollbar_alpha) > 0.01f;
 }
 
 }

@@ -6,8 +6,21 @@
 #include "ThemeDB.hpp"
 #include "Input/Input.hpp"
 #include "Graphics/Dialog.hpp"
+#include <algorithm>
 
 namespace Izo {
+
+static IntRect clip_to_screen(const IntRect& rect, int width, int height) {
+    return rect.intersection({0, 0, width, height});
+}
+
+static IntRect rect_union(const IntRect& a, const IntRect& b) {
+    int x1 = std::min(a.x, b.x);
+    int y1 = std::min(a.y, b.y);
+    int x2 = std::max(a.right(), b.right());
+    int y2 = std::max(a.bottom(), b.bottom());
+    return {x1, y1, x2 - x1, y2 - y1};
+}
 
 ViewManager& ViewManager::the() {
     static ViewManager instance;
@@ -16,6 +29,80 @@ ViewManager& ViewManager::the() {
 
 ViewManager::ViewManager() = default;
 ViewManager::~ViewManager() = default;
+
+void ViewManager::open_dialog(std::unique_ptr<Dialog> dialog) {
+    m_dialog = std::move(dialog);
+    invalidate_full();
+}
+
+void ViewManager::dismiss_dialog() {
+    m_dialog.reset();
+    invalidate_full();
+}
+
+void ViewManager::invalidate_rect(const IntRect& rect) {
+    if (m_full_redraw_needed) return;
+    if (m_width <= 0 || m_height <= 0) return;
+
+    IntRect clipped = clip_to_screen(rect, m_width, m_height);
+    if (clipped.w <= 0 || clipped.h <= 0) return;
+
+    m_dirty_rects.push_back(clipped);
+    if (m_dirty_rects.size() > 32) {
+        invalidate_full();
+        return;
+    }
+
+    for (size_t i = 0; i < m_dirty_rects.size(); ++i) {
+        for (size_t j = i + 1; j < m_dirty_rects.size();) {
+            if (m_dirty_rects[i].intersects(m_dirty_rects[j])) {
+                m_dirty_rects[i] = rect_union(m_dirty_rects[i], m_dirty_rects[j]);
+                m_dirty_rects.erase(m_dirty_rects.begin() + static_cast<std::vector<IntRect>::difference_type>(j));
+            } else {
+                ++j;
+            }
+        }
+    }
+
+    if (m_dirty_rects.size() > 16) {
+        invalidate_full();
+    }
+}
+
+void ViewManager::invalidate_full() {
+    m_full_redraw_needed = true;
+    m_dirty_rects.clear();
+}
+
+bool ViewManager::has_dirty() const {
+    return m_full_redraw_needed || !m_dirty_rects.empty();
+}
+
+std::vector<IntRect> ViewManager::consume_dirty_rects() {
+    if (m_width <= 0 || m_height <= 0) {
+        m_dirty_rects.clear();
+        m_full_redraw_needed = false;
+        return {};
+    }
+
+    if (m_full_redraw_needed) {
+        m_full_redraw_needed = false;
+        m_dirty_rects.clear();
+        return {{0, 0, m_width, m_height}};
+    }
+
+    std::vector<IntRect> dirty = std::move(m_dirty_rects);
+    m_dirty_rects.clear();
+    return dirty;
+}
+
+bool ViewManager::needs_redraw() const {
+    if (has_dirty()) return true;
+    if (m_animating) return true;
+    if (m_dialog && (m_dialog->m_dialog_anim.running() || m_dialog->has_running_animations())) return true;
+    if (!m_stack.empty() && m_stack.back() && m_stack.back()->has_running_animations()) return true;
+    return false;
+}
 
 void ViewManager::setup_transition(ViewTransition transition, bool is_pop) {
     int transition_duration = ThemeDB::the().get<int>("System", "ViewTransitionDuration", 500);
@@ -35,6 +122,7 @@ void ViewManager::setup_transition(ViewTransition transition, bool is_pop) {
     m_is_pop = is_pop;
     m_transition_anim.snap_to(0.0f);
     m_transition_anim.set_target(1.0f, transition_duration, transition_easing);
+    invalidate_full();
 }
 
 void ViewManager::push(std::unique_ptr<View> view, ViewTransition transition) {
@@ -56,6 +144,7 @@ void ViewManager::push(std::unique_ptr<View> view, ViewTransition transition) {
     }
 
     m_stack.push_back(std::move(view));
+    invalidate_full();
     m_processing_operation = false;
 }
 
@@ -89,6 +178,7 @@ void ViewManager::pop(ViewTransition transition) {
         setup_transition(transition, true);
     } else {
         m_stack.pop_back();
+        invalidate_full();
     }
 
     m_processing_operation = false;
@@ -141,6 +231,7 @@ void ViewManager::resize(int w, int h) {
     if (m_dialog) {
         m_dialog->measure(w, h);
     }
+    invalidate_full();
 }
 
 void ViewManager::update() {
@@ -150,15 +241,21 @@ void ViewManager::update() {
         if (scroll != 0) {
             m_dialog->on_scroll(scroll);
         }
-        m_dialog->update();
-    }
 
-    // m_dialog sometimes might be nullptr after update
-    if (m_dialog && !m_dialog->m_dialog_anim.running()) {
+        m_dialog->update();
+        if (m_dialog->m_dialog_anim.running()) {
+            invalidate_full();
+        }
+
+        if (m_dialog->m_closing && !m_dialog->m_dialog_anim.running()) {
+            dismiss_dialog();
+        }
+
         return;
     }
 
     if (m_animating) {
+        invalidate_full();
         float dt = Application::the().delta();
         if (m_transition_anim.update(dt)) {
             // Still animating...

@@ -16,17 +16,32 @@ void View::resize(int w, int h) {
     m_height = h;
     if (m_root) {
         m_root->set_bounds({0, 0, w, h});
-        m_root->measure(w, h);
-
-        Container* container = dynamic_cast<Container*>(m_root.get());
-        if (container) {
-            container->layout();
-        }
+        m_root->invalidate_layout();
     }
 }
 
 void View::update() {
-    if (m_root) m_root->update();
+    if (!m_root) return;
+
+    auto run_layout_pass = [&]() {
+        if (!m_root || !m_root->subtree_layout_dirty()) return;
+
+        m_root->set_bounds({0, 0, m_width, m_height});
+        m_root->measure(m_width, m_height);
+
+        if (auto* container = dynamic_cast<Container*>(m_root.get())) {
+            container->layout();
+        } else {
+            m_root->layout();
+        }
+
+        m_root->clear_layout_dirty_subtree();
+        m_root->invalidate_visual();
+    };
+
+    run_layout_pass();
+    m_root->update();
+    run_layout_pass();
 }
 
 void View::draw(Painter& painter) {
@@ -88,6 +103,10 @@ void View::on_key(KeyCode key) {
     }
 
     if (m_root) m_root->on_key(key);
+}
+
+bool View::has_running_animations() const {
+    return m_root ? m_root->has_running_animations() : false;
 }
 
 } 

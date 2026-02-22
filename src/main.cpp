@@ -15,6 +15,8 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <thread>
+#include <vector>
 
 #include "Core/Application.hpp"
 #include "Core/ArgsParser.hpp"
@@ -87,12 +89,14 @@ const std::string try_parse_arguments(int argc, const char* argv[]) {
     std::string resource_root = "res";
     std::string save_theme_preview;
     bool debug_mode = false;
+    bool flash_dirty_regions = false;
 
     ArgsParser parser("Izotrox - Experimental GUI engine for Android and Linux");
     parser.add_argument(theme_name, "theme", "t", "Name of the theme to load", false);
     parser.add_argument(resource_root, "resource-root", "r", "Resource root directory", false);
     parser.add_argument(save_theme_preview, "save-theme-preview", "p", "Save theme preview to file. Specify a custom theme using --theme", false);
     parser.add_argument(debug_mode, "debug", "d", "Enables debug mode", false);
+    parser.add_argument(flash_dirty_regions, "flash-dirty-regions", "f", "Flash dirty regions (debug mode only)", false);
 
     ArgsParser::ParseResult result = parser.parse(argc, argv);
 
@@ -118,6 +122,7 @@ const std::string try_parse_arguments(int argc, const char* argv[]) {
         Settings::the().set<std::string>("preview-path", save_theme_preview);
 
     Settings::the().set<bool>("debug", debug_mode);
+    Settings::the().set<bool>("flash-dirty-regions", flash_dirty_regions);
 
     return "";
 }
@@ -341,9 +346,18 @@ int main(int argc, const char* argv[]) {
     int frame_count = 0;
     float fps_timer = 0;
     float current_fps = 0;
+    IntPoint last_touch_point = Input::the().touch_point();
+    bool last_touch_down = Input::the().touch_down();
+    struct FlashClearRect {
+        IntRect rect;
+        long long clear_at_ms;
+    };
+    std::vector<FlashClearRect> flash_clear_rects;
+    std::vector<IntRect> clear_rects_due_this_frame;
 
     while (running) {
         auto now = std::chrono::high_resolution_clock::now();
+        const long long now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
         float dt = std::chrono::duration<float, std::chrono::milliseconds::period>(now - last_time).count();
         last_time = now;
 
@@ -363,21 +377,107 @@ int main(int argc, const char* argv[]) {
 
         IntPoint tp = Input::the().touch_point();
         bool down = Input::the().touch_down();
-        ViewManager::the().on_touch(tp, down);
+        bool touch_changed = (tp != last_touch_point || down != last_touch_down);
+        if (tp != last_touch_point || down != last_touch_down) {
+            ViewManager::the().on_touch(tp, down);
+            last_touch_point = tp;
+            last_touch_down = down;
+        }
 
         KeyCode key = Input::the().key();
         if (key != KeyCode::None) ViewManager::the().on_key(key);
+        bool has_scroll_input = Input::the().peek_scroll_y() != 0;
+        bool had_input_event = touch_changed || key != KeyCode::None || has_scroll_input;
+
+        bool should_process_frame =
+            had_input_event ||
+            ViewManager::the().needs_redraw() ||
+            ToastManager::the().has_active_toast();
+
+        if (!should_process_frame) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(8));
+            continue;
+        }
 
         ViewManager::the().update();
         ToastManager::the().update();
 
-        painter.canvas()->clear(ThemeDB::the().get<Color>("Colors", "Window.Background", Color(255)));
-        ViewManager::the().draw(painter);
-        ToastManager::the().draw(painter, width, height);
+        if (ToastManager::the().has_active_toast()) {
+            ViewManager::the().invalidate_full();
+        }
 
-        draw_debug_panel(painter, *inconsolata, current_fps);
+        const bool flash_dirty_regions = app.debug_mode() && Settings::the().get_or<bool>("flash-dirty-regions", false);
+        if (flash_dirty_regions) {
+            clear_rects_due_this_frame.clear();
+            for (auto it = flash_clear_rects.begin(); it != flash_clear_rects.end();) {
+                if (now_ms >= it->clear_at_ms) {
+                    clear_rects_due_this_frame.push_back(it->rect);
+                    ViewManager::the().invalidate_rect(it->rect);
+                    it = flash_clear_rects.erase(it);
+                } else {
+                    ++it;
+                }
+            }
+        } else {
+            flash_clear_rects.clear();
+            clear_rects_due_this_frame.clear();
+        }
 
-        app.present(*painter.canvas());
+        std::vector<IntRect> dirty_rects = ViewManager::the().consume_dirty_rects();
+
+        if (dirty_rects.empty()) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            continue;
+        }
+
+        Color window_bg = ThemeDB::the().get<Color>("Colors", "Window.Background", Color(255));
+        painter.reset_clips_and_transform();
+        for (const auto& rect : dirty_rects) {
+            IntRect clipped = rect.intersection({0, 0, width, height});
+            if (clipped.w <= 0 || clipped.h <= 0) continue;
+
+            painter.set_global_alpha(1.0f);
+            painter.push_clip(clipped);
+            painter.fill_rect(clipped, window_bg);
+            ViewManager::the().draw(painter);
+            ToastManager::the().draw(painter, width, height);
+            draw_debug_panel(painter, *inconsolata, current_fps);
+
+            if (flash_dirty_regions) {
+                bool from_scheduled_clear = false;
+                for (const auto& clear_rect : clear_rects_due_this_frame) {
+                    if (clear_rect.intersects(clipped)) {
+                        from_scheduled_clear = true;
+                        break;
+                    }
+                }
+
+                if (!from_scheduled_clear) {
+                    painter.fill_rect(clipped, Color(255, 64, 192, 170));
+
+                    bool merged = false;
+                    for (auto& pending : flash_clear_rects) {
+                        if (pending.rect.intersects(clipped)) {
+                            int x1 = std::min(pending.rect.x, clipped.x);
+                            int y1 = std::min(pending.rect.y, clipped.y);
+                            int x2 = std::max(pending.rect.right(), clipped.right());
+                            int y2 = std::max(pending.rect.bottom(), clipped.bottom());
+                            pending.rect = {x1, y1, x2 - x1, y2 - y1};
+                            pending.clear_at_ms = now_ms + 10;
+                            merged = true;
+                            break;
+                        }
+                    }
+                    if (!merged) {
+                        flash_clear_rects.push_back({clipped, now_ms + 10});
+                    }
+                }
+            }
+
+            painter.pop_clip();
+        }
+
+        app.present(*painter.canvas(), dirty_rects);
     }
 
     LogInfo("Bye!");

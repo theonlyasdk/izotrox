@@ -16,7 +16,7 @@ public:
 
     bool init() override;
     bool pump_events() override;
-    void present(Canvas& canvas) override;
+    void present(Canvas& canvas, std::span<const IntRect> dirty_rects) override;
     void quit(int exit_code) override;
     void show() override;
 
@@ -33,6 +33,7 @@ private:
     SDL_Renderer* m_renderer{nullptr};
     SDL_Texture* m_texture{nullptr};
     bool m_running{false};
+    bool m_texture_needs_full_upload{true};
     uint32_t m_width{0};
     uint32_t m_height{0};
 

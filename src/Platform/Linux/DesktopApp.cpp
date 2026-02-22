@@ -42,6 +42,7 @@ bool DesktopApp::recreate_texture(uint32_t w, uint32_t h) {
         LogError("SDL_CreateTexture failed: {}", SDL_GetError());
         return false;
     }
+    m_texture_needs_full_upload = true;
     return true;
 }
 
@@ -166,12 +167,27 @@ bool DesktopApp::pump_events() {
     return m_running;
 }
 
-void DesktopApp::present(Canvas& canvas) {
+void DesktopApp::present(Canvas& canvas, std::span<const IntRect> dirty_rects) {
     if (!m_texture || !m_renderer) return;
     if (canvas.width() != static_cast<int>(m_width) || canvas.height() != static_cast<int>(m_height)) return;
 
-    SDL_UpdateTexture(m_texture, nullptr, canvas.pixels(), canvas.width() * static_cast<int>(sizeof(uint32_t)));
-    SDL_RenderClear(m_renderer);
+    bool full_upload = m_texture_needs_full_upload || dirty_rects.empty();
+
+    if (full_upload) {
+        SDL_UpdateTexture(m_texture, nullptr, canvas.pixels(), canvas.width() * static_cast<int>(sizeof(uint32_t)));
+        m_texture_needs_full_upload = false;
+    } else {
+        const int pitch = canvas.width() * static_cast<int>(sizeof(uint32_t));
+        for (const auto& rect : dirty_rects) {
+            IntRect clipped = rect.intersection({0, 0, canvas.width(), canvas.height()});
+            if (clipped.w <= 0 || clipped.h <= 0) continue;
+
+            SDL_Rect sdl_rect{clipped.x, clipped.y, clipped.w, clipped.h};
+            const auto* src = reinterpret_cast<const uint8_t*>(canvas.pixels() + clipped.y * canvas.width() + clipped.x);
+            SDL_UpdateTexture(m_texture, &sdl_rect, src, pitch);
+        }
+    }
+
     SDL_RenderCopy(m_renderer, m_texture, nullptr, nullptr);
     SDL_RenderPresent(m_renderer);
 }

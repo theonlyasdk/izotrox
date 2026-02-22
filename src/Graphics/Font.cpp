@@ -1,15 +1,17 @@
-#include "Debug/Logger.hpp"
 #include "Graphics/Font.hpp"
+
 #include <cstdio>
 #include <sstream>
+
+#include "Debug/Logger.hpp"
 
 #define STB_TRUETYPE_IMPLEMENTATION
 #include "Lib/stb_truetype.h"
 
 namespace Izo {
 
-Font::Font(const std::string& path, float size) 
-    : path(path), sizeVal(size), validState(false) {
+Font::Font(const std::string& path, float size)
+    : path(path), font_size(size), font_loaded(false) {
     info = std::make_unique<stbtt_fontinfo>();
     load();
 }
@@ -37,7 +39,7 @@ void Font::load() {
         return;
     }
 
-    scale = stbtt_ScaleForPixelHeight(info.get(), sizeVal);
+    scale = stbtt_ScaleForPixelHeight(info.get(), font_size);
 
     stbtt_GetFontVMetrics(info.get(), &ascent, &descent, &lineGap);
     baseline = (int)(ascent * scale);
@@ -63,9 +65,10 @@ void Font::load() {
             maxRowH = 0;
         }
 
-        if (curY + h >= atlas.height) break; 
+        if (curY + h >= atlas.height)
+            break;
 
-        stbtt_MakeCodepointBitmap(info.get(), atlas.pixels.data() + (curY * atlas.width + curX), 
+        stbtt_MakeCodepointBitmap(info.get(), atlas.pixels.data() + (curY * atlas.width + curX),
                                   w, h, atlas.width, scale, scale, i);
 
         glyphs[i].x0 = curX;
@@ -79,17 +82,14 @@ void Font::load() {
         glyphs[i].lsb = (int)(lsb * scale);
 
         curX += w + 1;
-        if (h > maxRowH) maxRowH = h;
+        if (h > maxRowH)
+            maxRowH = h;
     }
 
-    validState = true;
+    font_loaded = true;
 }
 
-int Font::height() const {
-    return (int)((ascent - descent + lineGap) * scale);
-}
-
-int Font::width(const std::string& text) {
+int Font::width(const std::string& text) const {
     int w = 0;
     for (char c : text) {
         if (c >= 32 && c < 127) {
@@ -100,12 +100,14 @@ int Font::width(const std::string& text) {
 }
 
 void Font::draw_text(Painter& painter, IntPoint pos, const std::string& text, Color color) {
-    if (!validState) return;
+    if (!font_loaded)
+        return;
 
     int curX = pos.x;
 
     for (char c : text) {
-        if (c < 32 || c >= 127) continue;
+        if (c < 32 || c >= 127)
+            continue;
 
         const Glyph& g = glyphs[(int)c];
 
@@ -121,10 +123,10 @@ void Font::draw_text(Painter& painter, IntPoint pos, const std::string& text, Co
             for (int col = 0; col < gw; col++) {
                 uint8_t alpha = atlas.pixels[(g.y0 + row) * atlas.width + (g.x0 + col)];
                 if (alpha > 0) {
-                     uint8_t finalAlpha = (uint8_t)((color.a * alpha) / 255);
-                     Color finalColor = color;
-                     finalColor.a = finalAlpha;
-                     painter.draw_pixel({drawX + col, drawY + row}, finalColor);
+                    uint8_t finalAlpha = (uint8_t)((color.a * alpha) / 255);
+                    Color finalColor = color;
+                    finalColor.a = finalAlpha;
+                    painter.draw_pixel({drawX + col, drawY + row}, finalColor);
                 }
             }
         }
@@ -132,54 +134,60 @@ void Font::draw_text(Painter& painter, IntPoint pos, const std::string& text, Co
     }
 }
 
-void Font::measure_multiline(const std::string& text, int& out_w, int& out_h, int max_width) {
-    out_w = 0;
-    out_h = 0;
-    if (!validState || text.empty()) {
-        if (text.empty()) out_h = height();
+void Font::measure_multiline(const std::string& text, int& out_width, int& out_height, int max_line_width) {
+    out_width = 0;
+    out_height = 0;
+
+    if (!font_loaded || text.empty()) {
+        if (text.empty())
+            out_height = height();
         return;
     }
 
-    int lineHeight = height();
-    int maxW = 0;
-    int totalH = 0;
+    const int line_height = height();
+    int max_line_w = 0;
+    int accumulated_h = 0;
 
-    auto process_line = [&](const std::string& l) {
-        if (max_width <= 0) {
-            int w = width(l);
-            if (w > maxW) maxW = w;
-            totalH += lineHeight;
+    auto process_line = [&](const std::string& line) {
+        if (max_line_width <= 0) {
+            int line_w = width(line);
+            if (line_w > max_line_w)
+                max_line_w = line_w;
+            accumulated_h += line_height;
         } else {
-            std::string currentLine;
-            int currentW = 0;
+            std::string current_line;
+            int current_w = 0;
             std::string word;
-            
+
             auto flush_word = [&]() {
-                if (word.empty()) return;
-                int wordW = width(word);
-                if (!currentLine.empty() && currentW + wordW > max_width) {
-                    if (currentW > maxW) maxW = currentW;
-                    totalH += lineHeight;
-                    currentLine = word;
-                    currentW = wordW;
+                if (word.empty())
+                    return;
+
+                int word_w = width(word);
+                if (!current_line.empty() && current_w + word_w > max_line_width) {
+                    if (current_w > max_line_w)
+                        max_line_w = current_w;
+                    accumulated_h += line_height;
+                    current_line = word;
+                    current_w = word_w;
                 } else {
-                    currentLine += word;
-                    currentW += wordW;
+                    current_line += word;
+                    current_w += word_w;
                 }
-                word = "";
+                word.clear();
             };
 
-            for (char c : l) {
-                word += c;
-                if (c == ' ') {
+            for (char ch : line) {
+                word += ch;
+                if (ch == ' ')
                     flush_word();
-                }
             }
             flush_word();
 
-            if (!currentLine.empty() || l.empty()) {
-                if (currentW > maxW) maxW = currentW;
-                totalH += lineHeight;
+            if (!current_line.empty() || line.empty()) {
+                if (current_w > max_line_w)
+                    max_line_w = current_w;
+                accumulated_h += line_height;
             }
         }
     };
@@ -193,12 +201,17 @@ void Font::measure_multiline(const std::string& text, int& out_w, int& out_h, in
     }
     process_line(text.substr(start));
 
-    out_w = maxW;
-    out_h = totalH;
+    out_width = max_line_w;
+    out_height = accumulated_h;
+    out_height = accumulated_h;
 }
 
-void Font::draw_text_multiline(Painter& painter, IntPoint pos, const std::string& text, Color color, int wrap_width, int align_width, TextAlign align) {
-    if (!validState) return;
+void Font::draw_text_multiline(Painter& painter, IntPoint pos,
+                               const std::string& text, Color color,
+                               int wrap_width, int align_width,
+                               TextAlign align) {
+    if (!font_loaded)
+        return;
 
     int lineHeight = height();
     int curY = pos.y;
@@ -226,7 +239,8 @@ void Font::draw_text_multiline(Painter& painter, IntPoint pos, const std::string
             std::string word;
 
             auto flush_word = [&]() {
-                if (word.empty()) return;
+                if (word.empty())
+                    return;
                 int wordW = width(word);
                 if (!currentLine.empty() && currentW + wordW > wrap_width) {
                     draw_line_str(currentLine);
@@ -263,4 +277,4 @@ void Font::draw_text_multiline(Painter& painter, IntPoint pos, const std::string
     process_line(text.substr(start));
 }
 
-} 
+}  // namespace Izo

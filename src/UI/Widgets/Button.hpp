@@ -24,6 +24,7 @@ public:
     bool on_touch_event(IntPoint point, bool down) override;
     bool on_key(KeyCode key) override;
     void measure(int parent_w, int parent_h) override;
+    bool has_running_animations() const override;
 
     void set_on_click(std::function<void()> callback) { m_on_click = callback; }
 

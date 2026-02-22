@@ -48,10 +48,10 @@ template <typename T>
 struct Rect {
     T x, y, w, h;
 
-    T left() const;
-    T right() const;
-    T top() const;
-    T bottom() const;
+    T left() const { return x; }
+    T top() const { return y; }
+    T right() const { return x + w; }
+    T bottom() const { return y + h; }
 
     T width() const { return w; }
     T height() const { return h; }
@@ -61,7 +61,7 @@ struct Rect {
     bool intersects(const Rect& other) const;
 
     /* Does the operation on this Rect and returns resultant Rect */
-    Rect intersection(const Rect& other) const;
+    Rect intersection(const Rect& other) const noexcept;
     Rect expanded(T amount) const;
     Rect contracted(T amount) const;
 
@@ -82,8 +82,10 @@ struct Padding {
         left = right = top = bottom = all;
     }
     Padding(int left, int right, int top, int bottom) {
-        left=left;right=right;top=top;bottom=bottom;
+        left = left;
+        right = right;
+        top = top;
+        bottom = bottom;
     }
 };
-
 } 

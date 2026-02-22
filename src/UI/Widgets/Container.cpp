@@ -4,6 +4,13 @@
 
 namespace Izo {
 
+void Container::add_child(std::unique_ptr<Widget> child) {
+    if (!child) return;
+    child->set_parent(this);
+    m_children.push_back(std::move(child));
+    invalidate_layout();
+}
+
 void Container::draw_content(Painter& painter) {
     painter.push_clip(global_bounds());
     for (auto& child : m_children) {
@@ -96,6 +103,33 @@ void Container::collect_focusable_widgets(std::vector<Widget*>& out_list) {
 }
 
 void Container::layout() {
+}
+
+bool Container::subtree_layout_dirty() const {
+    if (layout_dirty()) return true;
+    for (const auto& child : m_children) {
+        if (child->subtree_layout_dirty()) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void Container::clear_layout_dirty_subtree() {
+    m_layout_dirty = false;
+    for (auto& child : m_children) {
+        child->clear_layout_dirty_subtree();
+    }
+}
+
+bool Container::has_running_animations() const {
+    if (Widget::has_running_animations()) return true;
+    for (const auto& child : m_children) {
+        if (child->has_running_animations()) {
+            return true;
+        }
+    }
+    return false;
 }
 
 void Container::draw_focus(Painter& painter) {

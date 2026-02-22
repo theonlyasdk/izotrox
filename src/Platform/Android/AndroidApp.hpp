@@ -17,7 +17,7 @@ public:
 
     bool init() override;
     bool pump_events() override;
-    void present(Canvas& canvas) override;
+    void present(Canvas& canvas, std::span<const IntRect> dirty_rects) override;
     void quit(int exit_code) override;
     void show() override;
 

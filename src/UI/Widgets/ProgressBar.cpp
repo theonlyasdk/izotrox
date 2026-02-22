@@ -35,13 +35,21 @@ void ProgressBar::on_theme_update() {
     m_color_bg = ThemeDB::the().get<Color>("Colors", "ProgressBar.Background", Color(100));
     m_color_fill = ThemeDB::the().get<Color>("Colors", "ProgressBar.Fill", Color(0, 255, 100));
     m_color_border = ThemeDB::the().get<Color>("Colors", "ProgressBar.Border", Color(200));
+    invalidate_visual();
 }
 
 void ProgressBar::set_progress(float v) { 
     float new_progress = std::clamp(v, 0.0f, 1.0f);
     if (new_progress != m_value) {
         m_value = new_progress;
+        invalidate_visual();
     }
+}
+
+void ProgressBar::set_type(ProgressBar::Type type) {
+    if (m_type == type) return;
+    m_type = type;
+    invalidate_visual();
 }
 
 void ProgressBar::set_animation_variant(ProgressBar::AnimationVariant variant) {
@@ -57,6 +65,7 @@ void ProgressBar::set_animation_variant(ProgressBar::AnimationVariant variant) {
             m_indeterminate_anim.set_loop_mode(AnimationLoopMode::NoLoop);
             break;
     }
+    invalidate_visual();
 }
 
 void ProgressBar::draw_normal(Painter& painter) {
@@ -129,11 +138,21 @@ void ProgressBar::draw_content(Painter& painter) {
 }
 
 void ProgressBar::update() {
+    bool was_anim_running = m_indeterminate_anim.running();
+    float old_anim_value = m_indeterminate_anim.value();
+
     switch (m_type) {
     case Izo::ProgressBar::Type::Indeterminate:
         m_indeterminate_anim.update(Application::the().delta());
+        break;
     default:
         break;
+    }
+
+    Widget::update();
+
+    if (was_anim_running || m_indeterminate_anim.running() || old_anim_value != m_indeterminate_anim.value()) {
+        invalidate_visual();
     }
 }
 
@@ -143,6 +162,11 @@ void ProgressBar::measure(int parent_w, int parent_h) {
 
 bool ProgressBar::on_touch_event(IntPoint point, bool down) {
      return false; 
+}
+
+bool ProgressBar::has_running_animations() const {
+    return Widget::has_running_animations() ||
+           (m_type == ProgressBar::Type::Indeterminate && m_indeterminate_anim.running());
 }
 
 } 

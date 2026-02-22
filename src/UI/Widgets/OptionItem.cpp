@@ -20,6 +20,7 @@ void OptionItem::on_theme_update() {
     m_roundness = ThemeDB::the().get<int>("WidgetParams", "Widget.Roundness", 12);
     m_color_highlight = ThemeDB::the().get<Color>("Colors", "OptionBox.Highlight", Color(255, 255, 255, 40));
     m_color_text = ThemeDB::the().get<Color>("Colors", "OptionBox.Text", Color(255));
+    invalidate_visual();
 }
 
 void OptionItem::measure(int parent_w, int parent_h) {
@@ -30,10 +31,8 @@ void OptionItem::measure(int parent_w, int parent_h) {
 
 void OptionItem::draw_content(Painter& painter) {
     IntRect bounds = global_bounds();
-    
-    m_bg_anim.update(Application::the().delta());
-    
-    if (m_selected || m_pressed || hovering()) {
+
+    if (m_selected || m_pressed || m_hovered) {
         Color highlight = m_color_highlight;
         if (!m_pressed && !m_selected) highlight.a /= 2;
         painter.fill_rounded_rect(bounds, m_roundness, highlight);
@@ -45,14 +44,39 @@ void OptionItem::draw_content(Painter& painter) {
     }
 }
 
+void OptionItem::update() {
+    bool old_hovered = m_hovered;
+    bool was_running = m_bg_anim.running();
+    Color old_bg = m_bg_anim.value();
+
+    m_hovered = hovering();
+    m_bg_anim.update(Application::the().delta());
+    Widget::update();
+
+    if (old_hovered != m_hovered ||
+        was_running ||
+        m_bg_anim.running() ||
+        old_bg.as_argb() != m_bg_anim.value().as_argb()) {
+        invalidate_visual();
+    }
+}
+
+void OptionItem::set_selected(bool selected) {
+    if (m_selected == selected) return;
+    m_selected = selected;
+    invalidate_visual();
+}
+
 bool OptionItem::on_touch_event(IntPoint point, bool down) {
     if (down) {
         m_pressed = true;
+        invalidate_visual();
     } else {
         if (m_pressed && content_box().contains(point)) {
             m_callback(m_index);
         }
         m_pressed = false;
+        invalidate_visual();
     }
     return true;
 }

@@ -3,3 +3,5 @@ IndentWidth: 4
 UseTab: Never
 TabWidth: 4
 ColumnLimit: 0
+BraceWrapping:
+  AfterFunction: true

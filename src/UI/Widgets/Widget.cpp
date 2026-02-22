@@ -1,11 +1,11 @@
 #include "UI/Widgets/Widget.hpp"
 #include "Core/Application.hpp"
 #include "Core/ThemeDB.hpp"
+#include "Core/ViewManager.hpp"
 #include "Geometry/Primitives.hpp"
 #include "Graphics/Font.hpp"
 #include "Graphics/Painter.hpp"
 #include "Input/Input.hpp"
-#include "Graphics/Painter.hpp"
 #include <algorithm>
 #include <vector>
 
@@ -69,10 +69,14 @@ void Widget::on_theme_update() {
     m_focus_roundness = ThemeDB::the().get<int>("WidgetParams", "Widget.Roundness", 6);
     m_focus_color = ThemeDB::the().get<Color>("Colors", "Widget.Focus", Color(0, 0, 255));
     m_focus_anim_duration = ThemeDB::the().get<int>("WidgetParams", "Widget.FocusAnimDuration", 300);
+    invalidate_layout();
 }
 
 void Widget::update() {
     m_focus_anim.update(Application::the().delta());
+    if (m_focus_anim.running()) {
+        invalidate_visual();
+    }
 }
 
 void Widget::measure(int parent_w, int parent_h) {
@@ -91,8 +95,6 @@ void Widget::measure(int parent_w, int parent_h) {
 }
 
 void Widget::handle_focus_logic(bool inside, bool down) {
-    bool old_focused = m_focused;
-
     if (down && !m_prev_touch_down) {
         m_touch_started_inside = inside;
         m_gesture_cancelled = false;
@@ -153,8 +155,10 @@ void Widget::draw_focus_outline(Painter& painter) {
 
 void Widget::set_focused(bool focused) {
     if (m_focused != focused) {
+        invalidate_visual();
         m_focused = focused;
         m_focus_anim.set_target(m_focused ? 1.0f : 0.0f, m_focus_anim_duration, Easing::EaseOutCubic);
+        invalidate_visual();
     }
 }
 
@@ -162,6 +166,123 @@ bool Widget::hovering() const {
     return global_bounds().contains(Input::the().touch_point());
 }
 
+void Widget::set_font(Font* font) {
+    if (m_font == font) return;
+    m_font = font;
+    invalidate_layout();
+}
+
+void Widget::show() {
+    if (m_visible) return;
+    m_visible = true;
+    invalidate_layout();
+}
+
+void Widget::hide() {
+    if (!m_visible) return;
+    IntRect old_bounds = global_bounds();
+    m_visible = false;
+    ViewManager::the().invalidate_rect(old_bounds);
+    invalidate_layout();
+}
+
+void Widget::set_padding(Padding padding) {
+    set_padding_ltrb(padding.left, padding.top, padding.right, padding.bottom);
+}
+
+void Widget::set_height(int h) {
+    if (m_height == h) return;
+    m_height = h;
+    invalidate_layout();
+}
+
+void Widget::set_height(WidgetSizePolicy p) {
+    set_height((int)p);
+}
+
+void Widget::set_bounds(const IntRect& bounds) {
+    if (m_bounds.x == bounds.x && m_bounds.y == bounds.y && m_bounds.w == bounds.w && m_bounds.h == bounds.h) {
+        return;
+    }
+
+    IntRect old_global_bounds = global_bounds();
+    m_bounds = bounds;
+
+    if (m_visible) {
+        ViewManager::the().invalidate_rect(old_global_bounds);
+        ViewManager::the().invalidate_rect(global_bounds());
+    }
+}
+
+void Widget::set_width(WidgetSizePolicy p) {
+    set_width((int)p);
+}
+
+void Widget::set_width(int w) {
+    if (m_width == w) return;
+    m_width = w;
+    invalidate_layout();
+}
+
+void Widget::set_focusable(bool focusable) {
+    if (m_focusable == focusable) return;
+    m_focusable = focusable;
+    if (!m_focusable) {
+        set_focused(false);
+    }
+    invalidate_visual();
+}
+
+void Widget::set_padding_ltrb(int left, int top, int right, int bottom) {
+    if (m_padding_left == left && m_padding_top == top && m_padding_right == right && m_padding_bottom == bottom) {
+        return;
+    }
+
+    m_padding_left = left;
+    m_padding_top = top;
+    m_padding_right = right;
+    m_padding_bottom = bottom;
+    invalidate_layout();
+}
+
+void Widget::set_padding(int padding) {
+    set_padding_ltrb(padding, padding, padding, padding);
+}
+
+void Widget::set_show_focus_indicator(bool show) {
+    if (m_show_focus_indicator == show) return;
+    m_show_focus_indicator = show;
+    invalidate_visual();
+}
+
+void Widget::set_parent(Widget* parent) {
+    if (m_parent == parent) return;
+    m_parent = parent;
+    invalidate_layout();
+}
+
+void Widget::set_layout_index(int index) {
+    m_layout_index = index;
+}
+
+void Widget::invalidate_visual() {
+    if (!m_visible) return;
+    ViewManager::the().invalidate_rect(global_bounds());
+}
+
+void Widget::invalidate_layout() {
+    if (!m_layout_dirty) {
+        m_layout_dirty = true;
+        if (m_parent) {
+            m_parent->invalidate_layout();
+        }
+    }
+    invalidate_visual();
+}
+
+bool Widget::has_running_animations() const {
+    return m_focus_anim.running();
+}
 
 const IntRect Widget::global_bounds() const {
     IntRect bounds = m_bounds;

@@ -19,6 +19,13 @@ void ListBox::on_theme_update() {
     m_color_border = ThemeDB::the().get<Color>("Colors", "ListBox.Border", Color(200));
     m_color_listitem_focus = ThemeDB::the().get<Color>("Colors", "ListItem.Focus", Color(0, 0, 255));
     m_widget_roundness = ThemeDB::the().get<int>("WidgetParams", "Widget.Roundness", 6);
+    invalidate_visual();
+}
+
+void ListBox::set_item_height(int h) {
+    if (m_item_height == h) return;
+    m_item_height = h;
+    invalidate_layout();
 }
 
 void ListBox::add_item(std::unique_ptr<Widget> item) {
@@ -46,8 +53,10 @@ void ListBox::smooth_scroll_to_index(int index) {
 void ListBox::select(int index) {
     if (index < 0 || index >= (int)m_children.size()) {
         m_selected_index = -1;
+        invalidate_visual();
         return;
     }
+    if (m_selected_index == index) return;
     m_selected_index = index;
     
     for (size_t i = 0; i < m_children.size(); ++i) {
@@ -62,6 +71,7 @@ void ListBox::select(int index) {
     }
 
     smooth_scroll_to_index(m_selected_index);
+    invalidate_visual();
 }
 
 void ListBox::measure(int parent_w, int parent_h) {
@@ -226,11 +236,12 @@ bool ListBox::on_scroll(int y) {
         int total_content_height = content_height();
         if (total_content_height > m_bounds.h) {
             if (y != 0) {
-                m_velocity_y += (float)y * 18.0f;
-                const float MAX_V = 3000.0f;
+                m_velocity_y += (float)y * 1080.0f;
+                const float MAX_V = 180000.0f;
                 if (m_velocity_y > MAX_V) m_velocity_y = MAX_V;
                 if (m_velocity_y < -MAX_V) m_velocity_y = -MAX_V;
                 m_scrollbar_alpha = 255;
+                invalidate_visual();
                 return true;
             }
         }

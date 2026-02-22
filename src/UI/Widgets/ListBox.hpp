@@ -14,7 +14,7 @@ public:
 
     void add_item(std::unique_ptr<Widget> item);
 
-    void set_item_height(int h) { m_item_height = h; } 
+    void set_item_height(int h); 
 
     void draw_content(Painter& painter) override;
     void layout_children() override;

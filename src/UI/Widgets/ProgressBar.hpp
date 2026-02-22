@@ -23,7 +23,7 @@ public:
     ProgressBar(bool indeterminate);
 
     void set_progress(float v);
-    void set_type(ProgressBar::Type type) { m_type = type; }
+    void set_type(ProgressBar::Type type);
     void set_animation_variant(AnimationVariant variant);
 
     ProgressBar::Type type() const { return m_type; }
@@ -35,6 +35,7 @@ public:
     bool on_touch_event(IntPoint point, bool down) override;
     void update() override;
     void on_theme_update() override;
+    bool has_running_animations() const override;
 
 private:
     float m_value;

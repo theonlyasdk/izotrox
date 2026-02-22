@@ -16,6 +16,12 @@ TextBox::TextBox(const std::string& placeholder)
     on_theme_update();
 }
 
+void TextBox::set_placeholder(const std::string& placeholder) {
+    if (m_placeholder == placeholder) return;
+    m_placeholder = placeholder;
+    invalidate_visual();
+}
+
 void TextBox::on_theme_update() {
     Widget::on_theme_update();
     m_roundness = ThemeDB::the().get<int>("WidgetParams", "Widget.Roundness", 6);
@@ -25,6 +31,7 @@ void TextBox::on_theme_update() {
     m_color_text = ThemeDB::the().get<Color>("Colors", "TextBox.Text", Color(0));
     m_color_cursor = ThemeDB::the().get<Color>("Colors", "TextBox.Cursor", Color(255));
     m_cursor_blink_speed_ms = ThemeDB::the().get<int>("System", "CursorBlinkSpeed", 500);
+    invalidate_layout();
 }
 
 void TextBox::set_text(const std::string& t) {
@@ -35,6 +42,7 @@ void TextBox::set_text(const std::string& t) {
         if (m_on_change) {
             m_on_change(m_text_buffer);
         }
+        invalidate_visual();
     }
 }
 
@@ -77,6 +85,8 @@ int TextBox::find_word_end(int pos) {
 
 void TextBox::ensure_cursor_visible() {
     if (!m_font) return;
+    int old_scroll_x = m_scroll_x;
+    bool old_cursor_visible = m_cursor_visible;
 
     std::string pre_cursor = m_text_buffer.substr(0, m_sel_end);
     int cursor_x = m_font->width(pre_cursor);
@@ -96,6 +106,9 @@ void TextBox::ensure_cursor_visible() {
 
     m_cursor_timer = 0.0f;
     m_cursor_visible = true;
+    if (old_scroll_x != m_scroll_x || old_cursor_visible != m_cursor_visible) {
+        invalidate_visual();
+    }
 }
 
 void TextBox::draw_content(Painter& painter) {
@@ -159,6 +172,11 @@ void TextBox::draw_content(Painter& painter) {
 }
 
 void TextBox::update() {
+    Color old_border = m_border_anim.value();
+    bool old_cursor_visible = m_cursor_visible;
+    int old_scroll_x = m_scroll_x;
+    int old_sel_end = m_sel_end;
+
     m_border_anim.update(Application::the().delta());
     Widget::update();
 
@@ -191,6 +209,14 @@ void TextBox::update() {
         m_cursor_visible = false;
         m_cursor_timer = 0.0f;
     }
+
+    if (m_border_anim.running() ||
+        old_border.as_argb() != m_border_anim.value().as_argb() ||
+        old_cursor_visible != m_cursor_visible ||
+        old_scroll_x != m_scroll_x ||
+        old_sel_end != m_sel_end) {
+        invalidate_visual();
+    }
 }
 
 bool TextBox::on_touch_event(IntPoint point, bool down) {
@@ -205,9 +231,11 @@ bool TextBox::on_touch_event(IntPoint point, bool down) {
             m_sel_end = idx;
         }
         ensure_cursor_visible();
+        invalidate_visual();
         return true;
     } else {
         m_is_dragging = false;
+        invalidate_visual();
     }
     return false;
 }
@@ -215,6 +243,10 @@ bool TextBox::on_touch_event(IntPoint point, bool down) {
 bool TextBox::on_key(KeyCode key) {
     if (!m_focused) return false;
 
+    std::string old_text = m_text_buffer;
+    int old_sel_start = m_sel_start;
+    int old_sel_end = m_sel_end;
+    int old_scroll_x = m_scroll_x;
     bool changed = false;
     bool shift = Input::the().shift();
     bool ctrl = Input::the().ctrl();
@@ -226,6 +258,7 @@ bool TextBox::on_key(KeyCode key) {
         m_sel_start = 0;
         m_sel_end = len;
         ensure_cursor_visible();
+        invalidate_visual();
         return true;
     }
 
@@ -235,6 +268,7 @@ bool TextBox::on_key(KeyCode key) {
             int e = std::max(m_sel_start, m_sel_end);
             s_clipboard = m_text_buffer.substr(s, e - s);
         }
+        invalidate_visual();
         return true;
     }
 
@@ -249,6 +283,7 @@ bool TextBox::on_key(KeyCode key) {
         }
         ensure_cursor_visible();
         if (changed && m_on_change) m_on_change(m_text_buffer);
+        invalidate_visual();
         return true;
     }
 
@@ -267,6 +302,7 @@ bool TextBox::on_key(KeyCode key) {
         }
         ensure_cursor_visible();
         if (changed && m_on_change) m_on_change(m_text_buffer);
+        invalidate_visual();
         return true;
     }
 
@@ -302,6 +338,7 @@ bool TextBox::on_key(KeyCode key) {
         if (m_on_submit) {
             m_on_submit(m_text_buffer);
         }
+        invalidate_visual();
         return true;
     } else if (key == KeyCode::Home) {
         m_sel_end = 0;
@@ -348,12 +385,23 @@ bool TextBox::on_key(KeyCode key) {
             m_on_change(m_text_buffer);
         }
     }
+    if (changed ||
+        old_text != m_text_buffer ||
+        old_sel_start != m_sel_start ||
+        old_sel_end != m_sel_end ||
+        old_scroll_x != m_scroll_x) {
+        invalidate_visual();
+    }
     return true;
 }
 
 void TextBox::measure(int parent_w, int parent_h) {
     int mh = m_font ? m_font->height() + 10 : 30;
     m_measured_size = {0, 0, 200, mh};
+}
+
+bool TextBox::has_running_animations() const {
+    return Widget::has_running_animations() || m_border_anim.running() || m_is_dragging;
 }
 
 

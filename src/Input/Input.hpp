@@ -30,6 +30,7 @@ public:
     bool shift();
     bool ctrl();
     int scroll_y();
+    int peek_scroll_y();
 
     KeyCode key();
 

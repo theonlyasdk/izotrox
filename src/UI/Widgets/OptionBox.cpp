@@ -83,10 +83,6 @@ class OptionsDialog : public Dialog {
 
     void update() override {
         Dialog::update();
-
-        if (m_closing && !m_dialog_anim.running()) {
-            ViewManager::the().dismiss_dialog();
-        }
     }
 
     void draw_content(Painter& painter) override {
@@ -172,14 +168,13 @@ class OptionsDialog : public Dialog {
    private:
     IntRect m_start, m_target;
     OptionBox::AnimationVariant m_variant{OptionBox::AnimationVariant::ExpandVertical};
-    int m_selected;
-    bool m_closing = false;
+    int m_selected  = -1;
+    int m_roundness = 12;
+    int m_animation_duration_ms = 300;
     bool m_touch_started_outside = false;
     std::function<void(int)> m_callback;
-    int m_roundness = 12;
     Color m_color_bg{100, 100, 100};
     Color m_color_border{200, 200, 200};
-    int m_animation_duration_ms = 300;
     Easing m_animation_easing = Easing::EaseOutQuart;
 };
 
@@ -202,6 +197,7 @@ void OptionBox::on_theme_update() {
     m_animation_duration_ms = ThemeDB::the().get<int>("WidgetParams", "OptionBox.AnimationDuration", 300);
     m_animation_easing = ThemeDB::the().get<Easing>("WidgetParams", "OptionBox.AnimationEasing", Easing::EaseOutQuart);
     m_bg_anim.snap_to(m_color_background);
+    invalidate_layout();
 }
 
 void OptionBox::add_option(const std::string& option) {
@@ -213,12 +209,21 @@ void OptionBox::set_options(const std::vector<std::string>& options) {
     if (m_selected_index >= (int)m_options.size()) {
         m_selected_index = m_options.empty() ? -1 : 0;
     }
+    invalidate_layout();
 }
 
 void OptionBox::select(int index) {
     if (index >= 0 && index < (int)m_options.size()) {
+        if (m_selected_index == index) return;
         m_selected_index = index;
+        invalidate_visual();
     }
+}
+
+void OptionBox::set_anim_variant(AnimationVariant variant) {
+    if (m_anim_variant == variant) return;
+    m_anim_variant = variant;
+    invalidate_layout();
 }
 
 void OptionBox::measure(int parent_w, int parent_h) {
@@ -234,8 +239,13 @@ void OptionBox::measure(int parent_w, int parent_h) {
 }
 
 void OptionBox::update() {
+    Color old_bg = m_bg_anim.value();
+    bool was_running = m_bg_anim.running();
     Widget::update();
     m_bg_anim.update(Application::the().delta());
+    if (was_running || m_bg_anim.running() || old_bg.as_argb() != m_bg_anim.value().as_argb()) {
+        invalidate_visual();
+    }
 }
 
 void OptionBox::draw_content(Painter& painter) {
@@ -261,12 +271,14 @@ bool OptionBox::on_touch_event(IntPoint point, bool down) {
     if (!content_box().contains(point)) {
         m_pressed = false;
         m_bg_anim.set_target(m_color_background, 200);
+        invalidate_visual();
         return false;
     }
 
     if (down) {
         m_pressed = true;
         m_bg_anim.set_target(m_color_active, 100);
+        invalidate_visual();
         return true;
     }
 
@@ -274,6 +286,7 @@ bool OptionBox::on_touch_event(IntPoint point, bool down) {
 
     m_pressed = false;
     m_bg_anim.set_target(m_color_background, 200);
+    invalidate_visual();
 
     auto dialog = std::make_unique<OptionsDialog>(this, global_bounds(), m_selected_index, [this](int idx) {
         select(idx);
@@ -282,6 +295,10 @@ bool OptionBox::on_touch_event(IntPoint point, bool down) {
     });
     ViewManager::the().open_dialog(std::move(dialog));
     return true;
+}
+
+bool OptionBox::has_running_animations() const {
+    return Widget::has_running_animations() || m_bg_anim.running();
 }
 
 }  // namespace Izo

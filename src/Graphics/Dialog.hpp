@@ -28,11 +28,12 @@ public:
     void set_on_dismiss(std::function<void()> callback) { m_on_dismiss = callback; }
 
 protected:
-    IntRect m_dialog_bounds;
+    bool m_closing = false;
     bool m_dialog_visible = false;
+    int m_animation_duration_ms = 300;
+    IntRect m_dialog_bounds;
     Animator<float> m_dialog_anim{0.0f};
     std::function<void()> m_on_dismiss;
-    int m_animation_duration_ms = 300;
     Easing m_animation_easing = Easing::EaseOutQuart;
 };
 

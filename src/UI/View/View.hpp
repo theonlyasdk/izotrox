@@ -18,6 +18,7 @@ public:
     void resize(int w, int h);
     void update();
     void draw(Painter& painter);
+    bool has_running_animations() const;
 
     void on_touch(IntPoint point, bool down);
     void on_scroll(int y);

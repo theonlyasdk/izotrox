@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
+#include <span>
 
 #include "Core/AppImplementation.hpp"
 #include "Geometry/Primitives.hpp"
@@ -22,7 +23,7 @@ public:
 
     bool pump_events();
 
-    void present(Canvas& canvas);
+    void present(Canvas& canvas, std::span<const IntRect> dirty_rects = {});
 
     uint32_t width() const { return m_width; }
     uint32_t height() const { return m_height; }

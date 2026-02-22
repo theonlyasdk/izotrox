@@ -36,9 +36,9 @@ bool AndroidApp::pump_events() {
     return true;
 }
 
-void AndroidApp::present(Canvas& canvas) {
+void AndroidApp::present(Canvas& canvas, std::span<const IntRect> dirty_rects) {
     if (m_fb.valid()) {
-        m_fb.swap_buffers(canvas);
+        m_fb.swap_buffers(canvas, dirty_rects);
     }
 }
 

@@ -37,7 +37,7 @@ public:
     std::vector<std::string>* options() { return &m_options; };
 
     const AnimationVariant anim_variant() const { return m_anim_variant; }
-    void set_anim_variant(AnimationVariant variant) { m_anim_variant = variant; }
+    void set_anim_variant(AnimationVariant variant);
 
     void select(int index);
     const int selected_index() const { return m_selected_index; }
@@ -50,6 +50,7 @@ public:
     }
     
     void set_on_change(std::function<void(int, const std::string&)> callback) { m_on_change = callback; }
+    bool has_running_animations() const override;
 
 private:
     AnimationVariant m_anim_variant = AnimationVariant::ExpandVertical;

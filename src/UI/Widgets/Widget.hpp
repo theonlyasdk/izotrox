@@ -32,7 +32,7 @@ public:
     virtual void on_theme_update();
     virtual void on_theme_reload() { on_theme_update(); }
     static void notify_theme_update_all();
-    void set_font(Font* font) { m_font = font; }
+    void set_font(Font* font);
     Font* font() const { return m_font; }
 
     virtual void layout() {};
@@ -64,45 +64,42 @@ public:
     int measured_width() const { return m_measured_size.w; }
     int measured_height() const { return m_measured_size.h; }
 
-    void show() { if (!m_visible) m_visible = true; }
-    void hide() { if (m_visible) m_visible = false; }
+    void show();
+    void hide();
 
     bool visible() const { return m_visible; }
     bool hovering() const;
 
-    void set_padding(Padding padding) {
-        m_padding_left = padding.left;
-        m_padding_right = padding.right;
-        m_padding_bottom = padding.bottom;
-        m_padding_top = padding.top;
-    }
+    void set_padding(Padding padding);
     const Padding padding() const { return Padding{m_padding_left, m_padding_right, m_padding_top, m_padding_bottom}; }
 
-    void set_height(int h) { m_height = h; }
-    void set_height(WidgetSizePolicy p) { m_height = (int)p; }
+    void set_height(int h);
+    void set_height(WidgetSizePolicy p);
 
     bool focusable() const { return m_focusable; }
     bool focused() const { return m_focused; }
     void cancel_gesture() { m_gesture_cancelled = true; }
 
-    void set_bounds(const IntRect& bounds) { m_bounds = bounds; }
-    void set_width(WidgetSizePolicy p) { m_width = (int)p; }
-    void set_width(int w) { m_width = w; }
+    void set_bounds(const IntRect& bounds);
+    void set_width(WidgetSizePolicy p);
+    void set_width(int w);
     void set_focused(bool focused);
-    void set_focusable(bool focusable) { m_focusable = focusable; }
-    void set_padding_ltrb(int left, int top, int right, int bottom) {
-        m_padding_left = left;
-        m_padding_top = top;
-        m_padding_right = right;
-        m_padding_bottom = bottom;
-    }
-    void set_padding(int padding) { set_padding_ltrb(padding, padding, padding, padding); }
-    void set_show_focus_indicator(bool show) { m_show_focus_indicator = show; }
-    void set_parent(Widget* parent) { m_parent = parent; }
+    void set_focusable(bool focusable);
+    void set_padding_ltrb(int left, int top, int right, int bottom);
+    void set_padding(int padding);
+    void set_show_focus_indicator(bool show);
+    void set_parent(Widget* parent);
     Widget* parent() const { return m_parent; }
 
-    void set_layout_index(int index) { m_layout_index = index; }
+    void set_layout_index(int index);
     int layout_index() const { return m_layout_index; }
+
+    void invalidate_visual();
+    void invalidate_layout();
+    bool layout_dirty() const { return m_layout_dirty; }
+    virtual bool subtree_layout_dirty() const { return m_layout_dirty; }
+    virtual void clear_layout_dirty_subtree() { m_layout_dirty = false; }
+    virtual bool has_running_animations() const;
 
     const std::string widget_type() const { return m_widget_type; };
 protected:
@@ -141,6 +138,7 @@ protected:
     int m_focus_roundness = 6;
     Color m_focus_color = Color(0, 0, 255);
     int m_focus_anim_duration = 300;
+    bool m_layout_dirty = true;
 };
 
 } 

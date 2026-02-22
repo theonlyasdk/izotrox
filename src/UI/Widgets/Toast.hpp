@@ -54,6 +54,7 @@ public:
     
     void set_font(Font* font) { m_font = font; }
     Font* font() const { return m_font; }
+    bool has_active_toast() const { return m_current != nullptr || !m_queue.empty(); }
 
 private:
     ToastManager() = default;

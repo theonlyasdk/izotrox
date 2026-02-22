@@ -90,6 +90,11 @@ int Input::scroll_y() {
     return y;
 }
 
+int Input::peek_scroll_y() {
+    std::lock_guard<std::mutex> lock(m_mutex);
+    return m_state.scroll_y;
+}
+
 #ifdef __ANDROID__
 static KeyCode linux_code_to_ascii(int code, bool shift) {
     if (code >= KEY_A && code <= KEY_Z) {

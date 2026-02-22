@@ -51,9 +51,9 @@ bool Application::pump_events() {
     return m_backend ? m_backend->pump_events() : false;
 }
 
-void Application::present(Canvas& canvas) {
+void Application::present(Canvas& canvas, std::span<const IntRect> dirty_rects) {
     if (m_backend) {
-        m_backend->present(canvas);
+        m_backend->present(canvas, dirty_rects);
     }
 }
 

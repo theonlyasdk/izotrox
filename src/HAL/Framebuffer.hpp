@@ -3,6 +3,7 @@
 #include "Graphics/Canvas.hpp"
 
 #include <string>
+#include <span>
 #include <linux/fb.h>
 
 namespace Izo {
@@ -15,7 +16,7 @@ public:
     bool init(const std::string& device = "/dev/graphics/fb0");
     void cleanup();
 
-    void swap_buffers(Canvas& src);
+    void swap_buffers(Canvas& src, std::span<const IntRect> dirty_rects = {});
 
     int width() const { return m_width; }
     int height() const { return m_height; }

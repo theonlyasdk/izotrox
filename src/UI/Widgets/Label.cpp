@@ -11,9 +11,31 @@ Label::Label(const std::string& text) : m_text(text) {
     on_theme_update();
 }
 
+void Label::set_wrap(bool wrap) {
+    if (m_should_wrap == wrap) return;
+    m_should_wrap = wrap;
+    invalidate_layout();
+}
+
+void Label::set_alignment(TextAlign align) {
+    if (m_alignment == align) return;
+    m_alignment = align;
+    invalidate_visual();
+}
+
+void Label::set_color_variant(ColorVariant variant) {
+    if (m_color_variant == variant) return;
+    m_color_variant = variant;
+    invalidate_visual();
+}
+
 void Label::set_color(const Color& color) {
+    if (m_has_custom_color && m_custom_color.as_argb() == color.as_argb()) {
+        return;
+    }
     m_has_custom_color = true;
     m_custom_color = color;
+    invalidate_visual();
 }
 
 Color Label::color() const {
@@ -23,6 +45,8 @@ Color Label::color() const {
 
 void Label::update() {
     float dt = Application::the().delta();
+    bool was_scrolling = m_should_scroll;
+    float previous_offset = m_scroll_anim.value();
     
     // Only scroll if wrapping is OFF and there are no newlines and text is wider than bounds
     if (m_font && !m_should_wrap && m_text.find('\n') == std::string::npos) {
@@ -48,6 +72,9 @@ void Label::update() {
     }
 
     m_scroll_anim.update(dt);
+    if (was_scrolling != m_should_scroll || m_scroll_anim.running() || previous_offset != m_scroll_anim.value()) {
+        invalidate_visual();
+    }
     Widget::update();
 }
 
@@ -90,6 +117,10 @@ void Label::measure(int parent_w, int parent_h) {
         mh = m_height;
 
     m_measured_size = {0, 0, mw, mh};
+}
+
+bool Label::has_running_animations() const {
+    return Widget::has_running_animations() || m_scroll_anim.running();
 }
 
 }

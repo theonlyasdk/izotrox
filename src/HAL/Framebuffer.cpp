@@ -88,7 +88,7 @@ void Framebuffer::cleanup() {
     }
 }
 
-void Framebuffer::swap_buffers(Canvas& src) {
+void Framebuffer::swap_buffers(Canvas& src, std::span<const IntRect> dirty_rects) {
     if (!m_fbp) return;
 
     int buf_idx = m_double_buffered ? (1 - m_current_buffer_idx) : 0;
@@ -98,11 +98,33 @@ void Framebuffer::swap_buffers(Canvas& src) {
         uint8_t* dst_base = m_fbp + (y_offset * m_line_length);
         const uint32_t* src_pixels = src.pixels();
 
-        for (int y = 0; y < m_height; ++y) {
-            uint32_t* dst_row = (uint32_t*)(dst_base + y * m_line_length);
-            const uint32_t* src_row = src_pixels + y * m_width; 
+        bool full_upload = dirty_rects.empty();
+        for (const auto& rect : dirty_rects) {
+            IntRect clipped = rect.intersection({0, 0, m_width, m_height});
+            if (clipped.w <= 0 || clipped.h <= 0) continue;
+            if (clipped.x == 0 && clipped.y == 0 && clipped.w == m_width && clipped.h == m_height) {
+                full_upload = true;
+                break;
+            }
+        }
 
-            std::memcpy(dst_row, src_row, m_width * 4);
+        if (full_upload) {
+            for (int y = 0; y < m_height; ++y) {
+                uint32_t* dst_row = (uint32_t*)(dst_base + y * m_line_length);
+                const uint32_t* src_row = src_pixels + y * m_width;
+                std::memcpy(dst_row, src_row, m_width * 4);
+            }
+        } else {
+            for (const auto& rect : dirty_rects) {
+                IntRect clipped = rect.intersection({0, 0, m_width, m_height});
+                if (clipped.w <= 0 || clipped.h <= 0) continue;
+
+                for (int y = clipped.y; y < clipped.y + clipped.h; ++y) {
+                    uint32_t* dst_row = (uint32_t*)(dst_base + y * m_line_length);
+                    const uint32_t* src_row = src_pixels + y * m_width;
+                    std::memcpy(dst_row + clipped.x, src_row + clipped.x, clipped.w * 4);
+                }
+            }
         }
     }
 

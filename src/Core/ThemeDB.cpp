@@ -64,6 +64,7 @@ bool ThemeDB::load(const std::string& path) {
     auto fontSize = ThemeDB::the().get<float>("System", "FontSize", 32.0);
     FontManager::the().reload("system-ui", fontFamily, fontSize);
     Widget::notify_theme_update_all();
+    ViewManager::the().invalidate_full();
 
     current_path = path;
     return true;

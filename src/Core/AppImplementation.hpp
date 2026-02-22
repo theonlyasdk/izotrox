@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <functional>
+#include <span>
 
 #include "Geometry/Primitives.hpp"
 
@@ -15,7 +16,7 @@ public:
 
     virtual bool init() = 0;
     virtual bool pump_events() = 0;
-    virtual void present(Canvas& canvas) = 0;
+    virtual void present(Canvas& canvas, std::span<const IntRect> dirty_rects) = 0;
     virtual void quit(int exit_code) = 0;
     virtual void show() = 0;
 

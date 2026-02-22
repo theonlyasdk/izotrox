@@ -10,6 +10,7 @@
 namespace Izo {
 
 void AndroidDevice::set_brightness(uint8_t value) {
+    LogDebug("Setting brightness to {}", value);
 #ifdef __ANDROID__
 
     const char* paths[] = {
@@ -29,7 +30,7 @@ void AndroidDevice::set_brightness(uint8_t value) {
 }
 
 void AndroidDevice::set_front_flash(bool enable) {
-    LogInfo("Setting front flash to {}", enable);
+    LogDebug("Setting front flash to {}", enable);
 #ifdef __ANDROID__
     std::ofstream f("/sys/class/camera/flash/front_flash");
     if (f.is_open()) {
@@ -39,7 +40,7 @@ void AndroidDevice::set_front_flash(bool enable) {
 }
 
 void AndroidDevice::set_back_flash(bool enable) {
-    LogInfo("Setting back flash to {}", enable);
+    LogDebug("Setting back flash to {}", enable);
 #ifdef __ANDROID__
     std::ofstream f("/sys/class/camera/flash/back_flash");
     if (f.is_open()) {
@@ -49,7 +50,7 @@ void AndroidDevice::set_back_flash(bool enable) {
 }
 
 bool AndroidDevice::try_disable_hw_overlays() {
-    LogInfo("Attempting to disable HW overlays...");
+    LogDebug("Attempting to disable HW overlays...");
 #ifdef __ANDROID__
     int ret = std::system("service call SurfaceFlinger 1008 i32 1");
     if (ret != 0) {
@@ -63,7 +64,7 @@ bool AndroidDevice::try_disable_hw_overlays() {
 }
 
 bool AndroidDevice::try_enable_otg() {
-    LogInfo("Attempting to enable OTG...");
+    LogDebug("Attempting to enable OTG...");
 #ifdef __ANDROID__
     bool success = false;
 
@@ -71,7 +72,7 @@ bool AndroidDevice::try_enable_otg() {
         std::ofstream f(path);
         if (f.is_open()) {
             f << value;
-            LogInfo("OTG: {}", log_msg);
+            LogDebug("OTG: {}", log_msg);
             success = true;
         }
     };
@@ -92,7 +93,7 @@ bool AndroidDevice::try_enable_otg() {
 }
 
 void AndroidDevice::set_screen_on(bool enable) {
-    LogInfo("Setting screen to {}", enable);
+    LogDebug("Setting screen to {}", enable);
     set_brightness(enable ? 255 : 0);
 }
 

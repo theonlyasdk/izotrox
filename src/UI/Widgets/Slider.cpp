@@ -23,12 +23,14 @@ void Slider::on_theme_update() {
     m_roundness = ThemeDB::the().get<int>("WidgetParams", "Widget.Roundness", 6);
     m_color_track = ThemeDB::the().get<Color>("Colors", "Slider.Track", Color(90));
     m_color_active = ThemeDB::the().get<Color>("Colors", "Slider.Active", Color(90));
+    invalidate_visual();
 }
 
 void Slider::set_value(float value) {
     float new_value = std::clamp(value, 0.0f, 1.0f);
     if (new_value != m_value) {
         m_value = new_value;
+        invalidate_visual();
 
         if (m_on_change) {
             m_on_change(m_value);
@@ -102,7 +104,9 @@ bool Slider::on_touch_event(IntPoint point, bool down) {
 
     if (down && !m_pressed) {
         m_pressed = (over_handle || inside_track);
+        if (m_pressed) invalidate_visual();
     } else if (!down) {
+        if (m_pressed) invalidate_visual();
         m_pressed = false;
     }
 

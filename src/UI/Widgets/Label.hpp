@@ -18,18 +18,19 @@ public:
     void draw_content(Painter& painter) override;
     void measure(int parent_w, int parent_h) override;
 
-    void set_wrap(bool wrap) { m_should_wrap = wrap; }
+    void set_wrap(bool wrap);
     
-    void set_alignment(TextAlign align) { m_alignment = align; }
+    void set_alignment(TextAlign align);
     TextAlign alignment() const { return m_alignment; }
     
-    void set_color_variant(ColorVariant variant) { m_color_variant = variant; }
+    void set_color_variant(ColorVariant variant);
     ColorVariant color_variant() const { return m_color_variant; }
 
     void set_color(const Color& color);
     Color color() const;
 
     void update() override;
+    bool has_running_animations() const override;
 
 private:
     std::string m_text;

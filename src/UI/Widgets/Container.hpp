@@ -9,10 +9,7 @@ namespace Izo {
 
 class Container : public Widget {
 public:
-    void add_child(std::unique_ptr<Widget> child) {
-        child->set_parent(this);
-        m_children.push_back(std::move(child));
-    }
+    void add_child(std::unique_ptr<Widget> child);
     virtual void draw_content(Painter& painter) override;
     virtual void draw_focus(Painter& painter) override;
     virtual void update() override;
@@ -26,6 +23,9 @@ public:
     void collect_focusable_widgets(std::vector<Widget*>& out_list);
 
     virtual void layout() override;
+    bool subtree_layout_dirty() const override;
+    void clear_layout_dirty_subtree() override;
+    bool has_running_animations() const override;
 
 protected:
     std::vector<std::unique_ptr<Widget>> m_children;
