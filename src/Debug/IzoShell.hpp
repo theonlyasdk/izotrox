@@ -10,6 +10,11 @@ class IzoShell {
 public:
     using CommandHandler = std::function<void(const std::vector<std::string>&)>;
 
+    struct ExecuteResult {
+        bool ok = true;
+        std::string error;
+    };
+
     struct Command {
         std::string name;
         std::string description;
@@ -22,7 +27,7 @@ public:
     void register_all_commands();
     void register_command(const std::string& name, const std::string& description, 
                          const std::string& usage, CommandHandler handler);
-    void execute(const std::string& input);
+    ExecuteResult execute(const std::string& input);
     std::string help() const;
 
 private:

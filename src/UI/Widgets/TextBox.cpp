@@ -397,7 +397,21 @@ bool TextBox::on_key(KeyCode key) {
 
 void TextBox::measure(int parent_w, int parent_h) {
     int mh = m_font ? m_font->height() + 10 : 30;
-    m_measured_size = {0, 0, 200, mh};
+    int mw = 200;
+
+    if (m_width == (int)WidgetSizePolicy::MatchParent) {
+        mw = parent_w;
+    } else if (m_width > 0) {
+        mw = std::min(m_width, parent_w);
+    }
+
+    if (m_height == (int)WidgetSizePolicy::MatchParent) {
+        mh = parent_h;
+    } else if (m_height > 0) {
+        mh = m_height;
+    }
+
+    m_measured_size = {0, 0, mw, mh};
 }
 
 bool TextBox::has_running_animations() const {

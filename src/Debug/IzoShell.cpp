@@ -9,6 +9,7 @@
 #include <sstream>
 #include <algorithm>
 #include <filesystem>
+#include <stdexcept>
 
 namespace Izo {
 
@@ -31,7 +32,7 @@ void IzoShell::register_all_commands() {
                     LogInfo("Description: {}", it->second.description);
                     LogInfo("Usage: {}", it->second.usage);
                 } else {
-                    LogError("Unknown command: {}", args[1]);
+                    throw std::runtime_error("Unknown command: " + args[1]);
                 }
             } else {
                 LogInfo("\n{}", help());
@@ -46,8 +47,7 @@ void IzoShell::register_all_commands() {
     register_command("theme", "Theme management", "theme <load|list|reload> [name]",
         [](const std::vector<std::string>& args) {
             if (args.size() < 2) {
-                LogError("Usage: theme <load|list|reload> [name]");
-                return;
+                throw std::runtime_error("Usage: theme <load|list|reload> [name]");
             }
 
             std::string subcmd = args[1];
@@ -55,8 +55,7 @@ void IzoShell::register_all_commands() {
 
             if (subcmd == "load") {
                 if (args.size() < 3) {
-                    LogError("Usage: theme load <name>");
-                    return;
+                    throw std::runtime_error("Usage: theme load <name>");
                 }
                 std::string theme_name = args[2];
                 std::string path = "theme/" + theme_name + ".ini";
@@ -64,7 +63,7 @@ void IzoShell::register_all_commands() {
                 if (ThemeDB::the().load(path)) {
                     ToastManager::the().show("Theme loaded: " + theme_name + " (" + path + ")");
                 } else {
-                    ToastManager::the().show("Failed to load theme: " + path);
+                    throw std::runtime_error("Failed to load theme: " + path);
                 }
             } else if (subcmd == "list") {
                 std::string theme_dir = ResourceManagerBase::to_resource_path("theme");
@@ -79,20 +78,19 @@ void IzoShell::register_all_commands() {
                             }
                         }
                     } else {
-                        LogError("Theme directory not found: {}", theme_dir);
+                        throw std::runtime_error("Theme directory not found: " + theme_dir);
                     }
                 } catch (const std::exception& e) {
-                    LogError("Error listing themes: {}", e.what());
+                    throw std::runtime_error("Error listing themes: " + std::string(e.what()));
                 }
             } else if (subcmd == "reload") {
                 if (ThemeDB::the().reload()) {
                     LogInfo("Theme reloaded successfully");
                 } else {
-                    LogError("Failed to reload theme");
+                    throw std::runtime_error("Failed to reload theme");
                 }
             } else {
-                LogError("Unknown theme subcommand: {}", subcmd);
-                LogInfo("Usage: theme <load|list> [name]");
+                throw std::runtime_error("Unknown theme subcommand: " + subcmd);
             }
         });
 
@@ -111,8 +109,7 @@ void IzoShell::register_all_commands() {
     register_command("getcolor", "Get color value for a tag", "getcolor <tag>",
         [](const std::vector<std::string>& args) {
             if (args.size() < 2) {
-                LogError("Usage: getcolor <tag>");
-                return;
+                throw std::runtime_error("Usage: getcolor <tag>");
             }
             Color c = ThemeDB::the().get<Color>("Colors", args[1], Color(255));
             LogInfo("{} = rgba({}, {}, {}, {})", args[1], c.r, c.g, c.b, c.a);
@@ -127,8 +124,7 @@ void IzoShell::register_all_commands() {
     register_command("toast", "Show a toast message", "toast <message>",
         [](const std::vector<std::string>& args) {
             if (args.size() < 2) {
-                LogError("Usage: toast <message>");
-                return;
+                throw std::runtime_error("Usage: toast <message>");
             }
 
             std::string message;
@@ -144,8 +140,7 @@ void IzoShell::register_all_commands() {
     register_command("debug", "Toggle debug mode", "debug <on|off>",
         [](const std::vector<std::string>& args) {
             if (args.size() < 2) {
-                LogError("Usage: debug <on|off>");
-                return;
+                throw std::runtime_error("Usage: debug <on|off>");
             }
 
             std::string subcmd = args[1];
@@ -160,9 +155,7 @@ void IzoShell::register_all_commands() {
                 LogInfo("Debug mode disabled");
                 ToastManager::the().show("Debug mode disabled");
             } else {
-                LogError("Unknown debug argument: {}", subcmd);
-                LogInfo("Usage: debug <on|off>");
-                ToastManager::the().show("Usage: debug <on|off>");
+                throw std::runtime_error("Usage: debug <on|off>");
             }
         });
 }
@@ -172,11 +165,15 @@ void IzoShell::register_command(const std::string& name, const std::string& desc
     m_commands[name] = {name, description, usage, handler};
 }
 
-void IzoShell::execute(const std::string& input) {
-    if (input.empty()) return;
+IzoShell::ExecuteResult IzoShell::execute(const std::string& input) {
+    if (input.empty()) {
+        return {false, "Command cannot be empty"};
+    }
 
     auto args = split(input, ' ');
-    if (args.empty()) return;
+    if (args.empty()) {
+        return {false, "Command cannot be empty"};
+    }
 
     std::string cmd = args[0];
     std::transform(cmd.begin(), cmd.end(), cmd.begin(), ::tolower);
@@ -185,12 +182,19 @@ void IzoShell::execute(const std::string& input) {
     if (it != m_commands.end()) {
         try {
             it->second.handler(args);
+            return {true, ""};
         } catch (const std::exception& e) {
-            LogError("Command execution failed: {}", std::string(e.what()));
+            std::string error = std::string(e.what());
+            LogError("Command execution failed: {}", error);
+            return {false, error};
         }
     } else {
-        LogError("Unknown command: {}", cmd);
+        std::string error = "Unknown command: " + cmd;
+        LogError("{}", error);
+        return {false, error};
     }
+
+    return {true, ""};
 }
 
 std::string IzoShell::help() const {

@@ -13,8 +13,8 @@
 
 namespace Izo {
 
-constexpr int DIALOG_PADDING = 10;
-constexpr int MARGIN_FROM_EDGE = 40;
+constexpr int kDialogPadding = 10;
+constexpr int kMarginFromEdge = 40;
 
 class OptionsDialog : public Dialog {
    public:
@@ -26,7 +26,7 @@ class OptionsDialog : public Dialog {
             "WidgetParams", "OptionBox.AnimationVariant", OptionBox::AnimationVariant::ExpandVertical);
         parent->set_anim_variant(m_variant);
 
-        set_padding(DIALOG_PADDING);
+        set_padding(kDialogPadding);
 
         const auto& options = *parent->options();
         for (int i = 0; i < (int)options.size(); ++i) {
@@ -41,17 +41,17 @@ class OptionsDialog : public Dialog {
         // Initial layout constants
         int win_w = Application::the().width();
         int win_h = Application::the().height();
-        int dialog_w = std::min(win_w - MARGIN_FROM_EDGE, 400);
-        int content_w_for_measure = dialog_w - (DIALOG_PADDING * 2);
+        int dialog_w = std::min(win_w - kMarginFromEdge, 400);
+        int content_w_for_measure = dialog_w - (kDialogPadding * 2);
         if (m_variant == OptionBox::AnimationVariant::ExpandVertical ||
             m_variant == OptionBox::AnimationVariant::ExpandDropdown) {
-            content_w_for_measure = std::max(1, start.w - (DIALOG_PADDING * 2));
+            content_w_for_measure = std::max(1, start.w - (kDialogPadding * 2));
         }
 
         // Measure children to determine desired popup height.
-        measure(content_w_for_measure, win_h - MARGIN_FROM_EDGE);
+        measure(content_w_for_measure, win_h - kMarginFromEdge);
 
-        int dialog_h = std::min(win_h - MARGIN_FROM_EDGE, m_measured_size.h);
+        int dialog_h = std::min(win_h - kMarginFromEdge, m_measured_size.h);
 
         switch (m_variant) {
             case OptionBox::AnimationVariant::ExpandCenter:
@@ -62,7 +62,7 @@ class OptionsDialog : public Dialog {
                 break;
             case OptionBox::AnimationVariant::ExpandDropdown: {
                 int dropdown_w = start.w;
-                int margin = MARGIN_FROM_EDGE / 2;
+                int margin = kMarginFromEdge / 2;
                 int x = std::clamp(start.x, margin, std::max(margin, win_w - margin - dropdown_w));
                 int max_h_below = std::max(1, win_h - margin - start.bottom());
                 int dropdown_h = std::min(dialog_h, max_h_below);
@@ -74,7 +74,7 @@ class OptionsDialog : public Dialog {
         }
 
         set_bounds(m_target);
-        measure(std::max(1, m_target.w - (DIALOG_PADDING * 2)), std::max(1, m_target.h - (DIALOG_PADDING * 2)));
+        measure(std::max(1, m_target.w - (kDialogPadding * 2)), std::max(1, m_target.h - (kDialogPadding * 2)));
         layout();
 
         on_theme_update();
@@ -116,10 +116,10 @@ class OptionsDialog : public Dialog {
         }
 
         set_bounds(current);
-        measure(std::max(1, current.w - (DIALOG_PADDING * 2)), std::max(1, current.h - (DIALOG_PADDING * 2)));
+        measure(std::max(1, current.w - (kDialogPadding * 2)), std::max(1, current.h - (kDialogPadding * 2)));
         layout();
 
-        int outer_radius = m_roundness < DIALOG_PADDING - m_roundness ? m_roundness : m_roundness + DIALOG_PADDING;
+        int outer_radius = calculate_visual_roundness(m_roundness, kDialogPadding);
 
         painter.fill_rounded_rect(current, outer_radius, m_color_bg);
         painter.draw_rounded_rect(current, outer_radius, m_color_border);

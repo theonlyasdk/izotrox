@@ -160,6 +160,8 @@ bool DesktopApp::pump_events() {
                     Input::the().set_key((KeyCode)'v');
                 } else if (e.key.keysym.sym == SDLK_x && (e.key.keysym.mod & KMOD_CTRL)) {
                     Input::the().set_key((KeyCode)'x');
+                } else if (e.key.keysym.sym == SDLK_d && (e.key.keysym.mod & KMOD_CTRL)) {
+                    Input::the().set_key((KeyCode)'d');
                 }
             }
         }

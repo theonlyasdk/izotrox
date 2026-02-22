@@ -77,7 +77,7 @@ Logger &Logger::the() {
 }
 
 void Logger::enable_logging_to_file() {
-    constexpr size_t MAX_LOGS = 10;
+    constexpr size_t kMaxLogs = 10;
     std::string filename;
   
     {
@@ -97,9 +97,9 @@ void Logger::enable_logging_to_file() {
             }
         }
 
-        if (log_files.size() >= MAX_LOGS) {
+        if (log_files.size() >= kMaxLogs) {
             std::sort(log_files.begin(), log_files.end());
-            for (size_t i = 0; i <= log_files.size() - MAX_LOGS; ++i) {
+            for (size_t i = 0; i <= log_files.size() - kMaxLogs; ++i) {
                 fs::remove(log_files[i]);
             }
         }

@@ -47,7 +47,7 @@ target_compile_definitions(izotrox PRIVATE LUA_USE_POSIX)
 set(COMPILE_OPTS)
 list(APPEND COMPILE_OPTS -O3 -flto)
 
-option(IZO_ENABLE_SANITIZERS "Enable Address/UB sanitizers" OFF)
+option(IZO_ENABLE_SANITIZERS "Enable Address/UB sanitizers" ON)
 if(IZO_ENABLE_SANITIZERS)
     list(APPEND COMPILE_OPTS -fsanitize=address,undefined -O0)
     set(LINK_OPTS -fsanitize=address,undefined)

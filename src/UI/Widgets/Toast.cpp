@@ -18,8 +18,8 @@ void Toast::update(float delta) {
     switch (m_state) {
         case State::FadeIn:
             m_timer += delta;
-            m_alpha = std::min(m_timer / FADE_DURATION, 1.0f);
-            if (m_timer >= FADE_DURATION) {
+            m_alpha = std::min(m_timer / kFadeDuration, 1.0f);
+            if (m_timer >= kFadeDuration) {
                 m_state = State::Show;
                 m_timer = 0.0f;
                 m_alpha = 1.0f;
@@ -34,8 +34,8 @@ void Toast::update(float delta) {
             break;
         case State::FadeOut:
             m_timer += delta;
-            m_alpha = std::max(1.0f - (m_timer / FADE_DURATION), 0.0f);
-            if (m_timer >= FADE_DURATION) {
+            m_alpha = std::max(1.0f - (m_timer / kFadeDuration), 0.0f);
+            if (m_timer >= kFadeDuration) {
                 m_state = State::Done;
                 m_alpha = 0.0f;
             }

@@ -26,6 +26,7 @@
 #include "Core/ThemeDB.hpp"
 #include "Core/ViewManager.hpp"
 #include "Debug/IzoShell.hpp"
+#include "Debug/IzoShellDialog.hpp"
 #include "Debug/Izometa.hpp"
 #include "Debug/Logger.hpp"
 #include "Graphics/Canvas.hpp"
@@ -53,9 +54,9 @@
 using namespace Izo;
 
 void draw_debug_panel(Painter& painter, Font& font, float fps) {
-    constexpr float UPDATE_FREQUENCY = 1.5f;  // every 1.5 seconds
-    constexpr int PANEL_ROUNDNESS = 20;
-    constexpr int PANEL_PADDING = 10;
+    constexpr float kUpdateFrequency = 1.5f;  // every 1.5 seconds
+    constexpr int kPanelRoundness = 20;
+    constexpr int kPanelPadding = 10;
 
     static float timer = 0;
     static std::string cached_text;
@@ -66,20 +67,20 @@ void draw_debug_panel(Painter& painter, Font& font, float fps) {
     int app_height = Application::the().height();
 
     timer += Application::the().delta();
-    if (cached_text.empty() || timer >= UPDATE_FREQUENCY * 1000.0f) {
+    if (cached_text.empty() || timer >= kUpdateFrequency * 1000.0f) {
         float temp = SystemStats::cpu_temp();
         int mem = SystemStats::sys_free_memory_mb();
         int app_mem = SystemStats::app_memory_usage_mb();
 
         cached_text = std::format("FPS: {:.1f} | Temp: {:.1f}C | FreeMem: {}MB | AppMem: {}MB", fps, temp, mem, app_mem);
-        cached_w = font.width(cached_text) + (PANEL_PADDING * 2);
+        cached_w = font.width(cached_text) + (kPanelPadding * 2);
         cached_h = font.height() + 10;
         timer = 0;
     }
 
     int pos_x = app_width / 2 - cached_w / 2;
-    painter.fill_rounded_rect({pos_x, 10, cached_w, cached_h}, PANEL_ROUNDNESS, Color(0, 0, 0, 128));
-    font.draw_text(painter, {PANEL_PADDING + pos_x, 15}, cached_text, Color::White);
+    painter.fill_rounded_rect({pos_x, 10, cached_w, cached_h}, kPanelRoundness, Color(0, 0, 0, 128));
+    font.draw_text(painter, {kPanelPadding + pos_x, 15}, cached_text, Color::White);
 }
 
 const std::string try_parse_arguments(int argc, const char* argv[]) {
@@ -292,7 +293,10 @@ int main(int argc, const char* argv[]) {
     tb_demo->set_on_submit([tb_demo_ptr](const std::string& text) {
         if (!text.empty()) {
             LogInfo("Shell> {}", text);
-            IzoShell::the().execute(text);
+            auto result = IzoShell::the().execute(text);
+            if (!result.ok) {
+                ToastManager::the().show(result.error);
+            }
             tb_demo_ptr->clear();
         }
     });
@@ -385,7 +389,19 @@ int main(int argc, const char* argv[]) {
         }
 
         KeyCode key = Input::the().key();
-        if (key != KeyCode::None) ViewManager::the().on_key(key);
+        if (key != KeyCode::None) {
+            int key_val = static_cast<int>(key);
+            bool open_shell_dialog =
+                Input::the().ctrl() &&
+                Input::the().shift() &&
+                (key_val == 'd' || key_val == 'D');
+
+            if (open_shell_dialog && !ViewManager::the().has_active_dialog()) {
+                ViewManager::the().open_dialog(std::make_unique<IzoShellDialog>());
+            } else {
+                ViewManager::the().on_key(key);
+            }
+        }
         bool has_scroll_input = Input::the().peek_scroll_y() != 0;
         bool had_input_event = touch_changed || key != KeyCode::None || has_scroll_input;
 

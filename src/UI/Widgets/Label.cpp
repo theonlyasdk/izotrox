@@ -7,6 +7,11 @@
 
 namespace Izo {
 
+namespace {
+constexpr float kMarqueeStartOffset = 5.0f;
+constexpr float kMarqueeSpeedPxPerSec = 50.0f;
+}
+
 Label::Label(const std::string& text) : m_text(text) {
     on_theme_update();
 }
@@ -47,31 +52,35 @@ void Label::update() {
     float dt = Application::the().delta();
     bool was_scrolling = m_should_scroll;
     float previous_offset = m_scroll_anim.value();
-    
-    // Only scroll if wrapping is OFF and there are no newlines and text is wider than bounds
-    if (m_font && !m_should_wrap && m_text.find('\n') == std::string::npos) {
-        int tw = m_font->width(m_text);
-        if (tw > m_bounds.w) {
-            if (!m_should_scroll) {
-                m_should_scroll = true;
-                float start_val = 5.0f; 
-                float target_val = -(float)tw;
-                float distance = start_val - target_val;
-                float speed = 50.0f;
-                float duration = (distance / speed) * 1000.0f;
-                
-                m_scroll_anim = Animator<float>(start_val);
-                m_scroll_anim.set_loop(true);
-                m_scroll_anim.set_target(target_val, duration, Easing::Linear);
-            }
-        } else {
-            m_should_scroll = false;
+
+    bool can_scroll = false;
+    if (m_font && !m_should_wrap && m_text.find('\n') == std::string::npos && m_bounds.w > 0) {
+        int text_width = m_font->width(m_text);
+        can_scroll = text_width > m_bounds.w;
+
+        if (can_scroll && !m_should_scroll) {
+            m_should_scroll = true;
+            float target = -static_cast<float>(text_width);
+            float distance = kMarqueeStartOffset - target;
+            float duration_ms = (distance / kMarqueeSpeedPxPerSec) * 1000.0f;
+
+            m_scroll_anim = Animator<float>(kMarqueeStartOffset);
+            m_scroll_anim.set_loop(true);
+            m_scroll_anim.set_target(target, duration_ms, Easing::Linear);
         }
-    } else {
+    }
+
+    if (!can_scroll) {
         m_should_scroll = false;
     }
 
-    m_scroll_anim.update(dt);
+    if (!m_should_scroll) {
+        m_scroll_anim.set_loop(false);
+        m_scroll_anim.snap_to(0.0f);
+    } else {
+        m_scroll_anim.update(dt);
+    }
+
     if (was_scrolling != m_should_scroll || m_scroll_anim.running() || previous_offset != m_scroll_anim.value()) {
         invalidate_visual();
     }

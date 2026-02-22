@@ -38,7 +38,7 @@ private:
     int m_width;
     int m_height;
     
-    static constexpr float FADE_DURATION = 200.0f;
+    static constexpr float kFadeDuration = 200.0f;
 };
 
 class ToastManager {

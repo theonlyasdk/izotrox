@@ -8,20 +8,20 @@
 
 namespace Izo {
 
-constexpr float SCROLL_FRICTION = 0.96f;
-constexpr float SCROLL_MIN_VELOCITY = 3.6f; // px/sec
-constexpr float SCROLL_TENSION = 0.10f;
-constexpr float SCROLLBAR_FADE_SPEED = 42.0f; // alpha/sec
-constexpr float AUTO_SCROLL_SPEED = 7.5f;
-constexpr float MOUSE_SCROLL_VELOCITY_SCALE = 450.0f; // px/sec per wheel step
-constexpr int   TOUCH_SLOP_PX = 12;
-constexpr int   SCROLLBAR_WIDTH_PX = 4;
-constexpr int   SCROLLBAR_INSET_PX = 6;
-constexpr int   VISIBILITY_MARGIN_PX = 20;
-constexpr float OVERSCROLL_DAMPING = 0.30f;
-constexpr float MIN_OVERSCROLL_BAR_FACTOR = 0.3f;
-constexpr float AUTO_SCROLL_SNAP_EPSILON = 0.75f;
-constexpr float AUTO_SCROLL_VELOCITY_EPS = 0.75f;
+constexpr float kScrollFriction = 0.96f;
+constexpr float kScrollMinVelocity = 3.6f; // px/sec
+constexpr float kScrollTension = 0.10f;
+constexpr float kScrollbarFadeSpeed = 42.0f; // alpha/sec
+constexpr float kAutoScrollSpeed = 7.5f;
+constexpr float kMouseScrollVelocityScale = 450.0f; // px/sec per wheel step
+constexpr int   kTouchSlopPx = 12;
+constexpr int   kScrollbarWidthPx = 4;
+constexpr int   kScrollbarInsetPx = 6;
+constexpr int   kVisibilityMarginPx = 20;
+constexpr float kOverscrollDamping = 0.30f;
+constexpr float kMinOverscrollBarFactor = 0.3f;
+constexpr float kAutoScrollSnapEpsilon = 0.75f;
+constexpr float kAutoScrollVelocityEps = 0.75f;
 
 void Layout::measure(int parent_w, int parent_h) { 
     m_measured_size = {0, 0, 0, 0};
@@ -58,9 +58,9 @@ void Layout::update() {
 
     if (m_auto_scrolling) {
         float diff = m_auto_scroll_target - m_scroll_y;
-        m_velocity_y = diff * AUTO_SCROLL_SPEED;
+        m_velocity_y = diff * kAutoScrollSpeed;
 
-        if (std::abs(diff) < AUTO_SCROLL_SNAP_EPSILON && std::abs(m_velocity_y) < AUTO_SCROLL_VELOCITY_EPS) {
+        if (std::abs(diff) < kAutoScrollSnapEpsilon && std::abs(m_velocity_y) < kAutoScrollVelocityEps) {
             m_scroll_y = m_auto_scroll_target;
             m_velocity_y = 0;
             m_auto_scrolling = false;
@@ -73,15 +73,15 @@ void Layout::update() {
 
             if (!m_auto_scrolling) {
                 if (m_scroll_y > 0) {
-                    m_velocity_y = (0 - m_scroll_y) * SCROLL_TENSION * 60.0f;
+                    m_velocity_y = (0 - m_scroll_y) * kScrollTension * 60.0f;
                     m_scrollbar_alpha = 255;
                     if (std::abs(m_scroll_y) < 0.5f) { m_scroll_y = 0; m_velocity_y = 0; }
                 } else if (m_scroll_y < max_scroll) {
-                    m_velocity_y = (max_scroll - m_scroll_y) * SCROLL_TENSION * 60.0f;
+                    m_velocity_y = (max_scroll - m_scroll_y) * kScrollTension * 60.0f;
                     m_scrollbar_alpha = 255;
                     if (std::abs(m_scroll_y - max_scroll) < 0.5f) { m_scroll_y = max_scroll; m_velocity_y = 0; }
-                } else if (std::abs(m_velocity_y) > SCROLL_MIN_VELOCITY) {
-                    m_velocity_y *= std::pow(SCROLL_FRICTION, dt60);
+                } else if (std::abs(m_velocity_y) > kScrollMinVelocity) {
+                    m_velocity_y *= std::pow(kScrollFriction, dt60);
                     m_scrollbar_alpha = 255;
                 } else {
                     m_velocity_y = 0;
@@ -93,7 +93,7 @@ void Layout::update() {
             }
         } else {
              if (m_scrollbar_alpha > 0) {
-                m_scrollbar_alpha -= SCROLLBAR_FADE_SPEED * dt_sec;
+                m_scrollbar_alpha -= kScrollbarFadeSpeed * dt_sec;
                 if (m_scrollbar_alpha < 0) m_scrollbar_alpha = 0;
             }
         }
@@ -124,7 +124,7 @@ bool Layout::on_scroll(int y) {
     IntPoint mouse = Input::the().touch_point();
     if (global_bounds().contains(mouse)) {
         if (y != 0) {
-            m_velocity_y += (float)y * MOUSE_SCROLL_VELOCITY_SCALE;
+            m_velocity_y += (float)y * kMouseScrollVelocityScale;
             m_scrollbar_alpha = 255;
             invalidate_visual();
             return true;
@@ -138,7 +138,7 @@ void Layout::draw_content(Painter& painter) {
     IntRect b = global_bounds();
     painter.push_clip(b);
 
-    int margin = VISIBILITY_MARGIN_PX;
+    int margin = kVisibilityMarginPx;
     int visible_top = b.y - margin;
     int visible_bottom = b.y + b.h + margin;
 
@@ -166,13 +166,13 @@ void Layout::draw_content(Painter& painter) {
             if (m_scroll_y > 0) {
                 float overscroll = m_scroll_y;
                 float size_factor = 1.0f - (overscroll / (float)local_bounds().h);
-                if (size_factor < MIN_OVERSCROLL_BAR_FACTOR) size_factor = MIN_OVERSCROLL_BAR_FACTOR;
+                if (size_factor < kMinOverscrollBarFactor) size_factor = kMinOverscrollBarFactor;
                 bar_h *= size_factor;
                 bar_y = (float)b.y;
             } else if (m_scroll_y < max_scroll) {
                 float overscroll = max_scroll - m_scroll_y;
                 float size_factor = 1.0f - (overscroll / (float)local_bounds().h);
-                if (size_factor < MIN_OVERSCROLL_BAR_FACTOR) size_factor = MIN_OVERSCROLL_BAR_FACTOR;
+                if (size_factor < kMinOverscrollBarFactor) size_factor = kMinOverscrollBarFactor;
                 bar_h *= size_factor;
                 bar_y = (float)b.y + (float)local_bounds().h - bar_h;
             } else {
@@ -180,7 +180,7 @@ void Layout::draw_content(Painter& painter) {
             }
 
             Color thumb(150, 150, 150, (uint8_t)m_scrollbar_alpha);
-            painter.fill_rect({b.x + b.w - SCROLLBAR_INSET_PX, (int)bar_y, SCROLLBAR_WIDTH_PX, (int)bar_h}, thumb);
+            painter.fill_rect({b.x + b.w - kScrollbarInsetPx, (int)bar_y, kScrollbarWidthPx, (int)bar_h}, thumb);
         }
     }
 
@@ -234,7 +234,7 @@ bool Layout::on_touch(IntPoint point, bool down, bool captured) {
             int dx = std::abs(point.x - m_initial_touch_x);
             int dy = std::abs(point.y - m_initial_touch_y);
 
-            if (dy > TOUCH_SLOP_PX && dy > dx) {
+            if (dy > kTouchSlopPx && dy > dx) {
                 m_has_intercepted = true;
                 if (m_captured_child) {
                     m_captured_child->cancel_gesture();
@@ -243,7 +243,7 @@ bool Layout::on_touch(IntPoint point, bool down, bool captured) {
                 }
                 m_is_dragging = true;
                 result = true;
-            } else if (dx > TOUCH_SLOP_PX) {
+            } else if (dx > kTouchSlopPx) {
                 m_potential_swipe = false;
             }
         }
@@ -281,7 +281,7 @@ bool Layout::on_touch_event(IntPoint point, bool down) {
         } else {
             float diff = (float)(ty - m_last_touch_y);
             if (m_scroll_y > 0 || m_scroll_y < max_scroll) {
-                diff *= OVERSCROLL_DAMPING; 
+                diff *= kOverscrollDamping; 
             }
             float dt_sec = Application::the().delta() * 0.001f;
             dt_sec = std::clamp(dt_sec, 0.001f, 0.1f);
