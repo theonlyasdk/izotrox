@@ -21,12 +21,11 @@ class OptionsDialog : public Dialog {
     OptionsDialog(OptionBox* parent, const IntRect& start, int current_idx, std::function<void(int)> callback)
         : m_parent(parent), m_start(start), m_selected(current_idx), m_callback(std::move(callback)) {
         m_focusable = true;
-
-        m_variant = ThemeDB::the().get<OptionBox::AnimationVariant>(
-            "WidgetParams", "OptionBox.AnimationVariant", OptionBox::AnimationVariant::ExpandVertical);
-        parent->set_anim_variant(m_variant);
-
+        set_widget_type("OptionsDialog");
         set_padding(kDialogPadding);
+
+        m_variant = ThemeDB::the().get<OptionBox::AnimationVariant>("WidgetParams", "OptionBox.AnimationVariant", OptionBox::AnimationVariant::ExpandVertical);
+        parent->set_anim_variant(m_variant);
 
         const auto& options = *parent->options();
         for (int i = 0; i < (int)options.size(); ++i) {

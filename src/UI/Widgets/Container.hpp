@@ -9,6 +9,8 @@ namespace Izo {
 
 class Container : public Widget {
 public:
+    Container();
+
     void add_child(std::unique_ptr<Widget> child);
     virtual void draw_content(Painter& painter) override;
     virtual void draw_focus(Painter& painter) override;

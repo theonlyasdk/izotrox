@@ -13,6 +13,7 @@ std::string TextBox::s_clipboard;
 
 TextBox::TextBox(const std::string& placeholder)
     : m_text_buffer(""), m_placeholder(placeholder) {
+    set_widget_type("TextBox");
     on_theme_update();
 }
 

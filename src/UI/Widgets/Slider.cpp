@@ -15,6 +15,7 @@ Slider::Slider(float value) : m_value(value) {
 
     set_focusable(true);
     set_show_focus_indicator(false);
+    set_widget_type("Slider");
     on_theme_update();
 }
 

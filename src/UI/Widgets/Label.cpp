@@ -1,6 +1,8 @@
 #include "UI/Widgets/Label.hpp"
 
 #include <algorithm>
+#include <chrono>
+#include <cctype>
 #include <cmath>
 #include <limits>
 
@@ -12,13 +14,19 @@
 
 namespace Izo {
 
-namespace {
 constexpr float kMarqueeStartOffset = 5.0f;
 constexpr float kMarqueeSpeedPxPerSec = 50.0f;
+constexpr int kMultiClickIntervalMs = 350;
+constexpr int kMultiClickSlopPx = 12;
+
+long long now_ms() {
+    using clock = std::chrono::steady_clock;
+    return std::chrono::duration_cast<std::chrono::milliseconds>(clock::now().time_since_epoch()).count();
 }
 
 Label::Label(const std::string& text) : m_text(text) {
     on_theme_update();
+    set_widget_type("Label");
 }
 
 void Label::set_text(const std::string& text) {
@@ -225,12 +233,143 @@ IntPoint Label::cursor_local_position(int index, const std::vector<LineLayout>& 
     return pos;
 }
 
+void Label::reset_cursor_blink() {
+    m_cursor_visible = true;
+    m_cursor_timer = 0.0f;
+}
+
+int Label::word_start_at(int index) const {
+    const int len = static_cast<int>(m_text.size());
+    if (len == 0) return 0;
+
+    index = std::clamp(index, 0, len);
+    if (index == len) index = len - 1;
+
+    auto is_space = [&](int i) -> bool {
+        unsigned char ch = static_cast<unsigned char>(m_text[static_cast<size_t>(i)]);
+        return std::isspace(ch) != 0;
+    };
+
+    bool target_is_space = is_space(index);
+    int pos = index;
+    while (pos > 0 && is_space(pos - 1) == target_is_space) {
+        --pos;
+    }
+    return pos;
+}
+
+int Label::word_end_at(int index) const {
+    const int len = static_cast<int>(m_text.size());
+    if (len == 0) return 0;
+
+    index = std::clamp(index, 0, len);
+    if (index == len) index = len - 1;
+
+    auto is_space = [&](int i) -> bool {
+        unsigned char ch = static_cast<unsigned char>(m_text[static_cast<size_t>(i)]);
+        return std::isspace(ch) != 0;
+    };
+
+    bool target_is_space = is_space(index);
+    int pos = index;
+    while (pos + 1 < len && is_space(pos + 1) == target_is_space) {
+        ++pos;
+    }
+    return pos + 1;
+}
+
+int Label::paragraph_start_at(int index) const {
+    const int len = static_cast<int>(m_text.size());
+    if (len == 0) return 0;
+
+    index = std::clamp(index, 0, len);
+    if (index == len && index > 0) index--;
+    if (index > 0 && index < len && m_text[static_cast<size_t>(index)] == '\n') index--;
+
+    while (index > 0 && m_text[static_cast<size_t>(index - 1)] != '\n') {
+        --index;
+    }
+    return index;
+}
+
+int Label::paragraph_end_at(int index) const {
+    const int len = static_cast<int>(m_text.size());
+    if (len == 0) return 0;
+
+    index = std::clamp(index, 0, len);
+    if (index == len && index > 0) index--;
+    if (index > 0 && index < len && m_text[static_cast<size_t>(index)] == '\n') index--;
+
+    while (index < len && m_text[static_cast<size_t>(index)] != '\n') {
+        ++index;
+    }
+    return index;
+}
+
+void Label::apply_drag_selection(int current_index, int anchor_index, SelectionDragMode mode) {
+    current_index = std::clamp(current_index, 0, static_cast<int>(m_text.size()));
+    anchor_index = std::clamp(anchor_index, 0, static_cast<int>(m_text.size()));
+
+    switch (mode) {
+        case SelectionDragMode::Character:
+            m_sel_start = anchor_index;
+            m_sel_end = current_index;
+            break;
+        case SelectionDragMode::Word: {
+            int anchor_s = word_start_at(anchor_index);
+            int anchor_e = word_end_at(anchor_index);
+            int current_s = word_start_at(current_index);
+            int current_e = word_end_at(current_index);
+            if (current_index < anchor_index) {
+                m_sel_start = current_s;
+                m_sel_end = anchor_e;
+            } else {
+                m_sel_start = anchor_s;
+                m_sel_end = current_e;
+            }
+            break;
+        }
+        case SelectionDragMode::Paragraph: {
+            int anchor_s = paragraph_start_at(anchor_index);
+            int anchor_e = paragraph_end_at(anchor_index);
+            int current_s = paragraph_start_at(current_index);
+            int current_e = paragraph_end_at(current_index);
+            if (current_index < anchor_index) {
+                m_sel_start = current_s;
+                m_sel_end = anchor_e;
+            } else {
+                m_sel_start = anchor_s;
+                m_sel_end = current_e;
+            }
+            break;
+        }
+    }
+
+    m_sel_start = std::clamp(m_sel_start, 0, static_cast<int>(m_text.size()));
+    m_sel_end = std::clamp(m_sel_end, 0, static_cast<int>(m_text.size()));
+}
+
 void Label::update() {
     float dt = Application::the().delta();
     bool was_scrolling = m_should_scroll;
     float previous_offset = m_scroll_anim.value();
+    bool old_cursor_visible = m_cursor_visible;
+    int old_sel_start = m_sel_start;
+    int old_sel_end = m_sel_end;
+    bool old_selecting = m_selecting;
 
-    if (m_selecting) {
+    if (m_selecting && m_drag_mode == SelectionDragMode::Character && !Input::the().shift()) {
+        m_selecting = false;
+    }
+
+    if (!focused()) {
+        m_selecting = false;
+        if (m_sel_start != m_sel_end) {
+            m_sel_start = m_sel_end;
+        }
+    }
+
+    if (focused()) {
         m_cursor_timer += dt;
         if (m_cursor_timer >= static_cast<float>(m_cursor_blink_speed_ms)) {
             m_cursor_visible = !m_cursor_visible;
@@ -241,7 +380,7 @@ void Label::update() {
         m_cursor_timer = 0.0f;
     }
 
-    bool selection_active = (m_sel_start != m_sel_end) || m_selecting;
+    bool selection_active = focused() || (m_sel_start != m_sel_end) || m_selecting;
 
     bool can_scroll = false;
     if (!selection_active && m_font && !m_should_wrap && m_text.find('\n') == std::string::npos && m_bounds.w > 0) {
@@ -274,7 +413,10 @@ void Label::update() {
     if (was_scrolling != m_should_scroll ||
         m_scroll_anim.running() ||
         previous_offset != m_scroll_anim.value() ||
-        m_selecting) {
+        old_cursor_visible != m_cursor_visible ||
+        old_sel_start != m_sel_start ||
+        old_sel_end != m_sel_end ||
+        old_selecting != m_selecting) {
         invalidate_visual();
     }
     Widget::update();
@@ -326,7 +468,7 @@ void Label::draw_content(Painter& painter) {
         m_font->draw_text(painter, {bounds.x + line.x, bounds.y + line.y}, line.text, text_color);
     }
 
-    if (m_selecting && m_cursor_visible) {
+    if (focused() && m_cursor_visible) {
         IntPoint cursor_local = cursor_local_position(m_sel_end, lines);
         painter.fill_rect({bounds.x + cursor_local.x, bounds.y + cursor_local.y, 2, line_height}, m_color_cursor);
     }
@@ -341,35 +483,204 @@ bool Label::on_touch_event(IntPoint point, bool down) {
     int line_height = 1;
     build_layout_lines(lines, line_height);
 
-    bool shift_down = Input::the().shift();
-
     if (down) {
-        if (!m_selecting) {
-            if (!shift_down) {
-                return false;
+        int current_index = cursor_index_from_local_point(point, lines, line_height);
+        bool shift_down = Input::the().shift();
+
+        if (!m_touch_down) {
+            m_touch_down = true;
+            m_vertical_nav_active = false;
+
+            const long long click_ms = now_ms();
+            int dx = point.x - m_last_click_point.x;
+            int dy = point.y - m_last_click_point.y;
+            bool within_click_window = (click_ms - m_last_click_ms) <= kMultiClickIntervalMs;
+            bool within_click_slop = (dx * dx + dy * dy) <= (kMultiClickSlopPx * kMultiClickSlopPx);
+            if (within_click_window && within_click_slop) {
+                m_click_count = std::min(3, m_click_count + 1);
+            } else {
+                m_click_count = 1;
             }
-            m_selecting = true;
-            m_cursor_visible = true;
-            m_cursor_timer = 0.0f;
-            int idx = cursor_index_from_local_point(point, lines, line_height);
-            m_sel_start = idx;
-            m_sel_end = idx;
-            invalidate_visual();
+            m_last_click_ms = click_ms;
+            m_last_click_point = point;
+
+            bool had_focus = focused();
+            bool had_selection = (m_sel_start != m_sel_end);
+            int old_sel_start = m_sel_start;
+            int old_sel_end = m_sel_end;
+
+            set_focused(true);
+            reset_cursor_blink();
+
+            if (m_click_count >= 3) {
+                m_drag_mode = SelectionDragMode::Paragraph;
+                m_drag_anchor = current_index;
+                m_selecting = true;
+                m_consume_touch = true;
+                apply_drag_selection(current_index, m_drag_anchor, m_drag_mode);
+                invalidate_visual();
+                return true;
+            }
+
+            if (m_click_count == 2) {
+                m_drag_mode = SelectionDragMode::Word;
+                m_drag_anchor = current_index;
+                m_selecting = true;
+                m_consume_touch = true;
+                apply_drag_selection(current_index, m_drag_anchor, m_drag_mode);
+                invalidate_visual();
+                return true;
+            }
+
+            if (shift_down) {
+                m_drag_mode = SelectionDragMode::Character;
+                if (m_sel_start != m_sel_end) {
+                    m_drag_anchor = m_sel_start;
+                } else {
+                    m_drag_anchor = had_focus ? m_sel_end : current_index;
+                }
+                m_selecting = true;
+                m_consume_touch = true;
+                apply_drag_selection(current_index, m_drag_anchor, m_drag_mode);
+                invalidate_visual();
+                return true;
+            }
+
+            m_drag_mode = SelectionDragMode::Character;
+            m_selecting = false;
+            m_sel_start = current_index;
+            m_sel_end = current_index;
+            m_consume_touch = had_selection;
+            if (had_selection || old_sel_start != m_sel_start || old_sel_end != m_sel_end || !had_focus) {
+                invalidate_visual();
+            }
+            return m_consume_touch;
+        }
+
+        if (m_selecting) {
+            int old_sel_start = m_sel_start;
+            int old_sel_end = m_sel_end;
+            apply_drag_selection(current_index, m_drag_anchor, m_drag_mode);
+            if (old_sel_start != m_sel_start || old_sel_end != m_sel_end) {
+                reset_cursor_blink();
+                invalidate_visual();
+            }
             return true;
         }
 
-        int idx = cursor_index_from_local_point(point, lines, line_height);
-        if (idx != m_sel_end) {
-            m_sel_end = idx;
-            invalidate_visual();
-        }
-        return true;
+        return m_consume_touch;
     }
+
+    if (!m_touch_down) return false;
+
+    m_touch_down = false;
+    bool consumed = m_consume_touch;
+    m_consume_touch = false;
 
     if (m_selecting) {
         m_selecting = false;
-        m_cursor_visible = false;
         invalidate_visual();
+        return true;
+    }
+
+    return consumed;
+}
+
+bool Label::on_key(KeyCode key) {
+    if (!focused() || !m_font) return false;
+
+    int old_sel_start = m_sel_start;
+    int old_sel_end = m_sel_end;
+    bool shift = Input::the().shift();
+    bool ctrl = Input::the().ctrl();
+    bool handled = false;
+
+    int len = static_cast<int>(m_text.size());
+    bool has_selection = (m_sel_start != m_sel_end);
+
+    auto apply_cursor_move = [&](int new_index) {
+        new_index = std::clamp(new_index, 0, len);
+        m_sel_end = new_index;
+        if (!shift) {
+            m_sel_start = m_sel_end;
+        }
+        reset_cursor_blink();
+        handled = true;
+    };
+
+    if (key == KeyCode::Home || key == KeyCode::End || key == KeyCode::Up || key == KeyCode::Down) {
+        std::vector<LineLayout> lines;
+        int line_height = 1;
+        build_layout_lines(lines, line_height);
+
+        int caret_index = m_sel_end;
+        if (has_selection && !shift && (key == KeyCode::Home || key == KeyCode::Up)) {
+            caret_index = std::min(m_sel_start, m_sel_end);
+        } else if (has_selection && !shift && (key == KeyCode::End || key == KeyCode::Down)) {
+            caret_index = std::max(m_sel_start, m_sel_end);
+        }
+
+        if (key == KeyCode::Home) {
+            int target = 0;
+            if (!ctrl && !lines.empty()) {
+                for (const auto& line : lines) {
+                    if (caret_index >= line.start_idx && caret_index <= line.end_idx) {
+                        target = line.start_idx;
+                        break;
+                    }
+                }
+            }
+            m_vertical_nav_active = false;
+            apply_cursor_move(target);
+        } else if (key == KeyCode::End) {
+            int target = len;
+            if (!ctrl && !lines.empty()) {
+                for (const auto& line : lines) {
+                    if (caret_index >= line.start_idx && caret_index <= line.end_idx) {
+                        target = line.end_idx;
+                        break;
+                    }
+                }
+            }
+            m_vertical_nav_active = false;
+            apply_cursor_move(target);
+        } else if (key == KeyCode::Up || key == KeyCode::Down) {
+            if (!lines.empty()) {
+                IntPoint caret_pos = cursor_local_position(caret_index, lines);
+                if (!m_vertical_nav_active) {
+                    m_vertical_nav_x = caret_pos.x;
+                    m_vertical_nav_active = true;
+                }
+
+                int target_y = (key == KeyCode::Up) ? (caret_pos.y - line_height) : (caret_pos.y + line_height);
+                int target_index = cursor_index_from_local_point({m_vertical_nav_x, target_y}, lines, line_height);
+                apply_cursor_move(target_index);
+            }
+        }
+    } else if (key == KeyCode::Left) {
+        int target = m_sel_end;
+        if (has_selection && !shift) {
+            target = std::min(m_sel_start, m_sel_end);
+        } else if (target > 0) {
+            target = ctrl ? word_start_at(target) : (target - 1);
+        }
+        m_vertical_nav_active = false;
+        apply_cursor_move(target);
+    } else if (key == KeyCode::Right) {
+        int target = m_sel_end;
+        if (has_selection && !shift) {
+            target = std::max(m_sel_start, m_sel_end);
+        } else if (target < len) {
+            target = ctrl ? word_end_at(target) : (target + 1);
+        }
+        m_vertical_nav_active = false;
+        apply_cursor_move(target);
+    }
+
+    if (handled) {
+        if (old_sel_start != m_sel_start || old_sel_end != m_sel_end) {
+            invalidate_visual();
+        }
         return true;
     }
 

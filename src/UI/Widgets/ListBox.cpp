@@ -9,6 +9,7 @@ namespace Izo {
 
 ListBox::ListBox() {
     set_focusable(true);
+    set_widget_type("ListBox");
     on_theme_update();
 }
 

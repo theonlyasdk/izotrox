@@ -1,10 +1,12 @@
 #include "IzoShell.hpp"
 #include "Core/ThemeDB.hpp"
 #include "Core/Application.hpp"
+#include "Core/ViewManager.hpp"
 #include "Debug/Logger.hpp"
 #include "UI/Widgets/Toast.hpp"
 #include "Core/ResourceManager.hpp"
 #include "Core/File.hpp"
+#include "Views/LauncherView.hpp"
 
 #include <sstream>
 #include <algorithm>
@@ -191,6 +193,19 @@ void IzoShell::register_all_commands() {
             } else {
                 throw std::runtime_error("Usage: debug <on|off>");
             }
+        });
+
+    register_command("launcher", "Open iOS-like launcher", "launcher",
+        [](const std::vector<std::string>& args) {
+            if (args.size() != 1) {
+                throw std::runtime_error("Usage: launcher");
+            }
+
+            auto launcher = LauncherView::create();
+            ViewManager::the().push(std::move(launcher), ViewTransition::PushBottom);
+            std::string out = "Launcher opened";
+            LogInfo("{}", out);
+            return out;
         });
 }
 

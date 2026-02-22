@@ -11,6 +11,7 @@ Button::Button(const std::string& text)
     : m_label(std::make_unique<Label>(text)),
       m_bg_anim(Color(100))
 {
+    set_widget_type("Button");
     m_label->set_alignment(TextAlign::Center);
     on_theme_update();
 }

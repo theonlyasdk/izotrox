@@ -13,6 +13,7 @@ namespace Izo {
 ProgressBar::ProgressBar(float progress) : m_value(progress) {
     set_focusable(true);
     set_height(20);
+    set_widget_type("ProgressBar");
     on_theme_update();
 }
 

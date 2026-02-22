@@ -18,6 +18,7 @@ static std::vector<Widget*>& widget_registry() {
 
 Widget::Widget() : m_bounds{0, 0, 0, 0}, m_measured_size{0, 0, 0, 0}, m_focus_anim(0.0f), m_prev_touch_down(false), m_touch_started_inside(false), m_focusable(true) {
     widget_registry().push_back(this);
+    set_widget_type("Widget");
     on_theme_update();
 }
 

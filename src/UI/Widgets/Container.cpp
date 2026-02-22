@@ -4,6 +4,10 @@
 
 namespace Izo {
 
+Container::Container() {
+    set_widget_type("Container");
+}
+
 void Container::add_child(std::unique_ptr<Widget> child) {
     if (!child) return;
     child->set_parent(this);

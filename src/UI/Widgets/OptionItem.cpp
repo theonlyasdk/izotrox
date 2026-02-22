@@ -12,6 +12,7 @@ OptionItem::OptionItem(const std::string& text, int index, std::function<void(in
     m_focusable = false;
     set_padding_ltrb(20, 10, 20, 10);
     set_width(WidgetSizePolicy::MatchParent);
+    set_widget_type("OptionItem");
     on_theme_update();
 }
 
