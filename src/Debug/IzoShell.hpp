@@ -8,11 +8,12 @@ namespace Izo {
 
 class IzoShell {
 public:
-    using CommandHandler = std::function<void(const std::vector<std::string>&)>;
+    using CommandHandler = std::function<std::string(const std::vector<std::string>&)>;
 
     struct ExecuteResult {
         bool ok = true;
         std::string error;
+        std::string output;
     };
 
     struct Command {

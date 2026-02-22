@@ -238,12 +238,17 @@ void ViewManager::update() {
     int scroll = Input::the().scroll_y();
 
     if (m_dialog) {
+        auto active_view = get_active_input_view();
+        if (active_view) {
+            active_view->update();
+        }
+
         if (scroll != 0) {
             m_dialog->on_scroll(scroll);
         }
 
         m_dialog->update();
-        if (m_dialog->m_dialog_anim.running()) {
+        if (m_dialog->m_dialog_anim.running() || m_dialog->has_running_animations()) {
             invalidate_full();
         }
 

@@ -19,7 +19,7 @@ constexpr int kMarginFromEdge = 40;
 class OptionsDialog : public Dialog {
    public:
     OptionsDialog(OptionBox* parent, const IntRect& start, int current_idx, std::function<void(int)> callback)
-        : m_start(start), m_selected(current_idx), m_callback(std::move(callback)) {
+        : m_parent(parent), m_start(start), m_selected(current_idx), m_callback(std::move(callback)) {
         m_focusable = true;
 
         m_variant = ThemeDB::the().get<OptionBox::AnimationVariant>(
@@ -38,40 +38,7 @@ class OptionsDialog : public Dialog {
             add_child(std::move(item));
         }
 
-        // Initial layout constants
-        int win_w = Application::the().width();
-        int win_h = Application::the().height();
-        int dialog_w = std::min(win_w - kMarginFromEdge, 400);
-        int content_w_for_measure = dialog_w - (kDialogPadding * 2);
-        if (m_variant == OptionBox::AnimationVariant::ExpandVertical ||
-            m_variant == OptionBox::AnimationVariant::ExpandDropdown) {
-            content_w_for_measure = std::max(1, start.w - (kDialogPadding * 2));
-        }
-
-        // Measure children to determine desired popup height.
-        measure(content_w_for_measure, win_h - kMarginFromEdge);
-
-        int dialog_h = std::min(win_h - kMarginFromEdge, m_measured_size.h);
-
-        switch (m_variant) {
-            case OptionBox::AnimationVariant::ExpandCenter:
-                m_target = {(win_w - dialog_w) / 2, (win_h - dialog_h) / 2, dialog_w, dialog_h};
-                break;
-            case OptionBox::AnimationVariant::ExpandVertical:
-                m_target = {start.x, (win_h - dialog_h) / 2, start.w, dialog_h};
-                break;
-            case OptionBox::AnimationVariant::ExpandDropdown: {
-                int dropdown_w = start.w;
-                int margin = kMarginFromEdge / 2;
-                int x = std::clamp(start.x, margin, std::max(margin, win_w - margin - dropdown_w));
-                int max_h_below = std::max(1, win_h - margin - start.bottom());
-                int dropdown_h = std::min(dialog_h, max_h_below);
-
-                m_target = {x, start.bottom(), dropdown_w, dropdown_h};
-                m_start = {x, start.bottom(), dropdown_w, 0};
-                break;
-            }
-        }
+        refresh_target_bounds();
 
         set_bounds(m_target);
         measure(std::max(1, m_target.w - (kDialogPadding * 2)), std::max(1, m_target.h - (kDialogPadding * 2)));
@@ -86,6 +53,8 @@ class OptionsDialog : public Dialog {
     }
 
     void draw_content(Painter& painter) override {
+        refresh_target_bounds();
+
         float anim_progress = m_dialog_anim.value();
         if (anim_progress <= 0.0f) return;
 
@@ -95,6 +64,9 @@ class OptionsDialog : public Dialog {
         IntRect current = m_target;
         if (m_variant == OptionBox::AnimationVariant::ExpandDropdown) {
             current.h = std::max(1, static_cast<int>(m_target.h * anim_progress));
+            if (m_dropdown_opens_up) {
+                current.y = m_target.bottom() - current.h;
+            }
         } else {
             current = {
                 m_start.x + (int)((m_target.x - m_start.x) * anim_progress),
@@ -102,17 +74,6 @@ class OptionsDialog : public Dialog {
                 m_start.w + (int)((m_target.w - m_start.w) * anim_progress),
                 m_start.h + (int)((m_target.h - m_start.h) * anim_progress),
             };
-        }
-
-        // Keep original animation untouched; only after open animation completes,
-        // move dialog to center of screen.
-        if (!m_closing && !m_dialog_anim.running() && anim_progress >= 1.0f) {
-            int win_w = Application::the().width();
-            int win_h = Application::the().height();
-            current.x = (win_w - current.w) / 2;
-            if (m_variant != OptionBox::AnimationVariant::ExpandDropdown) {
-                current.y = (win_h - current.h) / 2;
-            }
         }
 
         set_bounds(current);
@@ -166,11 +127,70 @@ class OptionsDialog : public Dialog {
     }
 
    private:
+    void refresh_target_bounds() {
+        IntRect anchor = m_start;
+        if (m_parent) {
+            anchor = m_parent->global_bounds();
+        }
+
+        int win_w = static_cast<int>(Application::the().width());
+        int win_h = static_cast<int>(Application::the().height());
+        int dialog_w = std::min(win_w - kMarginFromEdge, 400);
+        int content_w_for_measure = dialog_w - (kDialogPadding * 2);
+
+        if (m_variant == OptionBox::AnimationVariant::ExpandVertical ||
+            m_variant == OptionBox::AnimationVariant::ExpandDropdown) {
+            content_w_for_measure = std::max(1, anchor.w - (kDialogPadding * 2));
+        }
+
+        measure(std::max(1, content_w_for_measure), std::max(1, win_h - kMarginFromEdge));
+        int dialog_h = std::min(win_h - kMarginFromEdge, m_measured_size.h);
+
+        switch (m_variant) {
+            case OptionBox::AnimationVariant::ExpandCenter:
+                m_target = {(win_w - dialog_w) / 2, (win_h - dialog_h) / 2, dialog_w, dialog_h};
+                break;
+            case OptionBox::AnimationVariant::ExpandVertical: {
+                int x = std::clamp(anchor.x, 0, std::max(0, win_w - anchor.w));
+                m_target = {x, (win_h - dialog_h) / 2, anchor.w, dialog_h};
+                break;
+            }
+            case OptionBox::AnimationVariant::ExpandDropdown: {
+                int dropdown_w = anchor.w;
+                int margin = kMarginFromEdge / 2;
+                int x = std::clamp(anchor.x, margin, std::max(margin, win_w - margin - dropdown_w));
+                int max_h_below = std::max(1, win_h - margin - anchor.bottom());
+                int max_h_above = std::max(1, anchor.y - margin);
+
+                bool open_up = false;
+                if (max_h_below < dialog_h && max_h_above > max_h_below) {
+                    open_up = true;
+                }
+
+                if (open_up) {
+                    int dropdown_h = std::min(dialog_h, max_h_above);
+                    int y = anchor.y - dropdown_h;
+                    m_target = {x, y, dropdown_w, dropdown_h};
+                    m_start = {x, anchor.y, dropdown_w, 0};
+                    m_dropdown_opens_up = true;
+                } else {
+                    int dropdown_h = std::min(dialog_h, max_h_below);
+                    m_target = {x, anchor.bottom(), dropdown_w, dropdown_h};
+                    m_start = {x, anchor.bottom(), dropdown_w, 0};
+                    m_dropdown_opens_up = false;
+                }
+                break;
+            }
+        }
+    }
+
+    OptionBox* m_parent = nullptr;
     IntRect m_start, m_target;
     OptionBox::AnimationVariant m_variant{OptionBox::AnimationVariant::ExpandVertical};
     int m_selected  = -1;
     int m_roundness = 12;
     int m_animation_duration_ms = 300;
+    bool m_dropdown_opens_up = false;
     bool m_touch_started_outside = false;
     std::function<void(int)> m_callback;
     Color m_color_bg{100, 100, 100};
