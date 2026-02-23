@@ -73,7 +73,7 @@ class Painter {
     };
 
     const ShadowLayer& get_or_build_shadow_layer(int rect_w, int rect_h, int blur_radius, int roundness);
-
+    
     ClipRect m_current_clip;
     std::vector<ClipRect> m_clip_stack;
     ShadowLayer m_shadow_layer_cache;

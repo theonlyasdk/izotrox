@@ -19,12 +19,26 @@ constexpr int kMarginFromEdge = 40;
 class OptionsDialog : public Dialog {
    public:
     OptionsDialog(OptionBox* parent, const IntRect& start, int current_idx, std::function<void(int)> callback)
-        : m_parent(parent), m_start(start), m_selected(current_idx), m_callback(std::move(callback)) {
-        m_focusable = true;
+        : m_parent(parent), m_start(start), m_selected(current_idx), 
+        m_callback(std::move(callback)) {
         set_widget_type("OptionsDialog");
+
+        set_focusable(true);
         set_padding(kDialogPadding);
 
-        m_variant = ThemeDB::the().get<OptionBox::AnimationVariant>("WidgetParams", "OptionBox.AnimationVariant", OptionBox::AnimationVariant::ExpandVertical);
+        m_variant = ThemeDB::the().get<OptionBox::AnimationVariant>(
+            "WidgetParams", "OptionBox.AnimationVariant", 
+            OptionBox::AnimationVariant::ExpandVertical);
+
+        switch (m_variant) {
+            case OptionBox::AnimationVariant::ExpandCenter:
+            case OptionBox::AnimationVariant::ExpandVertical:
+                set_dim_background_on_open(true);
+                break;
+            case OptionBox::AnimationVariant::ExpandDropdown:
+                set_dim_background_on_open(false);
+                break;
+        }
         parent->set_anim_variant(m_variant);
 
         const auto& options = *parent->options();
@@ -33,7 +47,8 @@ class OptionsDialog : public Dialog {
                 m_callback(idx);
                 close();
             });
-            if (i == m_selected) item->set_selected(true);
+            if (i == m_selected) 
+                item->set_selected(true);
             add_child(std::move(item));
         }
 
@@ -43,8 +58,9 @@ class OptionsDialog : public Dialog {
         measure(std::max(1, m_target.w - (kDialogPadding * 2)), std::max(1, m_target.h - (kDialogPadding * 2)));
         layout();
 
-        on_theme_update();
         m_dialog_anim.set_target(1.0f, m_animation_duration_ms, m_animation_easing);
+
+        on_theme_update();
     }
 
     void update() override {
@@ -197,10 +213,8 @@ class OptionsDialog : public Dialog {
     Easing m_animation_easing = Easing::EaseOutQuart;
 };
 
-OptionBox::OptionBox()
-    : m_selected_index(0),
-      m_bg_anim(Color(200)) {
-    m_focusable = true;
+OptionBox::OptionBox() : m_selected_index(0), m_bg_anim(Color(200)) {
+    set_focusable(true);
     set_padding_ltrb(12, 8, 12, 8);
     on_theme_update();
 }
@@ -216,7 +230,7 @@ void OptionBox::on_theme_update() {
     m_animation_duration_ms = ThemeDB::the().get<int>("WidgetParams", "OptionBox.AnimationDuration", 300);
     m_animation_easing = ThemeDB::the().get<Easing>("WidgetParams", "OptionBox.AnimationEasing", Easing::EaseOutQuart);
     m_bg_anim.snap_to(m_color_background);
-    invalidate_layout();
+    invalidate_visual();
 }
 
 void OptionBox::add_option(const std::string& option) {

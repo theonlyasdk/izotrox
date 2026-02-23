@@ -25,9 +25,12 @@ public:
     bool visible() const { return m_dialog_visible; }
     void set_dialog_bounds(const IntRect& bounds) { m_dialog_bounds = bounds; }
     IntRect dialog_bounds() const { return m_dialog_bounds; }
+
+    const bool dim_background_on_open() const { return m_dim_background_on_open; }
+    void set_dim_background_on_open(bool enabled) {  m_dim_background_on_open = enabled; }
+
     void set_auto_layout_centered(bool enabled) { m_auto_layout_centered = enabled; }
     void set_on_dismiss(std::function<void()> callback) { m_on_dismiss = callback; }
-
 protected:
     static int calculate_visual_roundness(int base_roundness, int padding);
     int visual_roundness() const;
@@ -45,6 +48,7 @@ protected:
     Color m_dialog_color_border{100, 100, 100, 180};
     Color m_dialog_color_shadow{0, 0, 0, 96};
     bool m_auto_layout_centered = false;
+    bool m_dim_background_on_open = true;
     int m_last_parent_w = -1;
     int m_last_parent_h = -1;
 };

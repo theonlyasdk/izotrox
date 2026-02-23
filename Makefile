@@ -16,7 +16,7 @@ configure:
 		-DCMAKE_CXX_COMPILER=clang++
 
 build: configure
-	@cd $(BUILD_DIR) && $(MAKE) -j$(shell nproc)
+	@cd $(BUILD_DIR) && $(MAKE) -j6
 
 run:
 	@./$(BUILD_DIR)/$(TARGET)
