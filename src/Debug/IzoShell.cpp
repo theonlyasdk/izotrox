@@ -67,7 +67,7 @@ void IzoShell::register_all_commands() {
                     throw std::runtime_error("Usage: theme load <name>");
                 }
                 std::string theme_name = args[2];
-                std::string path = "theme/" + theme_name + ".ini";
+                std::string path = "themes/" + theme_name + ".ini";
 
                 if (ThemeDB::the().load(path)) {
                     std::string out = "Theme loaded: " + theme_name + " (" + path + ")";
@@ -78,7 +78,7 @@ void IzoShell::register_all_commands() {
                     throw std::runtime_error("Failed to load theme: " + path);
                 }
             } else if (subcmd == "list") {
-                std::string theme_dir = ResourceManagerBase::to_resource_path("theme");
+                std::string theme_dir = ResourceManagerBase::to_resource_path("themes");
                 try {
                     if (File::exists(theme_dir) && File::is_directory(theme_dir)) {
                         std::stringstream out;

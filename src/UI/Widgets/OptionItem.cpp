@@ -9,7 +9,7 @@ namespace Izo {
 OptionItem::OptionItem(const std::string& text, int index, std::function<void(int)> callback)
     : m_text(text), m_index(index), m_callback(callback),
       m_bg_anim(Color(0)) {
-    m_focusable = false;
+    set_focusable(false);
     set_padding_ltrb(20, 10, 20, 10);
     set_width(WidgetSizePolicy::MatchParent);
     set_widget_type("OptionItem");
@@ -21,12 +21,13 @@ void OptionItem::on_theme_update() {
     m_roundness = ThemeDB::the().get<int>("WidgetParams", "Widget.Roundness", 12);
     m_color_highlight = ThemeDB::the().get<Color>("Colors", "OptionBox.Highlight", Color(255, 255, 255, 40));
     m_color_text = ThemeDB::the().get<Color>("Colors", "OptionBox.Text", Color(255));
+
     invalidate_visual();
 }
 
 void OptionItem::measure(int parent_w, int parent_h) {
     if (!m_font) return;
-    int h = m_font->height() + m_padding_top + m_padding_bottom;
+    int h = m_font->height() + m_padding.top + m_padding.bottom;
     m_measured_size = {0, 0, parent_w, h};
 }
 
@@ -41,7 +42,7 @@ void OptionItem::draw_content(Painter& painter) {
 
     if (m_font) {
         int ty = bounds.y + (bounds.h - m_font->height()) / 2;
-        m_font->draw_text(painter, {bounds.x + m_padding_left, ty}, m_text, m_color_text);
+        m_font->draw_text(painter, {bounds.x + m_padding.left, ty}, m_text, m_color_text);
     }
 }
 

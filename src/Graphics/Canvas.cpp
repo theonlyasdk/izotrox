@@ -40,7 +40,7 @@ void Canvas::set_pixel(IntPoint point, uint32_t color) {
     }
 }
 
-uint32_t Canvas::pixel(IntPoint point) const {
+uint32_t Canvas::pixel_at(IntPoint point) const {
     if (point.x >= 0 && point.x < m_width && point.y >= 0 && point.y < m_height) {
         return m_pixels[point.y * m_width + point.x];
     }

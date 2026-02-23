@@ -382,7 +382,7 @@ void Painter::draw_line(IntPoint p1, IntPoint p2, Color color) {
     }
 }
 
-void Painter::draw_drop_shadow_rect(const IntRect& rect, int blur_radius, Color color, int roundness, IntPoint offset) {
+void Painter::drop_shadow_rect(const IntRect& rect, int blur_radius, Color color, int roundness, IntPoint offset) {
     if (rect.w <= 0 || rect.h <= 0 || color.a == 0 || m_global_alpha <= 0.0f) {
         return;
     }

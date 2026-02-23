@@ -253,8 +253,8 @@ void OptionBox::measure(int parent_w, int parent_h) {
         if (m_font) total_text_width = std::max(total_text_width, m_font->width(option));
     }
 
-    m_measured_size.w = total_text_width + m_padding_left + m_padding_right + 40;  // +40 for arrow
-    m_measured_size.h = total_text_height + m_padding_top + m_padding_bottom;
+    m_measured_size.w = total_text_width + m_padding.left + m_padding.right + 40;  // +40 for arrow
+    m_measured_size.h = total_text_height + m_padding.top + m_padding.bottom;
 }
 
 void OptionBox::update() {
@@ -276,7 +276,7 @@ void OptionBox::draw_content(Painter& painter) {
 
     if (m_font && m_selected_index >= 0 && m_selected_index < (int)m_options.size()) {
         int ty = bounds.y + (bounds.h - m_font->height()) / 2;
-        m_font->draw_text(painter, {bounds.x + m_padding_left, ty}, m_options[m_selected_index], m_color_text);
+        m_font->draw_text(painter, {bounds.x + m_padding.left, ty}, m_options[m_selected_index], m_color_text);
     }
     painter.pop_clip();
 

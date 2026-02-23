@@ -1,19 +1,15 @@
 #pragma once
 #include "Graphics/Color.hpp"
 #include "Geometry/Primitives.hpp"
-#include <vector>
-#include <memory>
-#include <span>
 
 namespace Izo {
 
 class Canvas {
 public:
-
     Canvas(int width, int height);
-
     Canvas(int width, int height, uint32_t* pixels);
-
+    Canvas(const Canvas&) = delete;
+    Canvas(const Canvas&&) = delete;
     ~Canvas();
 
     int width() const { return m_width; }
@@ -28,7 +24,7 @@ public:
 
     void set_pixel(IntPoint point, uint32_t color);
 
-    uint32_t pixel(IntPoint point) const;
+    uint32_t pixel_at(IntPoint point) const;
 
     void resize(int width, int height);
 

@@ -3,26 +3,26 @@
 TARGET      = izotrox
 BUILD_DIR   = build
 INSTALL_DIR = /data/adb/$(TARGET).install.dir/
+MAKE		= make
 .PHONY: all configure build run clean rebuild push
 
 all: build run
 
 configure:
 	@mkdir -p $(BUILD_DIR)
-	@cd $(BUILD_DIR) && cmake .. -G Ninja \
-		-DCMAKE_BUILD_TYPE=Debug \
+	@cd $(BUILD_DIR) && cmake .. \
 		-DCMAKE_CXX_STANDARD=23 \
 		-DCMAKE_CXX_STANDARD_REQUIRED=ON \
 		-DCMAKE_CXX_COMPILER=clang++
 
 build: configure
-	@cd $(BUILD_DIR) && ninja -j $(shell nproc)
+	@cd $(BUILD_DIR) && $(MAKE) -j$(shell nproc)
 
 run:
 	@./$(BUILD_DIR)/$(TARGET)
 
 clean:
-	@if [ -d "$(BUILD_DIR)" ]; then cd $(BUILD_DIR) && ninja clean; fi
+	@if [ -d "$(BUILD_DIR)" ]; then cd $(BUILD_DIR) && $(MAKE) clean; fi
 
 rebuild:
 	@rm -rf $(BUILD_DIR)

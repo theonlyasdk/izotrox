@@ -13,6 +13,7 @@ public:
 
     void set_value(float v);
     float value() const { return m_value; }
+
     void set_on_change(std::function<void(float)> callback) { m_on_change = callback; }
 
     void draw_content(Painter& painter) override;
@@ -22,11 +23,11 @@ public:
 
 private:
     float m_value;
-    Image* m_handle;
-    Image* m_handle_focus;
-    bool m_pressed = false;
-    std::function<void(float)> m_on_change;
     int m_roundness = 6;
+    bool m_pressed = false;
+    Image* m_img_handle;
+    Image* m_img_handle_focus;
+    std::function<void(float)> m_on_change;
     Color m_color_track{90, 90, 90};
     Color m_color_active{90, 90, 90};
 };

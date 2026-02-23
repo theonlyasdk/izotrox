@@ -45,14 +45,20 @@ target_include_directories(izotrox PRIVATE
 target_compile_definitions(izotrox PRIVATE LUA_USE_POSIX)
 
 set(COMPILE_OPTS)
-list(APPEND COMPILE_OPTS -O3 -flto)
+set(LINK_OPTS)
 
-option(IZO_ENABLE_SANITIZERS "Enable Address/UB sanitizers" ON)
+list(APPEND COMPILE_OPTS -O3)
+
+option(IZO_ENABLE_SANITIZERS "Enable Address/UB sanitizers" OFF)
 if(IZO_ENABLE_SANITIZERS)
-    list(APPEND COMPILE_OPTS -fsanitize=address,undefined -O0)
-    set(LINK_OPTS -fsanitize=address,undefined)
-else()
-    set(LINK_OPTS -flto)
+    list(APPEND COMPILE_OPTS -fsanitize=address,undefined)
+    list(APPEND LINK_OPTS -fsanitize=address,undefined)
+endif()
+
+option(IZO_ENABLE_LTO "Enable Link-time optimizations" OFF)
+if(IZO_ENABLE_LTO)
+    list(APPEND COMPILE_OPTS -flto)
+    list(APPEND LINK_OPTS -flto)
 endif()
 
 target_compile_options(izotrox PRIVATE ${COMPILE_OPTS})

@@ -4,6 +4,7 @@
 
 namespace Izo {
 
+// Forward-declaraton for using Rect inside Point
 template <typename T>
 struct Rect;
 
@@ -153,9 +154,13 @@ struct Padding {
     int bottom{0};
 
     constexpr Padding() = default;
-    constexpr explicit Padding(int all) : left(all), right(all), top(all), bottom(all) {}
+    // For convenience, declare an implicit conversion constructor
+    constexpr Padding(int all) : left(all), right(all), top(all), bottom(all) {}
     constexpr Padding(int left_value, int right_value, int top_value, int bottom_value)
         : left(left_value), right(right_value), top(top_value), bottom(bottom_value) {}
 };
+
+// For now, Margin is an alias for Padding
+using Margin = Padding;
 
 }  // namespace Izo

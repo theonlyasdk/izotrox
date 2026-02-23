@@ -19,8 +19,8 @@ namespace Izo {
 
 namespace {
 
-constexpr int kNavBarHeightPx = 74;
-constexpr int kOuterInsetPx = 14;
+constexpr int kNavBarHeightPx = 70;
+constexpr int kOuterInsetPx = 8;
 constexpr int kTopInsetPx = 18;
 constexpr int kSectionGapPx = 14;
 constexpr int kIconLabelGapPx = 8;
@@ -31,8 +31,8 @@ constexpr int kRecentCardHeightPx = 58;
 constexpr int kRecentCardGapPx = 10;
 constexpr int kRecentHeaderHeightPx = 42;
 constexpr int kMaxRecentEntries = 48;
-constexpr float kAppOpenDurationMs = 340.0f;
-constexpr float kAppCloseDurationMs = 260.0f;
+constexpr float kAppOpenDurationMs = 520.0f;
+constexpr float kAppCloseDurationMs = 440.0f;
 constexpr float kRecentsDurationMs = 180.0f;
 
 struct LauncherApp {
@@ -41,19 +41,15 @@ struct LauncherApp {
     Color color;
 };
 
-constexpr std::array<LauncherApp, 12> kDummyApps{{
-    {"Dummy App 1", '1', Color(86, 133, 244)},
-    {"Dummy App 2", '2', Color(66, 184, 131)},
-    {"Dummy App 3", '3', Color(240, 173, 78)},
-    {"Dummy App 4", '4', Color(231, 111, 81)},
-    {"Dummy App 5", '5', Color(181, 131, 218)},
-    {"Dummy App 6", '6', Color(47, 161, 214)},
-    {"Dummy App 7", '7', Color(237, 125, 49)},
-    {"Dummy App 8", '8', Color(99, 205, 218)},
-    {"Dummy App 9", '9', Color(158, 119, 238)},
-    {"Dummy App 10", 'A', Color(244, 114, 182)},
-    {"Dummy App 11", 'B', Color(64, 193, 114)},
-    {"Dummy App 12", 'C', Color(109, 135, 247)},
+constexpr std::array<LauncherApp, 8> kApps{{
+    {"Clock", 'C', Color(86, 133, 244)},
+    {"Calendar", 'C', Color(66, 184, 131)},
+    {"Calculator", 'C', Color(240, 173, 78)},
+    {"Browser", 'B', Color(231, 111, 81)},
+    {"Dialer", 'D', Color(181, 131, 218)},
+    {"Gallery", 'G', Color(47, 161, 214)},
+    {"Store", 'S', Color(237, 125, 49)},
+    {"Settings", 'S', Color(99, 205, 218)},
 }};
 
 enum class HitKind : uint8_t {
@@ -74,7 +70,7 @@ static bool same_target(const HitTarget& lhs, const HitTarget& rhs) {
     return lhs.kind == rhs.kind && lhs.index == rhs.index;
 }
 
-static Color with_alpha_scale(Color color, float alpha_scale) {
+static Color animate_alpha(Color color, float alpha_scale) {
     alpha_scale = std::clamp(alpha_scale, 0.0f, 1.0f);
     color.a = static_cast<uint8_t>(static_cast<float>(color.a) * alpha_scale);
     return color;
@@ -123,6 +119,7 @@ class LauncherRoot : public Widget {
         m_color_wallpaper_top = lerp_color(window_bg, Color(58, 92, 160), 0.28f);
         m_color_wallpaper_bottom = lerp_color(window_bg, Color(19, 27, 44), 0.64f);
 
+        m_widget_roundness = ThemeDB::the().get<int>("WidgetParams", "Widget.Roundness", kIconRoundnessPx);
         m_color_icon_label = ThemeDB::the().get<Color>("Colors", "Text.Primary", Color(245, 247, 252));
         m_color_icon_glyph = Color(250, 250, 252);
         m_color_nav_bg = Color(22, 24, 32, 190);
@@ -233,10 +230,10 @@ class LauncherRoot : public Widget {
                 open_app(target.index);
                 break;
             case HitKind::NavBack:
-                handle_back();
+                go_back();
                 break;
             case HitKind::NavHome:
-                handle_home();
+                go_home();
                 break;
             case HitKind::NavRecents:
                 toggle_recents();
@@ -250,15 +247,15 @@ class LauncherRoot : public Widget {
     }
 
     void open_app(int app_index) {
-        if (app_index < 0 || app_index >= static_cast<int>(kDummyApps.size())) return;
+        if (app_index < 0 || app_index >= static_cast<int>(kApps.size())) return;
 
-        add_recent(app_index);
+        add_recent_app(app_index);
         set_recents_visible(false);
 
         m_active_app = app_index;
         m_transition_app = app_index;
         m_app_target_open = true;
-        m_app_progress.set_target(1.0f, kAppOpenDurationMs, Easing::EaseOutQuart);
+        m_app_progress.set_target(1.0f, kAppOpenDurationMs, Easing::EaseOutCubic);
         invalidate_visual();
     }
 
@@ -266,16 +263,16 @@ class LauncherRoot : public Widget {
         if (m_active_app < 0 && m_app_progress.value() <= 0.001f) return;
 
         m_app_target_open = false;
-        m_app_progress.set_target(0.0f, kAppCloseDurationMs, Easing::EaseInOutCubic);
+        m_app_progress.set_target(0.0f, kAppCloseDurationMs, Easing::EaseOutCubic);
         invalidate_visual();
     }
 
-    void handle_home() {
+    void go_home() {
         set_recents_visible(false);
         close_app();
     }
 
-    void handle_back() {
+    void go_back() {
         if (m_app_progress.value() > 0.001f || m_active_app >= 0) {
             close_app();
             return;
@@ -306,8 +303,8 @@ class LauncherRoot : public Widget {
         invalidate_visual();
     }
 
-    void add_recent(int app_index) {
-        if (app_index < 0 || app_index >= static_cast<int>(kDummyApps.size())) return;
+    void add_recent_app(int app_index) {
+        if (app_index < 0 || app_index >= static_cast<int>(kApps.size())) return;
 
         m_recent_ring[m_recent_head] = static_cast<uint8_t>(app_index);
         m_recent_head = (m_recent_head + 1) % kMaxRecentEntries;
@@ -357,7 +354,7 @@ class LauncherRoot : public Widget {
             return {};
         }
 
-        for (int i = 0; i < static_cast<int>(kDummyApps.size()); ++i) {
+        for (int i = 0; i < static_cast<int>(kApps.size()); ++i) {
             if (icon_rect_for_index(i).contains(global_point)) {
                 return {HitKind::Icon, i};
             }
@@ -368,9 +365,11 @@ class LauncherRoot : public Widget {
 
     IntRect nav_bar_rect() const {
         IntRect b = global_bounds();
+        // constexpr int border_bottom = kOuterInsetPx;
+        constexpr int border_bottom = 0;
         int width = std::max(1, b.w - kOuterInsetPx * 2);
         int x = b.x + (b.w - width) / 2;
-        int y = b.bottom() - kNavBarHeightPx - kOuterInsetPx;
+        int y = b.bottom() - kNavBarHeightPx - border_bottom;
         return {x, y, width, kNavBarHeightPx};
     }
 
@@ -397,31 +396,33 @@ class LauncherRoot : public Widget {
     IntRect icon_rect_for_index(int index) const {
         IntRect area = launcher_content_rect();
         constexpr int kColumns = 4;
-        const int app_count = static_cast<int>(kDummyApps.size());
+        const int app_count = static_cast<int>(kApps.size());
         const int rows = (app_count + kColumns - 1) / kColumns;
 
         int horizontal_gap = std::max(8, area.w / 36);
+        int vertical_gap = 32;
         int cell_w = (area.w - horizontal_gap * (kColumns - 1)) / kColumns;
         int icon_size = std::clamp(cell_w, 52, 96);
-        int row_step = icon_size + kIconLabelGapPx + kIconLabelHeightPx + std::max(8, icon_size / 7);
-        int total_h = rows * row_step;
-
-        int start_y = area.y + std::max(0, (area.h - total_h) / 2);
+        int row_step = icon_size + kIconLabelGapPx + kIconLabelHeightPx +
+                       std::max(8, icon_size / 7) + vertical_gap;
 
         int row = index / kColumns;
         int col = index % kColumns;
-        int x = area.x + col * (cell_w + horizontal_gap) + std::max(0, (cell_w - icon_size) / 2);
-        int y = start_y + row * row_step;
+        int x = area.x + col * (cell_w + horizontal_gap) +
+                std::max(0, (cell_w - icon_size) / 2);
+        int y = area.y + row * row_step;  // aligned to top of area
         return {x, y, icon_size, icon_size};
     }
+
 
     IntRect app_target_rect() const {
         IntRect b = global_bounds();
         IntRect nav = nav_bar_rect();
-        int x = b.x + 8;
-        int y = b.y + 8;
-        int w = std::max(1, b.w - 16);
-        int h = std::max(1, nav.y - y - 8);
+        constexpr int border = 0;
+        int x = b.x + border;
+        int y = b.y + border;
+        int w = std::max(1, b.w - (border*2));
+        int h = std::max(1, nav.y - y - border);
         return {x, y, w, h};
     }
 
@@ -443,7 +444,7 @@ class LauncherRoot : public Widget {
 
     void draw_wallpaper(Painter& painter) {
         IntRect b = global_bounds();
-        constexpr int kSteps = 28;
+        constexpr int kSteps = 32;
         for (int i = 0; i < kSteps; ++i) {
             float t0 = static_cast<float>(i) / static_cast<float>(kSteps);
             float t1 = static_cast<float>(i + 1) / static_cast<float>(kSteps);
@@ -457,43 +458,43 @@ class LauncherRoot : public Widget {
     void draw_icon_grid(Painter& painter, float alpha_scale) {
         if (!m_font) return;
 
-        for (int i = 0; i < static_cast<int>(kDummyApps.size()); ++i) {
-            const LauncherApp& app = kDummyApps[static_cast<size_t>(i)];
+        for (int i = 0; i < static_cast<int>(kApps.size()); ++i) {
+            const LauncherApp& app = kApps[static_cast<size_t>(i)];
             IntRect icon = icon_rect_for_index(i);
 
-            Color icon_color = with_alpha_scale(app.color, alpha_scale);
-            painter.draw_drop_shadow_rect(icon, 10, with_alpha_scale(Color(0, 0, 0, 110), alpha_scale), kIconRoundnessPx, {0, 4});
-            painter.fill_rounded_rect(icon, kIconRoundnessPx, icon_color);
+            Color icon_color = animate_alpha(app.color, alpha_scale);
+            painter.fill_rounded_rect(icon, m_widget_roundness, icon_color);
 
             std::string glyph(1, app.glyph);
             int glyph_x = icon.x + (icon.w - m_font->width(glyph)) / 2;
             int glyph_y = icon.y + (icon.h - m_font->height()) / 2;
-            m_font->draw_text(painter, {glyph_x, glyph_y}, glyph, with_alpha_scale(m_color_icon_glyph, alpha_scale));
+            m_font->draw_text(painter, {glyph_x, glyph_y}, glyph, animate_alpha(m_color_icon_glyph, alpha_scale));
 
             int label_w = m_font->width(app.name);
             int label_x = icon.x + (icon.w - label_w) / 2;
             int label_y = icon.bottom() + kIconLabelGapPx;
-            m_font->draw_text(painter, {label_x, label_y}, app.name, with_alpha_scale(m_color_icon_label, alpha_scale));
+            m_font->draw_text(painter, {label_x, label_y}, app.name, animate_alpha(m_color_icon_label, alpha_scale));
         }
     }
 
     void draw_opening_app(Painter& painter, float progress) {
         if (!m_font || m_active_app < 0 || m_transition_app < 0) return;
 
-        const LauncherApp& app = kDummyApps[static_cast<size_t>(m_active_app)];
+        const LauncherApp& app = kApps[static_cast<size_t>(m_active_app)];
         IntRect source = icon_rect_for_index(m_transition_app);
         IntRect target = app_target_rect();
         IntRect rect = lerp_rect(source, target, progress);
         int roundness = std::max(2, static_cast<int>(std::lround((1.0f - progress) * 24.0f)));
 
-        painter.draw_drop_shadow_rect(rect, 18, Color(0, 0, 0, 120), std::max(2, roundness + 8), {0, 12});
+        Color app_color = animate_alpha(app.color, progress);
+        painter.push_rounded_clip(rect, roundness);
         painter.fill_rounded_rect(rect, roundness, app.color);
 
-        Color top_bar = lerp_color(with_alpha_scale(app.color, 1.0f), Color(255, 255, 255, 255), 0.12f);
+        Color top_bar = lerp_color(animate_alpha(app.color, 1.0f), Color(255, 255, 255, 255), 0.12f);
         painter.fill_rect({rect.x, rect.y, rect.w, 42}, top_bar);
 
         float text_alpha = std::clamp((progress - 0.30f) / 0.70f, 0.0f, 1.0f);
-        Color text_color = with_alpha_scale(m_color_app_text, text_alpha);
+        Color text_color = animate_alpha(m_color_app_text, text_alpha);
 
         int title_w = m_font->width(app.name);
         int title_x = rect.x + (rect.w - title_w) / 2;
@@ -508,38 +509,38 @@ class LauncherRoot : public Widget {
             painter.fill_rounded_rect(
                 {rect.x + 18, row_y, row_w, 22},
                 8,
-                with_alpha_scale(Color(255, 255, 255, 40), text_alpha));
+                animate_alpha(Color(255, 255, 255, 40), text_alpha));
         }
+        painter.pop_clip();
     }
 
     void draw_recents(Painter& painter, float recents_progress) {
         if (!m_font) return;
 
-        IntRect area = launcher_content_rect();
-        painter.fill_rect(area, with_alpha_scale(Color(0, 0, 0, 120), recents_progress));
+        IntRect area = app_target_rect();
+        painter.fill_rect(area, animate_alpha(Color(0, 0, 0, 240), recents_progress));
 
         m_font->draw_text(
             painter,
             {area.x + 10, area.y + 10},
             "Recent Apps",
-            with_alpha_scale(m_color_recents_header, recents_progress));
+            animate_alpha(m_color_recents_header, recents_progress));
 
         const int visible_count = recents_visible_count();
         for (int i = 0; i < visible_count; ++i) {
             int app_index = recent_app_from_newest(i);
-            if (app_index < 0 || app_index >= static_cast<int>(kDummyApps.size())) continue;
+            if (app_index < 0 || app_index >= static_cast<int>(kApps.size())) continue;
 
-            const LauncherApp& app = kDummyApps[static_cast<size_t>(app_index)];
+            const LauncherApp& app = kApps[static_cast<size_t>(app_index)];
             IntRect card = recents_card_rect(i);
 
-            painter.fill_rounded_rect(card, 12, with_alpha_scale(m_color_recent_card, recents_progress));
-            painter.fill_rounded_rect({card.x + 8, card.y + 8, 42, card.h - 16}, 10, with_alpha_scale(app.color, recents_progress));
+            painter.fill_rounded_rect(card, 12, animate_alpha(m_color_recent_card, recents_progress));
+            painter.fill_rounded_rect({card.x + 8, card.y + 8, 42, card.h - 16}, 10, animate_alpha(app.color, recents_progress));
 
             int title_x = card.x + 58;
             int title_y = card.y + 11;
             int subtitle_y = card.y + 31;
-            m_font->draw_text(painter, {title_x, title_y}, app.name, with_alpha_scale(m_color_recent_text, recents_progress));
-            m_font->draw_text(painter, {title_x, subtitle_y}, "Tap to reopen", with_alpha_scale(m_color_recent_meta, recents_progress));
+            m_font->draw_text(painter, {title_x, title_y}, app.name, animate_alpha(m_color_recent_text, recents_progress));
         }
 
         if (visible_count == 0) {
@@ -547,7 +548,7 @@ class LauncherRoot : public Widget {
                 painter,
                 {area.x + 12, area.y + kRecentHeaderHeightPx + 16},
                 "No recent apps yet",
-                with_alpha_scale(m_color_recent_meta, recents_progress));
+                animate_alpha(m_color_recent_meta, recents_progress));
         }
     }
 
@@ -555,10 +556,7 @@ class LauncherRoot : public Widget {
         if (!m_font) return;
 
         IntRect nav = nav_bar_rect();
-        painter.draw_drop_shadow_rect(nav, 10, Color(0, 0, 0, 110), 18, {0, 5});
-        painter.fill_rounded_rect(nav, 18, m_color_nav_bg);
-
-        const std::array<const char*, 3> labels{"B", "H", "R"};
+        const std::array<const char*, 3> labels{"Back", "Home", "Recents"};
         for (int i = 0; i < 3; ++i) {
             IntRect btn = nav_button_rect(i);
             bool pressed = m_pointer_down &&
@@ -575,7 +573,7 @@ class LauncherRoot : public Widget {
                 fill = lerp_color(m_color_nav_button, m_color_nav_button_active, 0.55f);
             }
 
-            painter.fill_rounded_rect(btn, 12, fill);
+            painter.fill_rounded_rect(btn, m_widget_roundness, fill);
 
             int label_w = m_font->width(labels[static_cast<size_t>(i)]);
             int label_x = btn.x + (btn.w - label_w) / 2;
@@ -593,6 +591,7 @@ class LauncherRoot : public Widget {
 
     int m_active_app = -1;
     int m_transition_app = -1;
+    int m_widget_roundness = 0;
     HitTarget m_pressed_target{};
 
     std::array<uint8_t, kMaxRecentEntries> m_recent_ring{};

@@ -1,4 +1,6 @@
 /*
+ * The Izotrox UI Framework
+ *
  * (c) theonlyasdk 2026
  *
  * Licensed under the Mozilla Public License 2.0
@@ -35,7 +37,6 @@
 #include "Graphics/Image.hpp"
 #include "Graphics/Painter.hpp"
 #include "Input/Input.hpp"
-#include "Platform/Android/AndroidDevice.hpp"
 #include "UI/Layout/LinearLayout.hpp"
 #include "UI/View/View.hpp"
 #include "UI/Widgets/Button.hpp"
@@ -47,9 +48,14 @@
 #include "UI/Widgets/TextBox.hpp"
 #include "UI/Widgets/Toast.hpp"
 #include "UI/Widgets/Widget.hpp"
+#include "Views/LauncherView.hpp"
 #include "Views/SecondView.hpp"
 #include "Views/SplashScreen.hpp"
 #include "Views/ThemePreviewView.hpp"
+
+#ifdef __ANDROID__
+#include "Platform/Android/AndroidDevice.hpp"
+#endif
 
 using namespace Izo;
 
@@ -84,8 +90,7 @@ void draw_debug_panel(Painter& painter, Font& font, float fps) {
 }
 
 const std::string try_parse_arguments(int argc, const char* argv[]) {
-    // These variables will always be non-empty after parsing
-    // The parser is guaranteed to populate these variables
+    // Set the default values of required arguments here
     std::string theme_name = "default";
     std::string resource_root = "res";
     std::string save_theme_preview;
@@ -142,9 +147,6 @@ static void register_signal_handlers() {
 
 int main(int argc, const char* argv[]) {
     register_signal_handlers();
-
-    Settings::the().set<std::string>("theme-name", "default");
-    Settings::the().set<std::string>("resource-root", "res");
 
     auto parse_error = try_parse_arguments(argc, argv);
     if (!parse_error.empty()) {
@@ -248,9 +250,14 @@ int main(int argc, const char* argv[]) {
     lbl_title->set_width(WidgetSizePolicy::MatchParent);
     root->add_child(std::move(lbl_title));
 
-    auto btn_start_engine = std::make_unique<Button>("Start Engine");
-    btn_start_engine->set_focusable(true);
-    root->add_child(std::move(btn_start_engine));
+    auto btn_start_launcher = std::make_unique<Button>("Start Launcher");
+    btn_start_launcher->set_focusable(true);
+    btn_start_launcher->set_on_click([]() {
+        auto launcher = LauncherView::create();
+        ViewManager::the().push(std::move(launcher), ViewTransition::PushBottom);
+        LogDebug("Launcher opened");
+    });
+    root->add_child(std::move(btn_start_launcher));
 
     auto btn_settings = std::make_unique<Button>("Settings");
     btn_settings->set_focusable(true);
@@ -457,7 +464,7 @@ int main(int argc, const char* argv[]) {
             painter.fill_rect(clipped, window_bg);
             ViewManager::the().draw(painter);
             ToastManager::the().draw(painter, width, height);
-            draw_debug_panel(painter, *inconsolata, current_fps);
+            // draw_debug_panel(painter, *inconsolata, current_fps);
 
             if (flash_dirty_regions) {
                 bool from_scheduled_clear = false;

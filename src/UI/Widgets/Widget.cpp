@@ -1,4 +1,8 @@
 #include "UI/Widgets/Widget.hpp"
+
+#include <algorithm>
+#include <vector>
+
 #include "Core/Application.hpp"
 #include "Core/ThemeDB.hpp"
 #include "Core/ViewManager.hpp"
@@ -6,8 +10,6 @@
 #include "Graphics/Font.hpp"
 #include "Graphics/Painter.hpp"
 #include "Input/Input.hpp"
-#include <algorithm>
-#include <vector>
 
 namespace Izo {
 
@@ -70,7 +72,6 @@ void Widget::on_theme_update() {
     m_focus_roundness = ThemeDB::the().get<int>("WidgetParams", "Widget.Roundness", 6);
     m_focus_color = ThemeDB::the().get<Color>("Colors", "Widget.Focus", Color(0, 0, 255));
     m_focus_anim_duration = ThemeDB::the().get<int>("WidgetParams", "Widget.FocusAnimDuration", 300);
-    invalidate_layout();
 }
 
 void Widget::update() {
@@ -187,27 +188,16 @@ void Widget::hide() {
     invalidate_layout();
 }
 
-void Widget::set_padding(Padding padding) {
-    set_padding_ltrb(padding.left, padding.top, padding.right, padding.bottom);
-}
-
-void Widget::set_height(int h) {
-    if (m_height == h) return;
-    m_height = h;
-    invalidate_layout();
-}
-
-void Widget::set_height(WidgetSizePolicy p) {
-    set_height((int)p);
-}
-
-void Widget::set_bounds(const IntRect& bounds) {
-    if (m_bounds.x == bounds.x && m_bounds.y == bounds.y && m_bounds.w == bounds.w && m_bounds.h == bounds.h) {
+void Widget::set_bounds(const IntRect& new_bounds) {
+    if (m_bounds.x == new_bounds.x &&
+        m_bounds.y == new_bounds.y &&
+        m_bounds.w == new_bounds.w &&
+        m_bounds.h == new_bounds.h) {
         return;
     }
 
     IntRect old_global_bounds = global_bounds();
-    m_bounds = bounds;
+    m_bounds = new_bounds;
 
     if (m_visible) {
         ViewManager::the().invalidate_rect(old_global_bounds);
@@ -215,39 +205,56 @@ void Widget::set_bounds(const IntRect& bounds) {
     }
 }
 
-void Widget::set_width(WidgetSizePolicy p) {
-    set_width((int)p);
-}
+void Widget::set_height(int new_height) {
+    if (m_height == new_height)
+        return;
 
-void Widget::set_width(int w) {
-    if (m_width == w) return;
-    m_width = w;
+    m_height = new_height;
     invalidate_layout();
 }
 
+void Widget::set_height(WidgetSizePolicy size_policy) {
+    set_height(static_cast<int>(size_policy));
+}
+
+void Widget::set_width(int new_width) {
+    if (m_width == new_width)
+        return;
+
+    m_width = new_width;
+    invalidate_layout();
+}
+
+void Widget::set_width(WidgetSizePolicy size_policy) {
+    set_width(static_cast<int>(size_policy));
+}
+
 void Widget::set_focusable(bool focusable) {
-    if (m_focusable == focusable) return;
+    if (m_focusable == focusable)
+        return;
+
     m_focusable = focusable;
-    if (!m_focusable) {
+
+    if (!m_focusable)
         set_focused(false);
-    }
+
     invalidate_visual();
 }
 
 void Widget::set_padding_ltrb(int left, int top, int right, int bottom) {
-    if (m_padding_left == left && m_padding_top == top && m_padding_right == right && m_padding_bottom == bottom) {
+    // The following check is to avoid redundant invalidate_visual() calls
+    if (m_padding.left == left &&
+        m_padding.top == top &&
+        m_padding.right == right &&
+        m_padding.bottom == bottom) {
         return;
     }
 
-    m_padding_left = left;
-    m_padding_top = top;
-    m_padding_right = right;
-    m_padding_bottom = bottom;
+    m_padding.left = left;
+    m_padding.top = top;
+    m_padding.right = right;
+    m_padding.bottom = bottom;
     invalidate_layout();
-}
-
-void Widget::set_padding(int padding) {
-    set_padding_ltrb(padding, padding, padding, padding);
 }
 
 void Widget::set_show_focus_indicator(bool show) {
@@ -285,6 +292,7 @@ bool Widget::has_running_animations() const {
     return m_focus_anim.running();
 }
 
+/* Translated screen space widget coordinates */
 const IntRect Widget::global_bounds() const {
     IntRect bounds = m_bounds;
     const Widget* current_parent = m_parent;
@@ -296,7 +304,5 @@ const IntRect Widget::global_bounds() const {
     }
     return bounds;
 }
-
-
 
 }  // namespace Izo

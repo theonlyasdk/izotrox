@@ -1,7 +1,6 @@
 #pragma once
 
 #include <string>
-#include <vector>
 #include "Geometry/Primitives.hpp"
 #include "Graphics/Color.hpp"
 #include "Input/KeyCode.hpp"
@@ -10,6 +9,7 @@
 namespace Izo {
 
 class Painter;
+class Font;
 
 enum class WidgetSizePolicy {
     Fixed = 0,
@@ -17,28 +17,24 @@ enum class WidgetSizePolicy {
     WrapContent = -2
 };
 
-class Font;
-
 class Widget {
 public:
     Widget();
     virtual ~Widget();
+
+    static void notify_theme_update_all();
 
     virtual void draw_content(Painter& painter) = 0;
     virtual void draw_focus(Painter& painter); 
 
     virtual void update();
 
+    /* NOTE: Child classes must call invalidate_visual() in this
+        method to re-render the widget */
     virtual void on_theme_update();
-    virtual void on_theme_reload() { on_theme_update(); }
-    static void notify_theme_update_all();
-    void set_font(Font* font);
-    Font* font() const { return m_font; }
 
     virtual void layout() {};
     virtual void measure(int parent_w, int parent_h); 
-    // NOTE: Deprecated, use local_bounds() instead
-    virtual IntRect content_box() const { return {0, 0, m_bounds.w, m_bounds.h}; } 
 
     /* What's the difference between on_touch and on_touch_event?? */
     virtual bool on_touch(IntPoint point, bool down, bool captured = false); 
@@ -54,8 +50,13 @@ public:
     const IntRect global_bounds() const;
     /* Returns the actual size and position of widget relative to it's parent */
     const IntRect& local_bounds() const { return m_bounds; }
+    /* Returns the content box of the widget (IntRect with only size) */
+    const IntRect content_box() const { return {0, 0, m_bounds.w, m_bounds.h }; }
 
     void draw(Painter& painter); 
+
+    void set_font(Font* font);
+    Font* font() const { return m_font; }
 
     int width() const { return m_width; }
     int height() const { return m_height; }
@@ -70,8 +71,9 @@ public:
     bool visible() const { return m_visible; }
     bool hovering() const;
 
-    void set_padding(Padding padding);
-    const Padding padding() const { return Padding{m_padding_left, m_padding_right, m_padding_top, m_padding_bottom}; }
+    void set_padding(Padding padding) { m_padding = padding; };
+    void set_padding_ltrb(int left, int top, int right, int bottom);
+    const Padding padding() const { return m_padding; }
 
     void set_height(int h);
     void set_height(WidgetSizePolicy p);
@@ -85,8 +87,6 @@ public:
     void set_width(int w);
     void set_focused(bool focused);
     void set_focusable(bool focusable);
-    void set_padding_ltrb(int left, int top, int right, int bottom);
-    void set_padding(int padding);
     void set_show_focus_indicator(bool show);
     void set_parent(Widget* parent);
     Widget* parent() const { return m_parent; }
@@ -97,6 +97,7 @@ public:
     void invalidate_visual();
     void invalidate_layout();
     bool layout_dirty() const { return m_layout_dirty; }
+
     virtual bool subtree_layout_dirty() const { return m_layout_dirty; }
     virtual void clear_layout_dirty_subtree() { m_layout_dirty = false; }
     virtual bool has_running_animations() const;
@@ -113,15 +114,11 @@ protected:
 
     IntRect m_bounds;
     IntRect m_measured_size;
+    Padding m_padding {2};
 
-    int m_width = (int)WidgetSizePolicy::WrapContent;
-    int m_height = (int)WidgetSizePolicy::WrapContent;
+    int m_width = static_cast<int>(WidgetSizePolicy::WrapContent);
+    int m_height = static_cast<int>(WidgetSizePolicy::WrapContent);
     int m_layout_index = -1;
-
-    int m_padding_left = 0;
-    int m_padding_right = 0;
-    int m_padding_top = 0;
-    int m_padding_bottom = 0;
 
     bool m_prev_touch_down = false;
     bool m_touch_started_inside = false;
@@ -133,7 +130,6 @@ protected:
     Animator<float> m_focus_anim;
     Widget* m_parent = nullptr;
     Font* m_font = nullptr;
-
     int m_focus_outline_thickness = 12;
     int m_focus_roundness = 6;
     Color m_focus_color = Color(0, 0, 255);

@@ -19,14 +19,14 @@ constexpr float kMarqueeSpeedPxPerSec = 50.0f;
 constexpr int kMultiClickIntervalMs = 350;
 constexpr int kMultiClickSlopPx = 12;
 
-long long now_ms() {
+static long long now_ms() {
     using clock = std::chrono::steady_clock;
     return std::chrono::duration_cast<std::chrono::milliseconds>(clock::now().time_since_epoch()).count();
 }
 
 Label::Label(const std::string& text) : m_text(text) {
-    on_theme_update();
     set_widget_type("Label");
+    on_theme_update();
 }
 
 void Label::set_text(const std::string& text) {

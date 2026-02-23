@@ -19,7 +19,7 @@ int Dialog::calculate_visual_roundness(int base_roundness, int padding) {
 }
 
 int Dialog::visual_roundness() const {
-    int max_padding = std::max({m_padding_left, m_padding_right, m_padding_top, m_padding_bottom});
+    int max_padding = std::max({m_padding.left, m_padding.right, m_padding.top, m_padding.bottom});
     return calculate_visual_roundness(m_dialog_base_roundness, max_padding);
 }
 

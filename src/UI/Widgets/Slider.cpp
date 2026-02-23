@@ -10,8 +10,8 @@
 namespace Izo {
 
 Slider::Slider(float value) : m_value(value) {
-    m_handle        = ImageManager::the().get_or_crash("slider-handle");
-    m_handle_focus  = ImageManager::the().get_or_crash("slider-handle-focus");
+    m_img_handle        = ImageManager::the().get_or_crash("slider-handle");
+    m_img_handle_focus  = ImageManager::the().get_or_crash("slider-handle-focus");
 
     set_focusable(true);
     set_show_focus_indicator(false);
@@ -21,9 +21,11 @@ Slider::Slider(float value) : m_value(value) {
 
 void Slider::on_theme_update() {
     Widget::on_theme_update();
+
     m_roundness = ThemeDB::the().get<int>("WidgetParams", "Widget.Roundness", 6);
     m_color_track = ThemeDB::the().get<Color>("Colors", "Slider.Track", Color(90));
     m_color_active = ThemeDB::the().get<Color>("Colors", "Slider.Active", Color(90));
+
     invalidate_visual();
 }
 
@@ -45,9 +47,9 @@ void Slider::draw_content(Painter& painter) {
     int ty = bounds.y + (bounds.h - track_h) / 2;
 
     int hw = 16;
-    Image* imgToDraw = m_handle;
-    if (m_pressed && m_handle_focus && m_handle_focus->valid()) {
-        imgToDraw = m_handle_focus;
+    Image* imgToDraw = m_img_handle;
+    if (m_pressed && m_img_handle_focus && m_img_handle_focus->valid()) {
+        imgToDraw = m_img_handle_focus;
     }
     if (imgToDraw && imgToDraw->valid()) {
         hw = imgToDraw->width();
@@ -86,8 +88,8 @@ bool Slider::on_touch_event(IntPoint point, bool down) {
 
     int hw = 16, hh = 16;
 
-    Image* img = m_handle;
-    if ((m_pressed || m_focused) && m_handle_focus && m_handle_focus->valid()) img = m_handle_focus;
+    Image* img = m_img_handle;
+    if ((m_pressed || m_focused) && m_img_handle_focus && m_img_handle_focus->valid()) img = m_img_handle_focus;
 
     if (img && img->valid()) {
         hw = img->width();
@@ -105,9 +107,11 @@ bool Slider::on_touch_event(IntPoint point, bool down) {
 
     if (down && !m_pressed) {
         m_pressed = (over_handle || inside_track);
-        if (m_pressed) invalidate_visual();
+        if (m_pressed) 
+            invalidate_visual();
     } else if (!down) {
-        if (m_pressed) invalidate_visual();
+        if (m_pressed) 
+            invalidate_visual();
         m_pressed = false;
     }
 

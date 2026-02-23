@@ -36,7 +36,7 @@ class Painter {
     void draw_line(IntPoint p1, IntPoint p2, Color color);
     void fill_rounded_rect(const IntRect& rect, int radius, Color color, int corners = AllCorners);
     void draw_rounded_rect(const IntRect& rect, int radius, Color color, int thickness = 1);
-    void draw_drop_shadow_rect(const IntRect& rect, int blur_radius, Color color, int roundness = 0, IntPoint offset = {0, 0});
+    void drop_shadow_rect(const IntRect& rect, int blur_radius, Color color, int roundness = 0, IntPoint offset = {0, 0});
     void reset_clips_and_transform();
     void draw_blur_rect(const IntRect& rect, int blur_level);
 

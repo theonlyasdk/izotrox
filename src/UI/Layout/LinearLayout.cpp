@@ -18,8 +18,8 @@ void LinearLayout::measure(int parent_w, int parent_h) {
     if (available_w <= 0) available_w = parent_w;
     if (available_h <= 0) available_h = parent_h;
 
-    int content_w = available_w - m_padding_left - m_padding_right;
-    int content_h = available_h - m_padding_top - m_padding_bottom;
+    int content_w = available_w - m_padding.left - m_padding.right;
+    int content_h = available_h - m_padding.top - m_padding.bottom;
 
     bool first = true;
     for (auto& child : m_children) {
@@ -38,8 +38,8 @@ void LinearLayout::measure(int parent_w, int parent_h) {
         first = false;
     }
 
-    w += m_padding_left + m_padding_right;
-    h += m_padding_top + m_padding_bottom;
+    w += m_padding.left + m_padding.right;
+    h += m_padding.top + m_padding.bottom;
 
     m_content_height = h; 
 
@@ -57,8 +57,8 @@ void LinearLayout::measure(int parent_w, int parent_h) {
 }
 
 void LinearLayout::layout_children() {
-    int cur_x = m_bounds.x + m_padding_left; 
-    int cur_y = m_bounds.y + m_padding_top;
+    int cur_x = m_bounds.x + m_padding.left; 
+    int cur_y = m_bounds.y + m_padding.top;
 
     for (auto& child : m_children) {
         if (!child->visible()) continue;
@@ -66,8 +66,8 @@ void LinearLayout::layout_children() {
         int cw = child->measured_width();
         int ch = child->measured_height();
 
-        if (child->width() == (int)WidgetSizePolicy::MatchParent) cw = m_bounds.w - m_padding_left - m_padding_right; 
-        if (child->height() == (int)WidgetSizePolicy::MatchParent) ch = m_bounds.h - m_padding_top - m_padding_bottom;
+        if (child->width() == (int)WidgetSizePolicy::MatchParent) cw = m_bounds.w - m_padding.left - m_padding.right; 
+        if (child->height() == (int)WidgetSizePolicy::MatchParent) ch = m_bounds.h - m_padding.top - m_padding.bottom;
 
         child->set_bounds({cur_x, cur_y, cw, ch});
         child->layout(); 

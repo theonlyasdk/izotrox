@@ -100,7 +100,7 @@ void IzoShellDialog::draw_content(Painter& painter) {
     IntRect panel_bounds = global_bounds();
     int outer_radius = visual_roundness();
 
-    painter.draw_drop_shadow_rect(panel_bounds, kShadowBlurRadius, m_dialog_color_shadow, outer_radius, kShadowOffset);
+    painter.drop_shadow_rect(panel_bounds, kShadowBlurRadius, m_dialog_color_shadow, outer_radius, kShadowOffset);
 
     painter.fill_rounded_rect(panel_bounds, outer_radius, m_dialog_color_bg);
     painter.draw_rounded_rect(panel_bounds, outer_radius, m_dialog_color_border, 1);
@@ -126,7 +126,7 @@ void IzoShellDialog::update() {
         target_w = kDialogMinWidth;
     }
     target_w = std::min(target_w, screen_w);
-    int content_w = std::max(1, target_w - m_padding_left - m_padding_right);
+    int content_w = std::max(1, target_w - m_padding.left - m_padding.right);
 
     int input_h = 40;
     if (m_input) {
@@ -143,7 +143,7 @@ void IzoShellDialog::update() {
         m_output_label->hide();
     }
 
-    int target_h = m_padding_top + m_padding_bottom + input_h;
+    int target_h = m_padding.top + m_padding.bottom + input_h;
     if (output_h > 0) {
         target_h += kLayoutSpacingPx + output_h;
     }
